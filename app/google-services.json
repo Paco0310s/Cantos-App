@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "746880510891",
+    "firebase_url": "https://coro-7251f-default-rtdb.firebaseio.com",
+    "project_id": "coro-7251f",
+    "storage_bucket": "coro-7251f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:746880510891:android:1d9c8b395c5a159cdc80ee",
+        "android_client_info": {
+          "package_name": "com.pacosotelo.coro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "746880510891-p7recsbgijtd6avi602dqbk15vo3ai2r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCARPfSV4Kh950Ces_4Os4iJjyT2OXIJ-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "746880510891-p7recsbgijtd6avi602dqbk15vo3ai2r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
