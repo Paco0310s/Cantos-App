@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Cantos</string>
+    <string name="agregar_canto">Agregar</string>
+    <string name="letra">Letra</string>
+    <string name="nombre">Nombre</string>
+    <string name="guardar">Guardar</string>
+    <string name="modificar">Modificar</string>
+    <string name="modificar_canto">Modificar canto</string>
+    <string name="nuevo_canto">Nuevo canto</string>
+    <string name="buscar">Buscar</string>
+    <string name="acerca_de">Acerca de</string>
+    <string name="aceptar">Aceptar</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="subir_tono">Subir tono</string>
+    <string name="bajar_tono">Bajar tono</string>
+    <string name="disminuir_tamano_letra">Disminuir tamaño de letra</string>
+    <string name="aumentar_tamano_letra">Aumentar tamaño de letra</string>
+    <string name="nuevo">Nuevo</string>
+    <string name="quitar_tonos">Quitar tonos</string>
+    <string name="ver_tonos">Ver tonos</string>
+    <string name="momento">Momento</string>
+    <string name="tiempo">Tiempo</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="agregar_tiempos">Agregar tiempos</string>
+    <string name="exportar_pdf">PDF</string>
+    <string name="escanear">Escanear</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="esquema">Esquema</string>
+</resources>

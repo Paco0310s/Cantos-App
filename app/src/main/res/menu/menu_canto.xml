@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/disminuirLetra"
+        android:icon="@drawable/ic_menos"
+        android:title="@string/disminuir_tamano_letra"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/aumentarLetra"
+        android:icon="@drawable/ic_mas"
+        android:title="@string/aumentar_tamano_letra"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/modificar"
+        android:title="@string/modificar"
+        android:icon="@drawable/ic_edit"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/eliminar"
+        android:title="@string/eliminar"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/quitarTonos"
+        android:title="@string/quitar_tonos"
+        android:icon="@drawable/ic_notes"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/subirTono"
+        android:title="@string/subir_tono"
+        android:icon="@drawable/ic_up"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/bajarTono"
+        android:title="@string/bajar_tono"
+        android:icon="@drawable/ic_down"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/pdf"
+        android:title="@string/exportar_pdf"
+        android:icon="@drawable/ic_pdf_24"
+        app:showAsAction="never"
+        />
+</menu>
