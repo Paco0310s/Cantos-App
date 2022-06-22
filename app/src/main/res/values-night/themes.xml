@@ -19,16 +19,26 @@
 
     <style name="texto" parent="TextAppearance.AppCompat">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#1D1E1E</item>
     </style>
 
     <style name="campo" parent="TextAppearance.AppCompat">
-        <item name="android:textColor">#000000</item>
-        <item name="android:background">#FFFFFF</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:background">#202020</item>
     </style>
 
     <style name="boton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:background">#0F1010</item>
     </style>
+
+    <style name="fondo" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:background">#0F1010</item>
+    </style>
+
+    <style name="item_canto" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:background">#3D3E3E</item>
+    </style>
+
 </resources>

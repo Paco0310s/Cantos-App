@@ -10,38 +10,35 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name=".MyFirebaseApp"
+        android:name=".tools.MyFirebaseApp"
         android:allowBackup="true"
-        android:icon="@drawable/icono"
+        android:icon="@drawable/icono2"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        android:roundIcon="@drawable/icono"
+        android:roundIcon="@drawable/icono2"
         android:supportsRtl="true"
         android:theme="@style/Theme.CantosCoro"
         android:usesCleartextTraffic="true"
         tools:ignore="AllowBackup"
         tools:targetApi="m">
         <activity
-            android:name=".EsquemasActivity"
+            android:name=".ui.EsquemasActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.login.LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login" />
-        <activity
-            android:name=".ViewPDFActivity"
+            android:name=".ui.ViewPDFActivity"
             android:exported="false" />
         <activity
-            android:name=".vista.Nuevo"
+            android:name=".ui.NuevoCantoActivity"
             android:exported="false" />
         <activity
-            android:name=".vista.VerCanto"
+            android:name=".ui.CantoActivity"
             android:exported="false" />
         <activity
-            android:name=".vista.Lista"
+            android:name=".ui.ListaCantosActivity"
             android:exported="false" />
         <activity
-            android:name=".vista.Principal"
+            android:name=".ui.SplashActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,4 +1,4 @@
-package com.pacosotelo.coro.vista;
+package com.pacosotelo.coro.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -16,22 +16,23 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.pacosotelo.coro.AdaptadorCantos;
+import com.pacosotelo.coro.tools.AdaptadorCantos;
 import com.pacosotelo.coro.R;
-import com.pacosotelo.coro.modelo.Canto;
+import com.pacosotelo.coro.modelos.Canto;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class Lista extends AppCompatActivity {
+public class ListaCantosActivity extends AppCompatActivity {
     private final List<Canto> listaCantos = new ArrayList<>();
+    private final List<Canto> listaRespaldo = new ArrayList<>();
     private RecyclerView lista;
     private AdaptadorCantos adapter;
-    //private ArrayAdapter<Canto> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_lista);
+        setContentView(R.layout.activity_listacantos);
 
         lista = findViewById(R.id.lista);
 
@@ -77,18 +78,21 @@ public class Lista extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaCantos.clear();
+                listaRespaldo.clear();
 
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    Canto c = objSnap.getValue(Canto.class);
-                    listaCantos.add(c);
+                    if(objSnap!=null) {
+                        Canto c = objSnap.getValue(Canto.class);
+                        listaCantos.add(c);
+                    }
 
-                    //adapter = new ArrayAdapter<>(Lista.this, android.R.layout.simple_list_item_1, listaCantos);
-
-                    adapter = new AdaptadorCantos(listaCantos, Lista.this);
+                    adapter = new AdaptadorCantos(listaCantos, ListaCantosActivity.this);
                     lista.setHasFixedSize(true);
-                    lista.setLayoutManager(new LinearLayoutManager(Lista.this));
+                    lista.setLayoutManager(new LinearLayoutManager(ListaCantosActivity.this));
                     lista.setAdapter(adapter);
                 }
+
+                listaRespaldo.addAll(listaCantos);
             }
 
             @Override
@@ -101,8 +105,8 @@ public class Lista extends AppCompatActivity {
     private void alertaAcercaDe(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.acerca_de);
-        String mensaje = "\u00a9 Paco Sotelo 2021 para el coro Angeles de Dios \n\n" +
-                "Version 0.2";
+        String mensaje = "\u00a9 Paco Sotelo 2022 para el coro Angeles de Dios \n\n" +
+                "Version 3.0";
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
@@ -111,7 +115,7 @@ public class Lista extends AppCompatActivity {
     }
 
     private void nuevoCanto() {
-        Intent i = new Intent(Lista.this, Nuevo.class);
+        Intent i = new Intent(ListaCantosActivity.this, NuevoCantoActivity.class);
         i.putExtra("getTipo", 0);
         startActivity(i);
         overridePendingTransition(R.anim.left_in,R.anim.left_out);
@@ -119,7 +123,7 @@ public class Lista extends AppCompatActivity {
     }
 
     private void verCanto(Canto canto) {
-        Intent i = new Intent(Lista.this, VerCanto.class);
+        Intent i = new Intent(ListaCantosActivity.this, CantoActivity.class);
         i.putExtra("getID", canto.getId());
         i.putExtra("getNombre",canto.getNombre());
         i.putExtra("getLetra", canto.getLetra());
@@ -131,22 +135,6 @@ public class Lista extends AppCompatActivity {
         finish();
     }
 
-    private static List<Canto> filter(List<Canto> cantos, String query) {
-        final String lowerCaseQuery = query.toLowerCase();
-
-        final List<Canto> filteredModelList = new ArrayList<>();
-
-        for (Canto canto : cantos) {
-            final String nombre = canto.getNombre().toLowerCase();
-            final String id = canto.getId();
-            if (nombre.contains(lowerCaseQuery) || id.equals(query)) {
-                filteredModelList.add(canto);
-            }
-        }
-
-        return filteredModelList;
-    }
-
     SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
@@ -154,10 +142,34 @@ public class Lista extends AppCompatActivity {
         }
 
         @Override
-        public boolean onQueryTextChange(String query) {
-            //adapter.getFilter().filter(newText);
-            final List<Canto> filteredModelList = filter(listaCantos, query);
-            adapter.setLista(filteredModelList);
+        public boolean onQueryTextChange(String s) {
+            int longitud = s.length();
+            if(longitud == 0)
+            {
+                listaCantos.clear();
+                listaCantos.addAll(listaRespaldo);
+            }else{
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    List<Canto> collecion = listaRespaldo.stream().filter
+                                    (i->i.getNombre().toLowerCase().contains(s.toLowerCase())).
+                            collect(Collectors.toList());
+                    listaCantos.clear();
+                    listaCantos.addAll(collecion);
+                }else {
+                    listaCantos.clear();
+                    for (Canto z: listaRespaldo) {
+                        if (z.getNombre().toLowerCase().contains(s.toLowerCase())){
+                            listaCantos.add(z);
+                        }
+                    }
+                }
+            }
+
+            adapter = new AdaptadorCantos(listaCantos, ListaCantosActivity.this);
+            lista.setHasFixedSize(true);
+            lista.setLayoutManager(new LinearLayoutManager(ListaCantosActivity.this));
+            lista.setAdapter(adapter);
+
             return true;
         }
     };

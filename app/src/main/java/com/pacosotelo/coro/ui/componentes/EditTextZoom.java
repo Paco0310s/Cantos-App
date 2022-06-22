@@ -1,4 +1,4 @@
-package com.pacosotelo.coro.vista.componentes;
+package com.pacosotelo.coro.ui.componentes;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,7 +9,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
 
 import com.pacosotelo.coro.R;
 

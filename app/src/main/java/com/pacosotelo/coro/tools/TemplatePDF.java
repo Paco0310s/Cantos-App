@@ -1,4 +1,4 @@
-package com.pacosotelo.coro;
+package com.pacosotelo.coro.tools;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -21,8 +21,7 @@ import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.pacosotelo.coro.vista.Nuevo;
-import com.pacosotelo.coro.vista.VerCanto;
+import com.pacosotelo.coro.ui.ViewPDFActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;

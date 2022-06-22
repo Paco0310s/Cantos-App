@@ -2,11 +2,8 @@ package com.pacosotelo.coro.controlador;
 
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
-import com.pacosotelo.coro.vista.Lista;
 
 import org.json.JSONArray;
 import org.json.JSONException;

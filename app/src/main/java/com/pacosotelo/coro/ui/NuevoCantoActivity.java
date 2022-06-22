@@ -1,4 +1,4 @@
-package com.pacosotelo.coro.vista;
+package com.pacosotelo.coro.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -21,14 +21,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
-import com.pacosotelo.coro.TemplatePDF;
-import com.pacosotelo.coro.modelo.Canto;
+import com.pacosotelo.coro.modelos.Canto;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
-public class Nuevo extends AppCompatActivity {
+public class NuevoCantoActivity extends AppCompatActivity {
     private EditText etNombre, etLetra;
     private Button bAgregar;
     private DatabaseReference dr;
@@ -45,7 +42,7 @@ public class Nuevo extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_nuevo);
+        setContentView(R.layout.activity_nuevocanto);
 
         etNombre = findViewById(R.id.etNombre);
         etLetra = findViewById(R.id.etLetra);
@@ -195,14 +192,14 @@ public class Nuevo extends AppCompatActivity {
     }
 
     private void regresar_lista() {
-        Intent i = new Intent(Nuevo.this, Lista.class);
+        Intent i = new Intent(NuevoCantoActivity.this, ListaCantosActivity.class);
         startActivity(i);
         overridePendingTransition(R.anim.right_in,R.anim.right_out);
         finish();
     }
 
     private void verCanto() {
-        Intent i = new Intent(Nuevo.this, VerCanto.class);
+        Intent i = new Intent(NuevoCantoActivity.this, CantoActivity.class);
         i.putExtra("getID",canto.getId());
         i.putExtra("getNombre",canto.getNombre());
         i.putExtra("getLetra", canto.getLetra());

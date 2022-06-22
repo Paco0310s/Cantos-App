@@ -1,23 +1,23 @@
-package com.pacosotelo.coro;
+package com.pacosotelo.coro.tools;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
-import com.pacosotelo.coro.modelo.Canto;
-import com.pacosotelo.coro.vista.Lista;
-import com.pacosotelo.coro.vista.VerCanto;
+
+import com.pacosotelo.coro.R;
+import com.pacosotelo.coro.modelos.Canto;
+import com.pacosotelo.coro.ui.CantoActivity;
 
 import java.util.List;
 
@@ -41,6 +41,7 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull AdaptadorCantos.ViewHolder holder, int position) {
+        //holder.cv.setAnimation(AnimationUtils.loadAnimation(contexto, R.anim.right_in));
         holder.bindData(listaCantos.get(position));
     }
 
@@ -56,6 +57,7 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView nombreCanto, momentoCanto, tiempoCanto;
         ImageButton bOpciones;
+        CardView cv;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -64,13 +66,14 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
             momentoCanto = itemView.findViewById(R.id.tMomentoCanto);
             tiempoCanto = itemView.findViewById(R.id.tTiempoCanto);
             bOpciones = itemView.findViewById(R.id.bOpciones);
+            cv = itemView.findViewById(R.id.cvCanto);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Canto canto = listaCantos.get(getAbsoluteAdapterPosition());
 
-                    Intent i = new Intent(contexto, VerCanto.class);
+                    Intent i = new Intent(contexto, CantoActivity.class);
                     i.putExtra("getID", canto.getId());
                     i.putExtra("getNombre",canto.getNombre());
                     i.putExtra("getLetra", canto.getLetra());

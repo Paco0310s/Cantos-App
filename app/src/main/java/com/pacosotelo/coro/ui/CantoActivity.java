@@ -1,4 +1,4 @@
-package com.pacosotelo.coro.vista;
+package com.pacosotelo.coro.ui;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -6,7 +6,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,12 +20,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
-import com.pacosotelo.coro.TemplatePDF;
-import com.pacosotelo.coro.modelo.Canto;
+import com.pacosotelo.coro.tools.TemplatePDF;
+import com.pacosotelo.coro.modelos.Canto;
 
 import java.util.Objects;
 
-public class VerCanto extends AppCompatActivity {
+public class CantoActivity extends AppCompatActivity {
     private EditText eLetra;
     private String letra;
     private final int tamLetra = 16;
@@ -80,7 +79,7 @@ public class VerCanto extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.ECLAIR)
     @Override
     public void onBackPressed() {
-        Intent i = new Intent(VerCanto.this, Lista.class);
+        Intent i = new Intent(CantoActivity.this, ListaCantosActivity.class);
         startActivity(i);
         overridePendingTransition(R.anim.right_in,R.anim.right_out);
         finish();
@@ -174,7 +173,7 @@ public class VerCanto extends AppCompatActivity {
     }
 
     private void modificarCanto() {
-        Intent i = new Intent(VerCanto.this, Nuevo.class);
+        Intent i = new Intent(CantoActivity.this, NuevoCantoActivity.class);
         i.putExtra("getTipo", 1);
         i.putExtra("getID", canto.getId());
         i.putExtra("getNombre",canto.getNombre());
@@ -195,7 +194,7 @@ public class VerCanto extends AppCompatActivity {
         builder.setPositiveButton("SI", (dialog, which) -> {
             dr.child(canto.getId()).removeValue();
 
-            Toast.makeText(VerCanto.this, "Canto eliminado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(CantoActivity.this, "Canto eliminado", Toast.LENGTH_SHORT).show();
             onBackPressed();
         });
 

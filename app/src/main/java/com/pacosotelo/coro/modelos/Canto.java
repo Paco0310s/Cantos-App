@@ -1,4 +1,4 @@
-package com.pacosotelo.coro.modelo;
+package com.pacosotelo.coro.modelos;
 
 import java.util.ArrayList;
 
