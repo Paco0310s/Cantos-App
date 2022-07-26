@@ -36,4 +36,13 @@
         <item name="android:textColor">#0F1010</item>
         <item name="android:background">#D9E7ED</item>
     </style>
+
+    <style name="Theme.CantosCoro.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.CantosCoro.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.CantosCoro.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

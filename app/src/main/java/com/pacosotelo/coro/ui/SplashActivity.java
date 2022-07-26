@@ -28,7 +28,7 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 handler.post(new Runnable() {
                     public void run() {
-                        Intent i = new Intent(SplashActivity.this, ListaCantosActivity.class);
+                        Intent i = new Intent(SplashActivity.this, LoginActivity.class);
                         startActivity(i);
                         overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
                         finish();

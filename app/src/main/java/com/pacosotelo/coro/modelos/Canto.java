@@ -7,6 +7,9 @@ public class Canto {
     private String nombre;
     private String letra;
     private ArrayList<String> momentos, tiempos;
+    private String id_usuario;
+    private String id_grupo;
+    private String visibilidad;
 
     public Canto() {
         momentos = new ArrayList<>();
@@ -51,6 +54,30 @@ public class Canto {
 
     public void setTiempos(ArrayList<String> tiempos) {
         this.tiempos = tiempos;
+    }
+
+    public String getId_usuario() {
+        return id_usuario;
+    }
+
+    public void setId_usuario(String id_usuario) {
+        this.id_usuario = id_usuario;
+    }
+
+    public String getId_grupo() {
+        return id_grupo;
+    }
+
+    public void setId_grupo(String id_grupo) {
+        this.id_grupo = id_grupo;
+    }
+
+    public String getVisibilidad() {
+        return visibilidad;
+    }
+
+    public void setVisibilidad(String visibilidad) {
+        this.visibilidad = visibilidad;
     }
 
     @Override

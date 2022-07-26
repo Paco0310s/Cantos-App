@@ -22,6 +22,14 @@
         tools:ignore="AllowBackup"
         tools:targetApi="m">
         <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.MenuLateralActivity"
+            android:exported="false"
+            android:label="@string/title_activity_menu_lateral"
+            android:theme="@style/Theme.CantosCoro.NoActionBar" />
+        <activity
             android:name=".ui.EsquemasActivity"
             android:exported="false" />
         <activity
@@ -38,8 +46,8 @@
             android:exported="false" />
         <activity
             android:name=".ui.SplashActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
