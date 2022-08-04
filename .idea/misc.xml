@@ -3,6 +3,36 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/drawable/side_nav_bar.xml" value="0.1305" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_canto.xml" value="0.2808988764044944" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_esquemas.xml" value="0.10925925925925926" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_listacantos.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_login.xml" value="0.19798657718120805" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_menu_lateral.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_nuevo_esquema.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_nuevocanto.xml" value="0.22" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_registrarse.xml" value="0.25" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/activity_splash.xml" value="0.21" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/app_bar.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/app_bar_canto.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/app_bar_menu_lateral.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/content_menu_lateral.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/fragment_afinador.xml" value="0.1824074074074074" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/fragment_home.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/fragment_lista_cantos.xml" value="0.19010416666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/fragment_lista_esquemas.xml" value="0.17" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/item_canto.xml" value="0.33" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/item_esquema.xml" value="0.10925925925925926" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/layout/nav_header_menu_lateral.xml" value="0.19907407407407407" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/activity_menu_latera_drawer.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_canto.xml" value="0.25" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_foto.xml" value="0.10925925925925926" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_lateral.xml" value="0.5" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_laterlal.xml" value="0.67" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_lista.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_lista_esquemas.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/menu_nuevo.xml" value="0.33" />
+        <entry key="..\:/Users/paco0/Documents/Ejemplos/Android/CantosCoro/app/src/main/res/menu/popup_menu_canto.xml" value="0.20416666666666666" />
         <entry key="..\:/Users/paco0/Documents/Proyectos/Android/CantosCoro/app/src/main/res/layout/activity_canto.xml" value="0.17074275362318841" />
         <entry key="..\:/Users/paco0/Documents/Proyectos/Android/CantosCoro/app/src/main/res/layout/activity_esquemas.xml" value="0.17074275362318841" />
         <entry key="..\:/Users/paco0/Documents/Proyectos/Android/CantosCoro/app/src/main/res/layout/activity_listacantos.xml" value="0.17074275362318841" />
@@ -42,7 +72,7 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="jbr-11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

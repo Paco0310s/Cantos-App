@@ -2,11 +2,11 @@
     <!-- Base application theme. -->
     <style name="Theme.CantosCoro" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#0B3249</item>
+        <item name="colorPrimary">#8C8C8C</item>
         <item name="colorPrimaryVariant">#0F1010</item>
-        <item name="colorOnPrimary">#235673</item>
+        <item name="colorOnPrimary">#1B1B1B</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">#6B642A</item>
+        <item name="colorSecondary">#EC5286</item>
         <item name="colorSecondaryVariant">#FFFFFF</item>
         <item name="colorOnSecondary">#7A989F</item>
         <!-- Status bar color. -->
@@ -28,7 +28,7 @@
 
     <style name="boton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#0F1010</item>
+        <item name="android:backgroundTint">#323333</item>
     </style>
 
     <style name="fondo" parent="TextAppearance.AppCompat">

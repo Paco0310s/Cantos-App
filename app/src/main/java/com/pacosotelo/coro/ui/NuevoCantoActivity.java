@@ -3,6 +3,7 @@ package com.pacosotelo.coro.ui;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -22,7 +23,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
+import com.pacosotelo.coro.tools.Constantes;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 public class NuevoCantoActivity extends AppCompatActivity {
@@ -38,11 +43,15 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private boolean[] checkedItemsMomentos, checkedItemsTiempos;
     private String[] arrayMomentos, arrayTiempos;
     private ArrayList<String> momentosSeleccionados, tiemposSeleccionados;
+    private boolean comillas = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nuevocanto);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         etNombre = findViewById(R.id.etNombre);
         etLetra = findViewById(R.id.etLetra);
@@ -52,6 +61,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         momentos = new ArrayList<>();
         momentosSeleccionados = new ArrayList<>();
@@ -62,7 +72,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         Bundle datos = this.getIntent().getExtras();
 
-        tipo = datos.getInt("getTipo");
+        tipo = datos.getInt("tipo");
 
         switch (tipo) {
             case 0:
@@ -71,7 +81,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 break;
             case 1:
                 actionBar.setTitle(R.string.modificar_canto);
-                modificarCanto(datos);
+                modificarCanto();
                 break;
         }
     }
@@ -81,14 +91,46 @@ public class NuevoCantoActivity extends AppCompatActivity {
         return true;
     }
 
-    @SuppressLint("NonConstantResourceId")
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.escanear:
-                Toast.makeText(this, "Proximamente", Toast.LENGTH_SHORT).show();
+            case R.id.comillas:
+
+                String letra = etLetra.getText().toString();
+
+                comillas = letra.contains("'");
+
+                if(comillas) {
+                    etLetra.setText(letra.replaceAll("'", ""));
+                } else {
+                    for (String tono: Constantes.tonos) {
+                        for(int i = Constantes.extras.length - 1; i >= 0; i--) {
+                            String nuevoTono = tono + Constantes.extras[i];
+                            letra = letra.replaceAll(nuevoTono,"'" + nuevoTono + "'");
+                        }
+                    }
+                    letra = letra.replaceAll("'''","'");
+                    letra = letra.replaceAll("''","'");
+
+                    for (int i = 1; i < Constantes.extras.length; i++) {
+                        String nuevoExtra = "'" + Constantes.extras[i];
+                        letra = letra.replaceAll(nuevoExtra, Constantes.extras[i]);
+                    }
+
+                    letra = letra.replaceAll("'#","#");
+                    letra = letra.replaceAll("'b","b");
+
+                    etLetra.setText(letra);
+                }
                 break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return false;
     }
 
     private void inicializarFirebase() {
@@ -156,15 +198,10 @@ public class NuevoCantoActivity extends AppCompatActivity {
         });
     }
 
-    private void modificarCanto(Bundle datos) {
+    private void modificarCanto() {
         bAgregar.setText(R.string.modificar);
 
-        canto = new Canto();
-        canto.setId(datos.getString("getID"));
-        canto.setNombre(datos.getString("getNombre"));
-        canto.setLetra(datos.getString("getLetra"));
-        canto.setMomentos(datos.getStringArrayList("getMomentos"));
-        canto.setTiempos(datos.getStringArrayList("getTiempos"));
+        canto = (Canto) this.getIntent().getSerializableExtra("canto");
 
         etNombre.setText(canto.getNombre());
         etLetra.setText(canto.getLetra());
@@ -192,19 +229,13 @@ public class NuevoCantoActivity extends AppCompatActivity {
     }
 
     private void regresar_lista() {
-        Intent i = new Intent(NuevoCantoActivity.this, ListaCantosActivity.class);
-        startActivity(i);
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
         finish();
+        overridePendingTransition(R.anim.right_in,R.anim.right_out);
     }
 
     private void verCanto() {
         Intent i = new Intent(NuevoCantoActivity.this, CantoActivity.class);
-        i.putExtra("getID",canto.getId());
-        i.putExtra("getNombre",canto.getNombre());
-        i.putExtra("getLetra", canto.getLetra());
-        i.putExtra("getMomentos", canto.getMomentos());
-        i.putExtra("getTiempos", canto.getTiempos());
+        i.putExtra("canto",canto);
         startActivity(i);
         overridePendingTransition(R.anim.right_in,R.anim.right_out);
         finish();

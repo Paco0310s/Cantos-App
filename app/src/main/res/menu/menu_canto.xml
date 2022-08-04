@@ -32,6 +32,7 @@
 
     <item
         android:id="@+id/quitarTonos"
+        android:visible="false"
         android:title="@string/quitar_tonos"
         android:icon="@drawable/ic_notes"
         app:showAsAction="never"

@@ -3,11 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.pacosotelo.coro">
     <!-- uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" / -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".tools.MyFirebaseApp"
@@ -17,21 +17,23 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@drawable/icono2"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CantosCoro"
+        android:theme="@style/Theme.CantosCoro.NoActionBar"
         android:usesCleartextTraffic="true"
         tools:ignore="AllowBackup"
         tools:targetApi="m">
+        <activity
+            android:name=".ui.NuevoEsquemaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.RegistrarseActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.LoginActivity"
             android:exported="false" />
         <activity
             android:name=".ui.MenuLateralActivity"
             android:exported="false"
-            android:label="@string/title_activity_menu_lateral"
-            android:theme="@style/Theme.CantosCoro.NoActionBar" />
-        <activity
-            android:name=".ui.EsquemasActivity"
-            android:exported="false" />
+            android:label="@string/title_activity_menu_lateral" />
         <activity
             android:name=".ui.ViewPDFActivity"
             android:exported="false" />
@@ -40,9 +42,6 @@
             android:exported="false" />
         <activity
             android:name=".ui.CantoActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.ListaCantosActivity"
             android:exported="false" />
         <activity
             android:name=".ui.SplashActivity"

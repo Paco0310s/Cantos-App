@@ -1,52 +1,67 @@
 package com.pacosotelo.coro.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.pacosotelo.coro.tools.AdaptadorCantos;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
+import com.pacosotelo.coro.tools.AdaptadorCantos;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ListaCantosActivity extends AppCompatActivity {
+public class ListaCantosFragment extends Fragment {
     private final List<Canto> listaCantos = new ArrayList<>();
     private final List<Canto> listaRespaldo = new ArrayList<>();
     private RecyclerView lista;
     private AdaptadorCantos adapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_listacantos);
+        setHasOptionsMenu(true);
+    }
 
-        lista = findViewById(R.id.lista);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_lista_cantos, container, false);
+
+        lista = root.findViewById(R.id.lista);
+
+        FloatingActionButton fabNuevo = root.findViewById(R.id.fabNuevoCanto);
+        fabNuevo.setOnClickListener(v -> nuevoCanto());
 
         inicializarFirebase();
 
-        /*lista.setOnItemClickListener((parent, view, position, id) -> {
-            Canto canto = (Canto) parent.getItemAtPosition(position);
-
-            verCanto(canto);
-        });*/
+        return root;
     }
 
-    public boolean onCreateOptionsMenu(Menu menu){
-        getMenuInflater().inflate(R.menu.menu_lista,menu);
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater){
+        inflater.inflate(R.menu.menu_lista,menu);
 
         MenuItem item = menu.findItem(R.id.buscar);
 
@@ -54,7 +69,7 @@ public class ListaCantosActivity extends AppCompatActivity {
         buscador.setOnQueryTextListener(oyente);
         buscador.setQueryHint(getString(R.string.buscar));
 
-        return super.onCreateOptionsMenu(menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -66,8 +81,11 @@ public class ListaCantosActivity extends AppCompatActivity {
             case R.id.info:
                 alertaAcercaDe();
                 break;
+            case R.id.cerrarSesion:
+                cerrarSesion();
+                break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
     private void inicializarFirebase() {
@@ -86,9 +104,9 @@ public class ListaCantosActivity extends AppCompatActivity {
                         listaCantos.add(c);
                     }
 
-                    adapter = new AdaptadorCantos(listaCantos, ListaCantosActivity.this);
+                    adapter = new AdaptadorCantos(listaCantos, getActivity());
                     lista.setHasFixedSize(true);
-                    lista.setLayoutManager(new LinearLayoutManager(ListaCantosActivity.this));
+                    lista.setLayoutManager(new LinearLayoutManager(getActivity()));
                     lista.setAdapter(adapter);
                 }
 
@@ -102,11 +120,22 @@ public class ListaCantosActivity extends AppCompatActivity {
         });
     }
 
+    private void cerrarSesion(){
+        FirebaseAuth.getInstance().signOut();
+
+        Activity activity = getActivity();
+        Intent i = new Intent(activity, LoginActivity.class);
+        startActivity(i);
+        assert activity != null;
+        activity.overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        activity.finish();
+    }
+
     private void alertaAcercaDe(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle(R.string.acerca_de);
         String mensaje = "\u00a9 Paco Sotelo 2022 para el coro Angeles de Dios \n\n" +
-                "Version 3.0";
+                "Version 2.5";
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
@@ -115,15 +144,21 @@ public class ListaCantosActivity extends AppCompatActivity {
     }
 
     private void nuevoCanto() {
-        Intent i = new Intent(ListaCantosActivity.this, NuevoCantoActivity.class);
+        Activity activity = getActivity();
+
+        Intent i = new Intent(activity, NuevoCantoActivity.class);
         i.putExtra("getTipo", 0);
         startActivity(i);
-        overridePendingTransition(R.anim.left_in,R.anim.left_out);
-        finish();
+
+        assert activity != null;
+
+        activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
     }
 
     private void verCanto(Canto canto) {
-        Intent i = new Intent(ListaCantosActivity.this, CantoActivity.class);
+        Activity activity = getActivity();
+
+        Intent i = new Intent(activity, CantoActivity.class);
         i.putExtra("getID", canto.getId());
         i.putExtra("getNombre",canto.getNombre());
         i.putExtra("getLetra", canto.getLetra());
@@ -131,8 +166,11 @@ public class ListaCantosActivity extends AppCompatActivity {
         i.putExtra("getTiempos", canto.getTiempos());
 
         startActivity(i);
-        overridePendingTransition(R.anim.left_in,R.anim.left_out);
-        finish();
+
+        assert activity != null;
+
+        activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
+        activity.finish();
     }
 
     SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
@@ -165,13 +203,12 @@ public class ListaCantosActivity extends AppCompatActivity {
                 }
             }
 
-            adapter = new AdaptadorCantos(listaCantos, ListaCantosActivity.this);
+            adapter = new AdaptadorCantos(listaCantos, getActivity());
             lista.setHasFixedSize(true);
-            lista.setLayoutManager(new LinearLayoutManager(ListaCantosActivity.this));
+            lista.setLayoutManager(new LinearLayoutManager(getActivity()));
             lista.setAdapter(adapter);
 
             return true;
         }
     };
-
 }

@@ -1,30 +1,32 @@
 package com.pacosotelo.coro.tools;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.ui.CantoActivity;
-
 import java.util.List;
 
 public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHolder> {
+    private final LayoutInflater mInflater;
+    private final Context contexto;
     private List<Canto> listaCantos;
-    private LayoutInflater mInflater;
-    private Context contexto;
 
     public AdaptadorCantos(List<Canto> listaCantos, Context contexto) {
         this.mInflater = LayoutInflater.from(contexto);
@@ -34,14 +36,13 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
 
     @NonNull
     @Override
-    public AdaptadorCantos.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public AdaptadorCantos.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.item_canto, null);
         return new AdaptadorCantos.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull AdaptadorCantos.ViewHolder holder, int position) {
-        //holder.cv.setAnimation(AnimationUtils.loadAnimation(contexto, R.anim.right_in));
         holder.bindData(listaCantos.get(position));
     }
 
@@ -56,44 +57,42 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView nombreCanto, momentoCanto, tiempoCanto;
-        ImageButton bOpciones;
+        //ImageButton bOpciones;
         CardView cv;
 
+        @SuppressLint("NonConstantResourceId")
         ViewHolder(View itemView) {
             super(itemView);
 
             nombreCanto = itemView.findViewById(R.id.tNombreCanto);
             momentoCanto = itemView.findViewById(R.id.tMomentoCanto);
             tiempoCanto = itemView.findViewById(R.id.tTiempoCanto);
-            bOpciones = itemView.findViewById(R.id.bOpciones);
+            //bOpciones = itemView.findViewById(R.id.bOpciones);
             cv = itemView.findViewById(R.id.cvCanto);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Canto canto = listaCantos.get(getAbsoluteAdapterPosition());
+            itemView.setOnClickListener(v -> {
+                Canto canto = listaCantos.get(getAbsoluteAdapterPosition());
 
-                    Intent i = new Intent(contexto, CantoActivity.class);
-                    i.putExtra("getID", canto.getId());
-                    i.putExtra("getNombre",canto.getNombre());
-                    i.putExtra("getLetra", canto.getLetra());
-                    i.putExtra("getMomentos", canto.getMomentos());
-                    i.putExtra("getTiempos", canto.getTiempos());
+                Intent i = new Intent(contexto, CantoActivity.class);
+                i.putExtra("canto",canto);
 
-                    //ActivityOptions options = ActivityOptions.makeCustomAnimation(contexto, R.anim.left_in,R.anim.left_out);
-
-                    contexto.startActivity(i);
-                    ((Activity) contexto).overridePendingTransition(R.anim.left_in,R.anim.left_out);
-                    ((Activity) contexto).finish();
-                }
+                contexto.startActivity(i);
+                ((Activity) contexto).overridePendingTransition(R.anim.left_in,R.anim.left_out);
             });
 
-            bOpciones.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(contexto, "Proximamente", Toast.LENGTH_SHORT).show();
-                }
-            });
+            /*bOpciones.setOnClickListener(v -> {
+                final PopupMenu popupMenu = new PopupMenu(contexto, bOpciones);
+                popupMenu.getMenuInflater().inflate(R.menu.popup_menu_canto,popupMenu.getMenu());
+                popupMenu.setOnMenuItemClickListener(menuItem -> {
+                    switch (menuItem.getItemId()) {
+                        case R.id.pdf:
+                            return true;
+                        default:
+                            return false;
+                    }
+                });
+                popupMenu.show();
+            });*/
         }
 
         private void bindData(final Canto canto) {

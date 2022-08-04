@@ -1,13 +1,20 @@
 package com.pacosotelo.coro.modelos;
 
-public class User {
+import java.io.Serializable;
+
+public class Usuario implements Serializable {
     String nombre;
     String email;
     String foto;
     String uid;
     String number_phone;
 
-    public User() {
+    public Usuario() {
+        this.nombre = "";
+        this.email = "";
+        this.foto = "";
+        this.uid = "";
+        this.number_phone = "";
     }
 
     public String getNombre() {

@@ -1,8 +1,9 @@
 package com.pacosotelo.coro.modelos;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Canto {
+public class Canto implements Serializable {
     private String id;
     private String nombre;
     private String letra;

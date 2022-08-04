@@ -1,19 +1,30 @@
 package com.pacosotelo.coro.ui;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.os.Build;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -22,7 +33,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.tools.TemplatePDF;
 import com.pacosotelo.coro.modelos.Canto;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class CantoActivity extends AppCompatActivity {
@@ -34,74 +46,93 @@ public class CantoActivity extends AppCompatActivity {
     private Canto canto;
     private boolean tonosQuitados = false;
 
-    private final String[] tonosMayores = {
-            "DO","DO#","RE","RE#","MI","FA","FA#","SOL","SOL#","LA","SIB","SI"
-    };
+    Map<String, String> tonosArriba;
+    Map<String, String> tonosAbajo;
 
-    private final String[] tonosMenores = {
-            "DOm","DO#m","REm","RE#m","MIm","FAm","FA#m","SOLm","SOL#m","LAm","SIBm","SIm"
-    };
-
-    private final String[] tonosMayores7 = {
-            "DO7","DO#7","RE7","RE#7","MI7","FA7","FA#7","SOL7","SOL#7","LA7","SIB7","SI7"
-    };
-
-    private final String[] tonosMenores7 = {
-            "DOm7","DO#m7","REm7","RE#m7","MIm7","FAm7","FA#m7","SOLm7","SOL#m7","LAm7","SIBm7","SIm7"
-    };
+    private final String[] extras = {"","m","7","m7"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canto);
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+
         eLetra = findViewById(R.id.eLetra);
 
-        Bundle datos = this.getIntent().getExtras();
-
-        canto = new Canto();
-
-        if (datos != null) {
-            canto.setId(datos.getString("getID"));
-            canto.setNombre(datos.getString("getNombre"));
-            canto.setLetra(datos.getString("getLetra"));
-            canto.setMomentos(datos.getStringArrayList("getMomentos"));
-            canto.setTiempos(datos.getStringArrayList("getTiempos"));
-        }
-
-        barra();
+        canto = (Canto) this.getIntent().getSerializableExtra("canto");
 
         inicializarFirebase();
 
-        letra();
+        tonosArriba = new HashMap<>();
+        tonosAbajo = new HashMap<>();
+
+        for (String extra: extras) {
+
+            tonosArriba.put("DO" + extra, "DO#" + extra);
+            tonosArriba.put("DO#" + extra, "RE" + extra);
+            tonosArriba.put("REb" + extra, "RE" + extra);
+            tonosArriba.put("RE" + extra, "MIb" + extra);
+            tonosArriba.put("RE#" + extra, "MI" + extra);
+            tonosArriba.put("MIb" + extra, "MI" + extra);
+            tonosArriba.put("MI" + extra, "FA" + extra);
+            tonosArriba.put("FA" + extra, "FA#" + extra);
+            tonosArriba.put("FA#" + extra, "SOL" + extra);
+            tonosArriba.put("SOLb" + extra, "SOL" + extra);
+            tonosArriba.put("SOL" + extra, "SOL#" + extra);
+            tonosArriba.put("SOL#" + extra, "LA" + extra);
+            tonosArriba.put("LAb" + extra, "LA" + extra);
+            tonosArriba.put("LA" + extra, "SIb" + extra);
+            tonosArriba.put("LA#" + extra, "SI" + extra);
+            tonosArriba.put("SIb" + extra, "SI" + extra);
+            tonosArriba.put("SI" + extra, "DO" + extra);
+
+            tonosAbajo.put("DO" + extra, "SI" + extra);
+            tonosAbajo.put("DO#" + extra, "DO" + extra);
+            tonosAbajo.put("REb" + extra, "DO" + extra);
+            tonosAbajo.put("RE" + extra, "DO#" + extra);
+            tonosAbajo.put("RE#" + extra, "RE" + extra);
+            tonosAbajo.put("MIb" + extra, "RE" + extra);
+            tonosAbajo.put("MI" + extra, "MIb" + extra);
+            tonosAbajo.put("FA" + extra, "MI" + extra);
+            tonosAbajo.put("FA#" + extra, "FA" + extra);
+            tonosAbajo.put("SOLb" + extra, "FA" + extra);
+            tonosAbajo.put("SOL" + extra, "FA#" + extra);
+            tonosAbajo.put("SOL#" + extra, "SOL" + extra);
+            tonosAbajo.put("LAb" + extra, "SOL" + extra);
+            tonosAbajo.put("LA" + extra, "SOL#" + extra);
+            tonosAbajo.put("LA#" + extra, "LA" + extra);
+            tonosAbajo.put("SIb" + extra, "LA" + extra);
+            tonosAbajo.put("SI" + extra, "SIb" + extra);
+        }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.ECLAIR)
     @Override
     public void onBackPressed() {
-        Intent i = new Intent(CantoActivity.this, ListaCantosActivity.class);
-        startActivity(i);
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
         finish();
+        overridePendingTransition(R.anim.right_in,R.anim.right_out);
     }
 
-    public boolean onCreateOptionsMenu(Menu menu){
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return false;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu){
         getMenuInflater().inflate(R.menu.menu_canto,menu);
         return true;
     }
 
     @SuppressLint("NonConstantResourceId")
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.pdf:
-                TemplatePDF templatePDF = new TemplatePDF(getApplicationContext());
-                templatePDF.openDocument(canto.getNombre());
-                templatePDF.addMetaData(canto.getNombre(), "Canto", "Paco Sotelo");
-                templatePDF.addTitle(canto.getNombre());
-                templatePDF.addParagraph(eLetra.getText().toString());
-                templatePDF.closeDocument();
-                templatePDF.viewPDF();
-                //templatePDF.appViewPDF(this);
+                crearPDF();
                 break;
             case R.id.modificar:
                 modificarCanto();
@@ -125,26 +156,19 @@ public class CantoActivity extends AppCompatActivity {
                 disminuirLetra();
                 break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
-    private void barra() {
-        ActionBar actionBar = getSupportActionBar();
-        assert actionBar != null;
-        actionBar.setTitle(canto.getNombre());
-    }
-
-    private void letra() {
-        this.letra = canto.getLetra();
-
-        eLetra.setFocusable(false);
-        eLetra.setCursorVisible(false);
-        eLetra.setText(letra.replaceAll("'", ""));
-
-        if (ValorTexto == 0){
-            ValorTexto = tamLetra;
-            eLetra.setTextSize(ValorTexto);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1){
+            if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                crearPDF();
+            }else{
+                Toast.makeText(this, "No se pudo acceder al almacenamiento: permiso denegado", Toast.LENGTH_SHORT).show();
+            }
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void inicializarFirebase() {
@@ -172,36 +196,93 @@ public class CantoActivity extends AppCompatActivity {
         });
     }
 
+    private void barra() {
+        ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setTitle(canto.getNombre());
+    }
+
+    private void letra() {
+        this.letra = canto.getLetra();
+
+        eLetra.setFocusable(false);
+        eLetra.setCursorVisible(false);
+
+        String letra2 = letra.replaceAll("'", "");
+        /*SpannableString ss = new SpannableString(letra2);
+
+        ss.setSpan(spanTono(),0,4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(Color.YELLOW),
+                0, 4,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);*/
+
+        eLetra.setText(letra2);
+
+        if (ValorTexto == 0){
+            ValorTexto = tamLetra;
+            eLetra.setTextSize(ValorTexto);
+        }
+    }
+
+    private ClickableSpan spanTono() {
+        return new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View view) {
+                Toast.makeText(CantoActivity.this, "click", Toast.LENGTH_SHORT).show();
+            }
+        };
+    }
+
+    private void crearPDF() {
+        if(ActivityCompat.checkSelfPermission(CantoActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED){
+            TemplatePDF templatePDF = new TemplatePDF(getApplicationContext());
+            templatePDF.openDocument(canto.getNombre());
+            templatePDF.addMetaData(canto.getNombre(), "Canto", "Paco Sotelo");
+            templatePDF.addTitle(canto.getNombre());
+            templatePDF.addParagraph(eLetra.getText().toString());
+            templatePDF.closeDocument();
+            templatePDF.viewPDF();
+            //templatePDF.appViewPDF(this);
+        }else{
+            ActivityCompat.requestPermissions(CantoActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
+    }
     private void modificarCanto() {
         Intent i = new Intent(CantoActivity.this, NuevoCantoActivity.class);
-        i.putExtra("getTipo", 1);
-        i.putExtra("getID", canto.getId());
-        i.putExtra("getNombre",canto.getNombre());
-        i.putExtra("getLetra", canto.getLetra());
-        i.putExtra("getMomentos",canto.getMomentos());
-        i.putExtra("getTiempos", canto.getTiempos());
+        i.putExtra("tipo", 1);
+        i.putExtra("canto", canto);
         startActivity(i);
         overridePendingTransition(R.anim.left_in,R.anim.left_out);
         finish();
     }
 
     private void eliminarCanto() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
-        builder.setTitle("Confirmar");
-        builder.setMessage("¿Desea eliminar el canto?");
+        if(usuario != null && usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setPositiveButton("SI", (dialog, which) -> {
-            dr.child(canto.getId()).removeValue();
+            builder.setTitle("Confirmar");
+            builder.setMessage("¿Desea eliminar el canto?");
 
-            Toast.makeText(CantoActivity.this, "Canto eliminado", Toast.LENGTH_SHORT).show();
-            onBackPressed();
-        });
+            builder.setPositiveButton("SI", (dialog, which) -> {
+                dr.child(canto.getId()).removeValue();
 
-        builder.setNegativeButton("NO", (dialog, which) -> dialog.dismiss());
+                Toast.makeText(CantoActivity.this, "Canto eliminado",
+                        Toast.LENGTH_SHORT).show();
 
-        AlertDialog alert = builder.create();
-        alert.show();
+                onBackPressed();
+            });
+
+            builder.setNegativeButton("NO", (dialog, which) -> dialog.dismiss());
+
+            AlertDialog alert = builder.create();
+            alert.show();
+        } else {
+            Toast.makeText(CantoActivity.this, "No tienes permiso para esta operación",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void aumentarLetra() {
@@ -224,25 +305,6 @@ public class CantoActivity extends AppCompatActivity {
         }
     }
 
-    private boolean esTono(String palabra, String[] tonos) {
-        boolean esTono = false;
-
-        for (String tono : tonos) {
-            if (palabra.equals(tono)) {
-                esTono = true;
-                break;
-            }
-        }
-
-        return esTono;
-    }
-    private boolean esTono(String palabra) {
-        return esTono(palabra, tonosMayores)
-                || esTono(palabra, tonosMenores)
-                || esTono(palabra, tonosMayores7)
-                || esTono(palabra, tonosMenores7);
-    }
-
     private void quitarTonos(MenuItem item) {
         tonosQuitados = !tonosQuitados;
 
@@ -260,17 +322,16 @@ public class CantoActivity extends AppCompatActivity {
         StringBuilder nuevaLetra = new StringBuilder();
 
         for (String palabra : palabras) {
-
-            if (!esTono(palabra)) {
+            if(tonosArriba.get(palabra) == null) {
                 nuevaLetra.append(palabra);
             }
         }
 
         letra = nuevaLetra.toString();
-        letra = letra.replaceAll("○", "");
-        letra = letra.replaceAll("\\|", "");
-        letra = letra.replaceAll("---", "");
-        letra = letra.trim();
+        letra = letra.replaceAll("○", " ");
+        letra = letra.replaceAll("\\|", " ");
+        letra = letra.replaceAll("---", "   ");
+        letra = letra.replaceAll("(?m)^[ \t]*\r?\n", "");
         eLetra.setText(letra);
     }
 
@@ -278,191 +339,11 @@ public class CantoActivity extends AppCompatActivity {
         String[] palabras = letra.split("'");
         StringBuilder nuevaLetra = new StringBuilder();
 
-        /*for (int i = 0; i < palabras.length; i++) {
-            for (int j = 0; j < tonosMayores.length; j++) {
-                if(palabras[i].equals(tonosMayores[j])) {
-                    if(j == (tonosMayores.length-1)) {
-                        nuevaLetra.append("'").append(tonosMayores[j+1]).append("'");
-                    } else {
-                        nuevaLetra.append("'").append(tonosMayores[0]).append("'");
-                    }
-                } else {
-                    nuevaLetra.append(palabras[i]);
-                    i++;
-                }
-            }
-
-        }*/
-
         for (String palabra : palabras) {
-            switch (palabra) {
-                case "DO":
-                    nuevaLetra.append("'DO#'");
-                    break;
-                case "DO#":
-                case "REb":
-                    nuevaLetra.append("'RE'");
-                    break;
-                case "RE":
-                    nuevaLetra.append("'RE#'");
-                    break;
-                case "RE#":
-                case "MIb":
-                    nuevaLetra.append("'MI'");
-                    break;
-                case "MI":
-                    nuevaLetra.append("'FA'");
-                    break;
-                case "FA":
-                    nuevaLetra.append("'FA#'");
-                    break;
-                case "FA#":
-                case "SOLb":
-                    nuevaLetra.append("'SOL'");
-                    break;
-                case "SOL":
-                    nuevaLetra.append("'SOL#'");
-                    break;
-                case "SOL#":
-                case "LAb":
-                    nuevaLetra.append("'LA'");
-                    break;
-                case "LA":
-                    nuevaLetra.append("'SIb'");
-                    break;
-                case "LA#":
-                case "SIb":
-                    nuevaLetra.append("'SI'");
-                    break;
-                case "SI":
-                    nuevaLetra.append("'DO'");
-                    break;
-                case "DOm":
-                    nuevaLetra.append("'DO#m'");
-                    break;
-                case "DO#m":
-                case "REbm":
-                    nuevaLetra.append("'REm'");
-                    break;
-                case "REm":
-                    nuevaLetra.append("'RE#m'");
-                    break;
-                case "RE#m":
-                case "MIbm":
-                    nuevaLetra.append("'MIm'");
-                    break;
-                case "MIm":
-                    nuevaLetra.append("'FAm'");
-                    break;
-                case "FAm":
-                    nuevaLetra.append("'FA#m'");
-                    break;
-                case "FA#m":
-                case "SOLbm":
-                    nuevaLetra.append("'SOLm'");
-                    break;
-                case "SOLm":
-                    nuevaLetra.append("'SOL#m'");
-                    break;
-                case "SOL#m":
-                case "LAbm":
-                    nuevaLetra.append("'LAm'");
-                    break;
-                case "LAm":
-                    nuevaLetra.append("'SIbm'");
-                    break;
-                case "LA#m":
-                case "SIbm":
-                    nuevaLetra.append("'SIm'");
-                    break;
-                case "SIm":
-                    nuevaLetra.append("'DOm'");
-                    break;
-                case "DO7":
-                    nuevaLetra.append("'DO#7'");
-                    break;
-                case "DO#7":
-                case "REb7":
-                    nuevaLetra.append("'RE7'");
-                    break;
-                case "RE7":
-                    nuevaLetra.append("'RE#7'");
-                    break;
-                case "RE#7":
-                case "MIb7":
-                    nuevaLetra.append("'MI7'");
-                    break;
-                case "MI7":
-                    nuevaLetra.append("'FA7'");
-                    break;
-                case "FA7":
-                    nuevaLetra.append("'FA#7'");
-                    break;
-                case "FA#7":
-                case "SOLb7":
-                    nuevaLetra.append("'SOL7'");
-                    break;
-                case "SOL7":
-                    nuevaLetra.append("'SOL#7'");
-                    break;
-                case "SOL#7":
-                case "LAb7":
-                    nuevaLetra.append("'LA7'");
-                    break;
-                case "LA7":
-                    nuevaLetra.append("'SIb7'");
-                    break;
-                case "LA#7":
-                case "SIb7":
-                    nuevaLetra.append("'SI7'");
-                    break;
-                case "SI7":
-                    nuevaLetra.append("'DO7' ");
-                    break;
-                case "DOm7":
-                    nuevaLetra.append("'DO#m7'");
-                    break;
-                case "DO#m7":
-                case "REbm7":
-                    nuevaLetra.append("'REm7'");
-                    break;
-                case "REm7":
-                    nuevaLetra.append("'RE#m7'");
-                    break;
-                case "RE#m7":
-                case "MIbm7":
-                    nuevaLetra.append("'MIm7'");
-                    break;
-                case "MIm7":
-                    nuevaLetra.append("'FAm7'");
-                    break;
-                case "FAm7":
-                    nuevaLetra.append("'FA#m7'");
-                    break;
-                case "FA#m7":
-                case "SOLbm7":
-                    nuevaLetra.append("'SOLm7'");
-                    break;
-                case "SOLm7":
-                    nuevaLetra.append("'SOL#m7'");
-                    break;
-                case "SOL#m7":
-                case "LAbm7":
-                    nuevaLetra.append("'LAm7'");
-                    break;
-                case "LAm7":
-                    nuevaLetra.append("'SIbm7'");
-                    break;
-                case "LA#m7":
-                case "SIbm7":
-                    nuevaLetra.append("'SIm7'");
-                    break;
-                case "SIm7":
-                    nuevaLetra.append("'DOm7'");
-                    break;
-                default:
-                    nuevaLetra.append(palabra);
-                    break;
+            if(tonosArriba.get(palabra) != null) {
+                nuevaLetra.append("'").append(tonosArriba.get(palabra)).append("'");
+            } else {
+                nuevaLetra.append(palabra);
             }
         }
 
@@ -471,178 +352,14 @@ public class CantoActivity extends AppCompatActivity {
     }
 
     private void bajarTono() {
-        String[] partesLetra = letra.split("'");
+        String[] palabras = letra.split("'");
         StringBuilder nuevaLetra = new StringBuilder();
 
-        for (String palabra : partesLetra) {
-            switch (palabra) {
-                case "DO":
-                    nuevaLetra.append("'SI'");
-                    break;
-                case "DO#":
-                case "REb":
-                    nuevaLetra.append("'DO'");
-                    break;
-                case "RE":
-                    nuevaLetra.append("'DO#'");
-                    break;
-                case "RE#":
-                case "MIb":
-                    nuevaLetra.append("'RE'");
-                    break;
-                case "MI":
-                    nuevaLetra.append("'RE#'");
-                    break;
-                case "FA":
-                    nuevaLetra.append("'MI'");
-                    break;
-                case "FA#":
-                case "SOLb":
-                    nuevaLetra.append("'FA'");
-                    break;
-                case "SOL":
-                    nuevaLetra.append("'FA#'");
-                    break;
-                case "SOL#":
-                case "LAb":
-                    nuevaLetra.append("'SOL'");
-                    break;
-                case "LA":
-                    nuevaLetra.append("'SOL#'");
-                    break;
-                case "LA#":
-                case "SIb":
-                    nuevaLetra.append("'LA'");
-                    break;
-                case "SI":
-                    nuevaLetra.append("'SIb'");
-                    break;
-                case "DOm":
-                    nuevaLetra.append("'SIm'");
-                    break;
-                case "DO#m":
-                case "REbm":
-                    nuevaLetra.append("'DOm'");
-                    break;
-                case "REm":
-                    nuevaLetra.append("'DO#m'");
-                    break;
-                case "RE#m":
-                case "MIbm":
-                    nuevaLetra.append("'REm'");
-                    break;
-                case "MIm":
-                    nuevaLetra.append("'RE#m'");
-                    break;
-                case "FAm":
-                    nuevaLetra.append("'MIm'");
-                    break;
-                case "FA#m":
-                case "SOLbm":
-                    nuevaLetra.append("'FAm'");
-                    break;
-                case "SOLm":
-                    nuevaLetra.append("'FA#m'");
-                    break;
-                case "SOL#m":
-                case "LAbm":
-                    nuevaLetra.append("'SOLm'");
-                    break;
-                case "LAm":
-                    nuevaLetra.append("'SOL#m'");
-                    break;
-                case "LA#m":
-                case "SIbm":
-                    nuevaLetra.append("'LAm'");
-                    break;
-                case "SIm":
-                    nuevaLetra.append("'SIbm'");
-                    break;
-                case "DO7":
-                    nuevaLetra.append("'SI7'");
-                    break;
-                case "DO#7":
-                case "REb7":
-                    nuevaLetra.append("'DO7'");
-                    break;
-                case "RE7":
-                    nuevaLetra.append("'DO#7'");
-                    break;
-                case "RE#7":
-                case "MIb7":
-                    nuevaLetra.append("'RE7'");
-                    break;
-                case "MI7":
-                    nuevaLetra.append("'RE#7'");
-                    break;
-                case "FA7":
-                    nuevaLetra.append("'MI7'");
-                    break;
-                case "FA#7":
-                case "SOLb7":
-                    nuevaLetra.append("'FA7'");
-                    break;
-                case "SOL7":
-                    nuevaLetra.append("'FA#7'");
-                    break;
-                case "SOL#7":
-                case "LAb7":
-                    nuevaLetra.append("'SOL7'");
-                    break;
-                case "LA7":
-                    nuevaLetra.append("'SOL#7'");
-                    break;
-                case "LA#7":
-                case "SIb7":
-                    nuevaLetra.append("'LA7'");
-                    break;
-                case "SI7":
-                    nuevaLetra.append("'SIb7'");
-                    break;
-                case "DOm7":
-                    nuevaLetra.append("'SIm7'");
-                    break;
-                case "DO#m7":
-                case "REbm7":
-                    nuevaLetra.append("'DOm7'");
-                    break;
-                case "REm7":
-                    nuevaLetra.append("'DO#m7'");
-                    break;
-                case "RE#m7":
-                case "MIbm7":
-                    nuevaLetra.append("'REm7'");
-                    break;
-                case "MIm7":
-                    nuevaLetra.append("'RE#m7'");
-                    break;
-                case "FAm7":
-                    nuevaLetra.append("'MIm7'");
-                    break;
-                case "FA#m7":
-                case "SOLbm7":
-                    nuevaLetra.append("'FAm7'");
-                    break;
-                case "SOLm7":
-                    nuevaLetra.append("'FA#m7'");
-                    break;
-                case "SOL#m7":
-                case "LAbm7":
-                    nuevaLetra.append("'SOLm7'");
-                    break;
-                case "LAm7":
-                    nuevaLetra.append("'SOL#m7'");
-                    break;
-                case "LA#m7":
-                case "SIbm7":
-                    nuevaLetra.append("'LAm7'");
-                    break;
-                case "SIm7":
-                    nuevaLetra.append("'SIbm7'");
-                    break;
-                default:
-                    nuevaLetra.append(palabra);
-                    break;
+        for (String palabra : palabras) {
+            if(tonosAbajo.get(palabra) != null) {
+                nuevaLetra.append("'").append(tonosAbajo.get(palabra)).append("'");
+            } else {
+                nuevaLetra.append(palabra);
             }
         }
 
