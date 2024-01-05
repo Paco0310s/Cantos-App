@@ -3,9 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/comillas"
+        android:title="@string/ver_sin_comillas"
+        android:icon="@drawable/ic_comillas"
+        app:showAsAction="ifRoom"
+        />
+
+    <!--item
         android:id="@+id/escanear"
         android:title="@string/escanear"
         android:icon="@drawable/ic_camera"
         app:showAsAction="ifRoom"
-        />
+        /-->
+
 </menu>

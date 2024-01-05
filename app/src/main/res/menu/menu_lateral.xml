@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item
+        android:id="@+id/nav_listaCantos"
+        android:icon="@drawable/hogar"
+        android:title="Mis cantos" />
+
+    <item
+        android:visible="true"
+        android:id="@+id/nav_listaEsquemas"
+        android:icon="@drawable/ic_lista"
+        android:title="@string/esquemas" />
+</menu>

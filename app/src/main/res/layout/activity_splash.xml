@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo"
+    android:gravity="center"
+    tools:context=".ui.SplashActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_margin="60dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center"
+            android:src="@drawable/preicono" />
+
+        <TextView
+            style="@style/texto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="App Cantos"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/mywife"
+            android:textAlignment="center"
+            android:textColor="#eee"
+            android:textSize="40sp"
+            android:textStyle="bold" />
+        <TextView
+            style="@style/texto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Desarrollado por: \nPaco Sotelo, \n\n Logo: \nSantiago Romo"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/mywife"
+            android:textAlignment="center"
+            android:textColor="#eee"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <TextView
+            style="@style/texto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="v4.5"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/mywife"
+            android:textAlignment="center"
+            android:textColor="#eee"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

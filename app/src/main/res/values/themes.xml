@@ -2,32 +2,52 @@
     <!-- Base application theme. -->
     <style name="Theme.CantosCoro" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#0B3249</item>
-        <item name="colorPrimaryVariant">#042335</item>
-        <item name="colorOnPrimary">#235673</item>
+        <item name="colorPrimary">#383838</item>
+        <item name="colorPrimaryVariant">#0B0B0B</item>
+        <item name="colorOnPrimary">#1B1B1B</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">#A5A5AE</item>
         <item name="colorSecondaryVariant">#FFFFFF</item>
-        <item name="colorOnSecondary">#7A989F</item>
+        <item name="colorOnSecondary">#292929</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-
-        <!-- Customize your theme here. -->
-
     </style>
 
     <style name="texto" parent="TextAppearance.AppCompat">
-        <item name="android:textColor">#000000</item>
-        <item name="android:background">#FFFFFF</item>
+        <item name="android:textColor">#FFFFFF</item>
     </style>
 
     <style name="campo" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#121212</item>
+        <item name="android:background">@drawable/redondo_claro</item>
+    </style>
+
+    <style name="campo2" parent="TextAppearance.AppCompat">
         <item name="android:textColor">#000000</item>
-        <item name="android:background">#D2DCDF</item>
+        <item name="android:background">#494949</item>
     </style>
 
     <style name="boton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#0B3249</item>
+        <item name="android:background">@drawable/boton_claro</item>
     </style>
+
+    <style name="fondo" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#ACACAC</item>
+        <item name="android:background">#292929</item>
+    </style>
+
+    <style name="item_canto" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">#0F1010</item>
+        <item name="android:background">#D9E7ED</item>
+    </style>
+
+    <style name="Theme.CantosCoro.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.CantosCoro.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.CantosCoro.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>
