@@ -84,4 +84,8 @@
     <string name="guardar_esquema">Guardar Esquema</string>
     <string name="agregar_canto">Agregar canto</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="ver_canto">Ver canto</string>
+    <string name="eliminar_de_la_lista">Eliminar del esquema</string>
+    <string name="duracion">Duracion</string>
+    <string name="todo">TODO</string>
 </resources>

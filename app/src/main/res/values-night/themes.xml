@@ -6,7 +6,7 @@
         <item name="colorPrimaryVariant">#0F1010</item>
         <item name="colorOnPrimary">#1B1B1B</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">#EC5286</item>
+        <item name="colorSecondary">#DFDFDF</item>
         <item name="colorSecondaryVariant">#FFFFFF</item>
         <item name="colorOnSecondary">#7A989F</item>
         <!-- Status bar color. -->
@@ -23,12 +23,12 @@
 
     <style name="campo" parent="TextAppearance.AppCompat">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#202020</item>
+        <item name="android:background">@drawable/redondo_oscuro</item>
     </style>
 
     <style name="boton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:backgroundTint">#323333</item>
+        <item name="android:background">@drawable/boton_oscuro</item>
     </style>
 
     <style name="fondo" parent="TextAppearance.AppCompat">

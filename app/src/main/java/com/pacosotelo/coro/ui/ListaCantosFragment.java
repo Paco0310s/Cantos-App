@@ -16,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -28,6 +29,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.tools.AdaptadorCantos;
+
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +40,7 @@ public class ListaCantosFragment extends Fragment {
     private final List<Canto> listaRespaldo = new ArrayList<>();
     private RecyclerView lista;
     private AdaptadorCantos adapter;
+    private ProgressBar progressBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,8 @@ public class ListaCantosFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_lista_cantos, container, false);
 
         lista = root.findViewById(R.id.lista);
+
+        progressBar = root.findViewById(R.id.pbCantos);
 
         FloatingActionButton fabNuevo = root.findViewById(R.id.fabNuevoCanto);
         fabNuevo.setOnClickListener(v -> nuevoCanto());
@@ -90,9 +96,11 @@ public class ListaCantosFragment extends Fragment {
 
     private void inicializarFirebase() {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        DatabaseReference dr = fd.getReference("Canto");
+        DatabaseReference dr = fd.getReference("cantos");
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaCantos.clear();
@@ -103,14 +111,15 @@ public class ListaCantosFragment extends Fragment {
                         Canto c = objSnap.getValue(Canto.class);
                         listaCantos.add(c);
                     }
-
-                    adapter = new AdaptadorCantos(listaCantos, getActivity());
-                    lista.setHasFixedSize(true);
-                    lista.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    lista.setAdapter(adapter);
                 }
 
+                adapter = new AdaptadorCantos(listaCantos, getActivity());
+                lista.setHasFixedSize(true);
+                lista.setLayoutManager(new LinearLayoutManager(getActivity()));
+                lista.setAdapter(adapter);
+
                 listaRespaldo.addAll(listaCantos);
+                progressBar.setVisibility(View.GONE);
             }
 
             @Override
@@ -134,8 +143,8 @@ public class ListaCantosFragment extends Fragment {
     private void alertaAcercaDe(){
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle(R.string.acerca_de);
-        String mensaje = "\u00a9 Paco Sotelo 2022 para el coro Angeles de Dios \n\n" +
-                "Version 2.5";
+        String mensaje = "\u00a9 Paco Sotelo 2024 para el mundo \n\nCreditos: \nLogo: Santiago Romo \n\n" +
+                "Versión 4.5";
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
@@ -173,6 +182,12 @@ public class ListaCantosFragment extends Fragment {
         activity.finish();
     }
 
+    public static String quitaDiacriticos(String s) {
+        s = Normalizer.normalize(s, Normalizer.Form.NFD);
+        s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return s;
+    }
+
     SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
@@ -181,6 +196,7 @@ public class ListaCantosFragment extends Fragment {
 
         @Override
         public boolean onQueryTextChange(String s) {
+            //s.replace("ÁáÉéÍíÓóÚúÜü","");
             int longitud = s.length();
             if(longitud == 0)
             {
@@ -189,14 +205,14 @@ public class ListaCantosFragment extends Fragment {
             }else{
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                     List<Canto> collecion = listaRespaldo.stream().filter
-                                    (i->i.getNombre().toLowerCase().contains(s.toLowerCase())).
+                                    (i->quitaDiacriticos(i.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))).
                             collect(Collectors.toList());
                     listaCantos.clear();
                     listaCantos.addAll(collecion);
                 }else {
                     listaCantos.clear();
                     for (Canto z: listaRespaldo) {
-                        if (z.getNombre().toLowerCase().contains(s.toLowerCase())){
+                        if (quitaDiacriticos(z.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))){
                             listaCantos.add(z);
                         }
                     }

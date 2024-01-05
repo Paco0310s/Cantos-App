@@ -243,6 +243,7 @@ public class LoginActivity extends AppCompatActivity {
             usuario.setNombre(currentUser.getDisplayName());
             usuario.setEmail(currentUser.getEmail());
             usuario.setNumber_phone(currentUser.getPhoneNumber());
+
             // Si tiene foto le asignamos el link al objeto
             if (currentUser.getPhotoUrl() != null) {
                 usuario.setFoto(currentUser.getPhotoUrl().toString());
@@ -261,6 +262,7 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(i);
             overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
             finish();
+
         } else { // Si es un usuario previamente registrado
             // Intetamos obtener el usuario de la base de datos
             dr.child(currentUser.getUid()).get().addOnCompleteListener(task -> {

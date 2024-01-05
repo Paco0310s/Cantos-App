@@ -1,25 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_listaCantos"
-            android:icon="@drawable/hogar"
-            android:title="@string/app_name" />
+    <item
+        android:id="@+id/nav_listaCantos"
+        android:icon="@drawable/hogar"
+        android:title="Mis cantos" />
 
-        <item
-            android:visible="false"
-            android:id="@+id/nav_listaEsquemas"
-            android:icon="@drawable/ic_lista"
-            android:title="@string/esquemas" />
-
-        <item
-            android:visible="false"
-            android:id="@+id/nav_afinador"
-            android:icon="@drawable/ic_afinador"
-            android:title="@string/afinador" />
-    </group>
-
+    <item
+        android:visible="true"
+        android:id="@+id/nav_listaEsquemas"
+        android:icon="@drawable/ic_lista"
+        android:title="@string/esquemas" />
 </menu>

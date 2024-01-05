@@ -19,7 +19,7 @@
 
     <style name="campo" parent="TextAppearance.AppCompat">
         <item name="android:textColor">#121212</item>
-        <item name="android:background">#FFFFFF</item>
+        <item name="android:background">@drawable/redondo_claro</item>
     </style>
 
     <style name="campo2" parent="TextAppearance.AppCompat">
@@ -29,7 +29,7 @@
 
     <style name="boton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#222222</item>
+        <item name="android:background">@drawable/boton_claro</item>
     </style>
 
     <style name="fondo" parent="TextAppearance.AppCompat">

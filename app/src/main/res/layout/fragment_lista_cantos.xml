@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/fondo"
+    android:id="@+id/fragment_lista_cantos"
     tools:context=".ui.ListaCantosFragment">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -26,7 +27,17 @@
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
         android:visibility="invisible"
-        android:backgroundTint="@color/purple_500"
-        app:srcCompat="@drawable/ic_add" />
+        app:srcCompat="@drawable/ic_add"
+        android:contentDescription="@string/todo"
+        tools:ignore="ContentDescription" />
+
+    <ProgressBar
+        android:id="@+id/pbCantos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="#ffffff"
+        android:visibility="gone"
+        />
 
 </FrameLayout>

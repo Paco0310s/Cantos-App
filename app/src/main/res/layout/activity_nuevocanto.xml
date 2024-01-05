@@ -35,6 +35,7 @@
                 android:text="@string/nombre"
                 android:textStyle="bold"
                 android:textSize="18sp"
+                android:fontFamily="@font/mywife"
                 style="@style/texto"
                 />
 
@@ -61,6 +62,7 @@
                 android:text="@string/letra"
                 android:textStyle="bold"
                 android:textSize="18sp"
+                android:fontFamily="@font/mywife"
                 style="@style/texto"
                 />
 
@@ -93,26 +95,11 @@
                 style="@style/texto"
                 /-->
 
-            <Button
-                android:id="@+id/bAgregar"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="40dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="25dp"
-                android:textSize="20sp"
-                android:onClick="agregarCanto"
-                android:text="@string/agregar"
-                style="@style/boton"
-                tools:ignore="UsingOnClickInXml" />
-
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginTop="30dp"
-                android:visibility="invisible"
                 tools:ignore="UselessLeaf">
 
                 <Button
@@ -126,8 +113,9 @@
                     android:onClick="mostrarMomentos"
                     android:text="@string/momento"
                     android:textSize="20sp"
-                    android:background="@drawable/redondo"
-                    style="@style/texto"
+                    android:textAllCaps="false"
+                    style="@style/boton"
+                    android:fontFamily="@font/mywife"
                     tools:ignore="UsingOnClickInXml" />
 
                 <Button
@@ -140,10 +128,26 @@
                     android:onClick="mostrarTiempos"
                     android:text="@string/tiempo"
                     android:textSize="20sp"
-                    android:background="@drawable/redondo"
-                    style="@style/texto"
+                    android:textAllCaps="false"
+                    style="@style/boton"
+                    android:fontFamily="@font/mywife"
                     tools:ignore="UsingOnClickInXml" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/bAgregar"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="25dp"
+                android:textSize="20sp"
+                android:onClick="agregarCanto"
+                android:text="@string/agregar"
+                style="@style/boton"
+                android:fontFamily="@font/mywife"
+                tools:ignore="UsingOnClickInXml" />
 
             <!--LinearLayout
                 android:layout_width="match_parent"

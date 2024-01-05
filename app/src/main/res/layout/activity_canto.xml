@@ -4,8 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.CantoActivity"
-    style="@style/campo">
+    tools:context=".ui.CantoActivity">
 
     <include
         android:id="@+id/app_bar"
@@ -27,31 +26,44 @@
         android:autofillHints=""
         tools:ignore="LabelFor" />
 
+    <include
+        android:id="@+id/reproducir_audio"
+        layout="@layout/item_reproducir_audio"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/app_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/eLetra"
+        app:layout_constraintVertical_bias="0.991" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabSiguiente"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="4dp"
-        android:layout_marginBottom="4dp"
-        android:backgroundTint="@color/purple_500"
+        android:alpha="0.5"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:backgroundTint="@color/gris"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:visibility="invisible"
-        app:srcCompat="@drawable/ic_delante" />
+        app:srcCompat="@drawable/flechad" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAntes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginStart="4dp"
-        android:layout_marginBottom="4dp"
-        android:backgroundTint="@color/purple_500"
+        android:alpha="0.5"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="10dp"
+        android:backgroundTint="@color/gris"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:visibility="invisible"
-        app:srcCompat="@drawable/ic_atras" />
+        app:srcCompat="@drawable/flechai"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

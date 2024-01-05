@@ -1,5 +1,6 @@
 package com.pacosotelo.coro.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,8 +13,10 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
@@ -24,7 +27,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.AdaptadorEsquemas;
+
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +39,7 @@ public class ListaEsquemasFragment extends Fragment {
     private final List<Esquema> listaRespaldo = new ArrayList<>();
     private RecyclerView rvEsquemas;
     private AdaptadorEsquemas adapter;
+    private ProgressBar progressBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,15 +47,25 @@ public class ListaEsquemasFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_lista_esquemas, container, false);
 
-        rvEsquemas = root.findViewById(R.id.lista);
+        rvEsquemas = root.findViewById(R.id.rvEsquemas);
+
+        progressBar = root.findViewById(R.id.pbEsquemas);
 
         FloatingActionButton fabNuevo = root.findViewById(R.id.fabNuevoEsquema);
         fabNuevo.setOnClickListener(v -> nuevoEsquema());
+
+        rvEsquemas.setOnTouchListener((v, event) -> {
+            root.findViewById(R.id.rvEsquemas).getParent()
+                    .requestDisallowInterceptTouchEvent(false);
+            return false;
+        });
+
 
         inicializarFirebase();
 
@@ -76,7 +93,9 @@ public class ListaEsquemasFragment extends Fragment {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         DatabaseReference dr = fd.getReference("esquemas");
 
-        dr.addValueEventListener(new ValueEventListener() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaEsquemas.clear();
@@ -87,14 +106,18 @@ public class ListaEsquemasFragment extends Fragment {
                         Esquema e = objSnap.getValue(Esquema.class);
                         listaEsquemas.add(e);
                     }
-
-                    adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
-                    rvEsquemas.setHasFixedSize(true);
-                    rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    rvEsquemas.setAdapter(adapter);
                 }
 
+                //Collections.reverse(listaEsquemas);
+
+                adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
+                rvEsquemas.setHasFixedSize(true);
+                rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
+                rvEsquemas.setAdapter(adapter);
+
                 listaRespaldo.addAll(listaEsquemas);
+
+                progressBar.setVisibility(View.GONE);
             }
 
             @Override
@@ -116,6 +139,12 @@ public class ListaEsquemasFragment extends Fragment {
         activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
     }
 
+    public static String quitaDiacriticos(String s) {
+        s = Normalizer.normalize(s, Normalizer.Form.NFD);
+        s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return s;
+    }
+
     SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
@@ -132,14 +161,14 @@ public class ListaEsquemasFragment extends Fragment {
             }else{
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                     List<Esquema> collecion = listaRespaldo.stream().filter
-                                    (i->i.getNombre().toLowerCase().contains(s.toLowerCase())).
+                                    (i->quitaDiacriticos(i.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))).
                             collect(Collectors.toList());
                     listaEsquemas.clear();
                     listaEsquemas.addAll(collecion);
                 }else {
                     listaEsquemas.clear();
                     for (Esquema z: listaRespaldo) {
-                        if (z.getNombre().toLowerCase().contains(s.toLowerCase())){
+                        if (quitaDiacriticos(z.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))){
                             listaEsquemas.add(z);
                         }
                     }

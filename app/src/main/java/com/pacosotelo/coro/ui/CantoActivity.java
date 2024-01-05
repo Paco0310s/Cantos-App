@@ -11,18 +11,16 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,11 +29,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
+import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.TemplatePDF;
 import com.pacosotelo.coro.modelos.Canto;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CantoActivity extends AppCompatActivity {
     private EditText eLetra;
@@ -44,7 +44,11 @@ public class CantoActivity extends AppCompatActivity {
     private int ValorTexto = 0;
     private DatabaseReference dr;
     private Canto canto;
+    private Esquema esquema;
     private boolean tonosQuitados = false;
+    private FloatingActionButton bAtras, bSiguiente;
+    private boolean bandera;
+    private AtomicInteger indice;
 
     Map<String, String> tonosArriba;
     Map<String, String> tonosAbajo;
@@ -63,8 +67,7 @@ public class CantoActivity extends AppCompatActivity {
         eLetra = findViewById(R.id.eLetra);
 
         canto = (Canto) this.getIntent().getSerializableExtra("canto");
-
-        inicializarFirebase();
+        bandera = this.getIntent().getBooleanExtra("bandera", false);
 
         tonosArriba = new HashMap<>();
         tonosAbajo = new HashMap<>();
@@ -107,6 +110,54 @@ public class CantoActivity extends AppCompatActivity {
             tonosAbajo.put("SIb" + extra, "LA" + extra);
             tonosAbajo.put("SI" + extra, "SIb" + extra);
         }
+
+        if(bandera) {
+            bAtras = findViewById(R.id.fabAntes);
+            bSiguiente = findViewById(R.id.fabSiguiente);
+            bAtras.setVisibility(View.VISIBLE);
+            bSiguiente.setVisibility(View.VISIBLE);
+
+            esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
+
+            indice = new AtomicInteger();
+
+            indice.set(this.getIntent().getIntExtra("indice", 0));
+
+            verificar(indice.get());
+
+            bAtras.setOnClickListener(view -> {
+                indice.getAndDecrement();
+
+                verificar(indice.get());
+            });
+
+            bSiguiente.setOnClickListener(view -> {
+                indice.getAndIncrement();
+
+                verificar(indice.get());
+            });
+        } else {
+            inicializarFirebase();
+        }
+    }
+
+    private void verificar(int indice) {
+        if(indice == 0) {
+            bAtras.setVisibility(View.INVISIBLE);
+        } else {
+            bAtras.setVisibility(View.VISIBLE);
+        }
+
+        if(indice == esquema.getCantos().size() - 1) {
+            bSiguiente.setVisibility(View.INVISIBLE);
+        } else {
+            bSiguiente.setVisibility(View.VISIBLE);
+        }
+
+        canto = esquema.getCantos().get(indice);
+
+        barra();
+        letra();
     }
 
     @Override
@@ -135,10 +186,24 @@ public class CantoActivity extends AppCompatActivity {
                 crearPDF();
                 break;
             case R.id.modificar:
-                modificarCanto();
+                if(bandera) {
+                    Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
+                    intent.putExtra("canto", esquema.getCantos().get(indice.get()));
+                    intent.putExtra("esquema", esquema);
+                    intent.putExtra("indice",indice.get());
+
+                    this.startActivity(intent);
+                    this.overridePendingTransition(R.anim.left_in,R.anim.left_out);
+                } else {
+                    modificarCanto();
+                }
                 break;
             case R.id.eliminar:
-                eliminarCanto();
+                if(bandera) {
+                    Toast.makeText(this, "No se puede eliminar", Toast.LENGTH_SHORT).show();
+                } else {
+                    eliminarCanto();
+                }
                 break;
             case R.id.quitarTonos:
                 quitarTonos(item);
@@ -173,9 +238,9 @@ public class CantoActivity extends AppCompatActivity {
 
     private void inicializarFirebase() {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        dr = fd.getReference("Canto");
+        dr = fd.getReference("cantos");
 
-        dr.child(canto.getId()).addValueEventListener(new ValueEventListener() {
+        dr.child(canto.getId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()) {
@@ -249,6 +314,7 @@ public class CantoActivity extends AppCompatActivity {
         }
     }
     private void modificarCanto() {
+        canto.setLetra(letra);
         Intent i = new Intent(CantoActivity.this, NuevoCantoActivity.class);
         i.putExtra("tipo", 1);
         i.putExtra("canto", canto);

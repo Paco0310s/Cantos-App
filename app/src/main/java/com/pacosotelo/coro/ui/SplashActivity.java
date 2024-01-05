@@ -1,22 +1,26 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
-
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Usuario;
+import com.pacosotelo.coro.tools.Constantes;
 
 //Clase que hace un splash mientras se obtiene el usuario
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
+    private FirebaseDatabase fd;
+    private FirebaseAuth auth;
+    private DatabaseReference dr;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,18 +28,63 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         // Firebase Analytics, para poder observar informacion de la app posteriormente
-        FirebaseAnalytics.getInstance(this);
+        //FirebaseAnalytics.getInstance(this);
 
         // Obtenemos la instancia de FirebaseDatabase y FirebaseAuth
-        FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        FirebaseAuth auth = FirebaseAuth.getInstance();
+        fd = FirebaseDatabase.getInstance();
+        auth = FirebaseAuth.getInstance();
 
         //Obtenemos la referencia de la base datos, root
-        DatabaseReference dr = fd.getReference();
+        dr = fd.getReference();
 
         //Obtenemos el usuario actual
-        FirebaseUser currentUser = auth.getCurrentUser();
+        currentUser = auth.getCurrentUser();
 
+        //Obtenemos la version de la ultima acualización
+       dr.child("constantes").child("version").get().addOnCompleteListener(task -> {
+
+            if (task.isSuccessful()) {
+                if(task.getResult().getValue() == null) mostrarErrorVersion();
+                else {
+                    String version_str = task.getResult().getValue().toString();
+                    int version = Integer.parseInt(version_str);
+
+                    if(Constantes.VERSION >= version) {
+                        redireccionar();
+                    }
+                    else {
+                        mostrarMensajeActualización();
+                    }
+                }
+            } else {
+                mostrarErrorVersion();
+            }
+        });
+    }
+
+    private void mostrarMensajeActualización() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Aviso");
+        String mensaje = "Actualice la aplicación a la versión mas reciente";
+        builder.setMessage(mensaje);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
+        AlertDialog alerta = builder.create();
+        alerta.show();
+    }
+
+    private void mostrarErrorVersion() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error");
+        String mensaje = "Ocurrió un error al obtener la versión \nVerifique su conexión a internet";
+        builder.setMessage(mensaje);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
+        AlertDialog alerta = builder.create();
+        alerta.show();
+    }
+
+    private void redireccionar() {
         // Si el usuario ya ha iniciado sesión previamente
         if(currentUser != null) {
             dr.child("usuarios").child(currentUser.getUid()).get().addOnCompleteListener(task -> {

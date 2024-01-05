@@ -16,6 +16,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -44,6 +47,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private String[] arrayMomentos, arrayTiempos;
     private ArrayList<String> momentosSeleccionados, tiemposSeleccionados;
     private boolean comillas = true;
+    FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +75,8 @@ public class NuevoCantoActivity extends AppCompatActivity {
         inicializarFirebase();
 
         Bundle datos = this.getIntent().getExtras();
+
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         tipo = datos.getInt("tipo");
 
@@ -136,9 +142,9 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private void inicializarFirebase() {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
 
-        dr = fd.getReference("Momentos");
+        dr = fd.getReference("momentos");
 
-        dr.addValueEventListener(new ValueEventListener() {
+        dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -149,6 +155,14 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 arrayMomentos = new String[momentos.size()];
                 for (int i = 0; i < arrayMomentos.length; i++) arrayMomentos[i] = momentos.get(i);
                 checkedItemsMomentos = new boolean[arrayMomentos.length];
+
+                if(tipo==1) {
+                    for(int i = 0; i < arrayMomentos.length; i++) {
+                        for (int j = 0; j < canto.getMomentos().size(); j++) {
+                            if (Objects.equals(arrayMomentos[i], canto.getMomentos().get(j))) checkedItemsMomentos[i] = true;
+                        }
+                    }
+                }
             }
 
             @Override
@@ -157,8 +171,8 @@ public class NuevoCantoActivity extends AppCompatActivity {
             }
         });
 
-        dr = fd.getReference("Tiempos");
-        dr.addValueEventListener(new ValueEventListener() {
+        dr = fd.getReference("tiempos");
+        dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -169,6 +183,14 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 arrayTiempos = new String[tiempos.size()];
                 for (int i = 0; i < arrayTiempos.length; i++) arrayTiempos[i] = tiempos.get(i);
                 checkedItemsTiempos = new boolean[arrayTiempos.length];
+
+                if(tipo==1) {
+                    for(int i = 0; i < arrayTiempos.length; i++) {
+                        for (int j = 0; j < canto.getTiempos().size(); j++) {
+                            if (Objects.equals(arrayTiempos[i], canto.getTiempos().get(j))) checkedItemsTiempos[i] = true;
+                        }
+                    }
+                }
             }
 
             @Override
@@ -177,13 +199,13 @@ public class NuevoCantoActivity extends AppCompatActivity {
             }
         });
 
-        dr = fd.getReference("Canto");
+        dr = fd.getReference("cantos");
     }
 
     private void nuevoCanto() {
         bAgregar.setText(R.string.guardar);
 
-        dr.addValueEventListener(new ValueEventListener() {
+        dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()) {
@@ -209,11 +231,11 @@ public class NuevoCantoActivity extends AppCompatActivity {
         //Toast.makeText(this, arrayMomentos.length, Toast.LENGTH_SHORT).show();
 
         /*for (int i = 0; i < arrayMomentos.length; i++) {
-
-        }
-        if(arrayMomentos[i].equals(canto.getMomentos().get(i))) {
-            checkedItemsMomentos[i] = true;
+            if(arrayMomentos[i].equals(canto.getMomentos().get(i))) {
+                checkedItemsMomentos[i] = true;
+            }
         }*/
+
     }
 
     @Override
@@ -262,6 +284,10 @@ public class NuevoCantoActivity extends AppCompatActivity {
             case 0:
                 canto_mod.setId(String.valueOf(maxid + 1));
 
+                assert currentUser != null;
+                canto_mod.setCreado_por(currentUser.getUid());
+                canto_mod.setModificado_por(currentUser.getUid());
+
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 
                 Toast.makeText(this, "Canto agregado", Toast.LENGTH_SHORT).show();
@@ -272,6 +298,9 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 break;
             case 1:
                 canto_mod.setId(canto.getId());
+
+                assert currentUser != null;
+                canto_mod.setModificado_por(currentUser.getUid());
 
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 

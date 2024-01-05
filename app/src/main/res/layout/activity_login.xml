@@ -37,7 +37,7 @@
         android:layout_width="112dp"
         android:layout_height="112dp"
         android:layout_marginTop="60dp"
-        android:src="@drawable/icono2"
+        android:src="@drawable/preicono"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
