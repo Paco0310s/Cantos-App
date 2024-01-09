@@ -10,13 +10,13 @@
         android:title="Mis cantos" />
 
     <item
-        android:visible="true"
+        android:visible="false"
         android:id="@+id/nav_listaEsquemas"
         android:icon="@drawable/ic_lista"
         android:title="Esquemas" />
 
     <item
-        android:visible="false"
+        android:visible="true"
         android:id="@+id/nav_listaEsquemasSJT"
         android:icon="@drawable/ic_lista"
         android:title="Esquemas" />
