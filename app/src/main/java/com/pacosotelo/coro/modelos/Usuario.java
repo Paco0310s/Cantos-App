@@ -8,6 +8,7 @@ public class Usuario implements Serializable {
     String foto;
     String uid;
     String number_phone;
+    String fecha_creacion;
 
     public Usuario() {
         this.nombre = "";
@@ -15,6 +16,7 @@ public class Usuario implements Serializable {
         this.foto = "";
         this.uid = "";
         this.number_phone = "";
+        this.fecha_creacion = "";
     }
 
     public String getNombre() {
@@ -55,5 +57,13 @@ public class Usuario implements Serializable {
 
     public void setNumber_phone(String number_phone) {
         this.number_phone = number_phone;
+    }
+
+    public String getFecha_creacion() {
+        return fecha_creacion;
+    }
+
+    public void setFecha_creacion(String fecha_creacion) {
+        this.fecha_creacion = fecha_creacion;
     }
 }

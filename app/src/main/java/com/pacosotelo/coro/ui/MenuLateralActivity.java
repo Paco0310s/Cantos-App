@@ -57,7 +57,7 @@ public class MenuLateralActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_listaCantos, R.id.nav_listaEsquemas, R.id.nav_afinador)
+                R.id.nav_listaCantos, R.id.nav_listaEsquemas, R.id.nav_listaEsquemasSJT, R.id.nav_afinador)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_lateral);

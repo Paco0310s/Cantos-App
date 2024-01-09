@@ -16,11 +16,17 @@
         android:name="com.pacosotelo.coro.ui.ListaEsquemasFragment"
         android:label="@string/esquemas"
         tools:layout="@layout/fragment_lista_esquemas" />
+
+    <fragment
+        android:id="@+id/nav_listaEsquemasSJT"
+        android:name="com.pacosotelo.coro.ui.ListaEsquemasFragmentSJT"
+        android:label="@string/esquemas"
+        tools:layout="@layout/fragment_lista_esquemas_sjt" />
+
     <fragment
         android:id="@+id/nav_afinador"
         android:name="com.pacosotelo.coro.ui.AfinadorFragment"
         android:label="@string/afinador"
         tools:layout="@layout/fragment_afinador" />
-
 
 </navigation>

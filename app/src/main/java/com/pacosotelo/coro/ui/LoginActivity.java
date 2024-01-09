@@ -31,6 +31,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Usuario;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 // Clase que nos servirá para iniciar sesión;
@@ -236,6 +238,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // Si es un nuevo usuario
         if(nuevo) {
+            LocalDateTime fechaActual = LocalDateTime.now();
+
             // Suponemos que es de google
             // Creamos un objeto usuario y le asignamos los datos de google
             Usuario usuario = new Usuario();
@@ -243,6 +247,7 @@ public class LoginActivity extends AppCompatActivity {
             usuario.setNombre(currentUser.getDisplayName());
             usuario.setEmail(currentUser.getEmail());
             usuario.setNumber_phone(currentUser.getPhoneNumber());
+            usuario.setFecha_creacion(fechaActual.toString());
 
             // Si tiene foto le asignamos el link al objeto
             if (currentUser.getPhotoUrl() != null) {

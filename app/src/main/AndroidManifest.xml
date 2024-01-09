@@ -25,8 +25,14 @@
             android:name=".ui.ModificarEsquemaActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
+        <activity android:name=".ui.ModificarEsquemaActivitySJT"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
         <activity
             android:name=".ui.NuevoEsquemaActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
+        <activity android:name=".ui.NuevoEsquemaActivitySJT"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
         <activity

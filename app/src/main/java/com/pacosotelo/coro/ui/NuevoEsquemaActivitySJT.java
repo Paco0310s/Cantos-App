@@ -1,14 +1,5 @@
 package com.pacosotelo.coro.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -18,6 +9,13 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.Toolbar;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,13 +24,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
-import com.pacosotelo.coro.tools.AdaptadorCantoEsquema;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class NuevoEsquemaActivity extends AppCompatActivity {
+public class NuevoEsquemaActivitySJT extends AppCompatActivity {
     Button bAgregarCanto, bGuardarEsquema;
     EditText etNombreEsquema;
     ListView rvCantosEsquema;
@@ -45,7 +42,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_nuevo_esquema);
+        setContentView(R.layout.activity_nuevo_esquema_sjt);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -130,7 +127,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
     }
 
     private void cantoPulsado(View v, int indice) {
-        final PopupMenu popupMenu = new PopupMenu(NuevoEsquemaActivity.this, v);
+        final PopupMenu popupMenu = new PopupMenu(NuevoEsquemaActivitySJT.this, v);
         popupMenu.getMenuInflater().inflate(R.menu.menu_canto_esquema, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(menuItem -> {
             switch (menuItem.getItemId()) {
@@ -179,7 +176,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         esquema.setFecha_creacion(fechaActual.toString());
 
         dr = fd.getReference();
-        dr.child("esquemas").child(esquema.getId()).setValue(esquema);
+        dr.child("esquemas-sjt").child(esquema.getId()).setValue(esquema);
 
         Toast.makeText(this, "Esquema agregado", Toast.LENGTH_SHORT).show();
 

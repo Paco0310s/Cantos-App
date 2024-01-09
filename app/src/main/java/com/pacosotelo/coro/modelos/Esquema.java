@@ -7,7 +7,8 @@ public class Esquema implements Serializable {
     private String id;
     private String nombre;
     private ArrayList<Canto> cantos;
-    private String fecha;
+    private String fecha_creacion;
+    private String fecha_modificacion;
 
     public Esquema() {
         cantos = new ArrayList<>();
@@ -37,11 +38,19 @@ public class Esquema implements Serializable {
         this.cantos = cantos;
     }
 
-    public String getFecha() {
-        return fecha;
+    public String getFecha_creacion() {
+        return fecha_creacion;
     }
 
-    public void setFecha(String fecha) {
-        this.fecha = fecha;
+    public void setFecha_creacion(String fecha_creacion) {
+        this.fecha_creacion = fecha_creacion;
+    }
+
+    public String getFecha_modificacion() {
+        return fecha_modificacion;
+    }
+
+    public void setFecha_modificacion(String fecha_modificacion) {
+        this.fecha_modificacion = fecha_modificacion;
     }
 }

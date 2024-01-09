@@ -1,17 +1,6 @@
 package com.pacosotelo.coro.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-
-import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +10,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -32,13 +28,11 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
-import com.pacosotelo.coro.tools.Constantes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.UUID;
 
-public class ModificarEsquemaActivity extends AppCompatActivity {
+public class ModificarEsquemaActivitySJT extends AppCompatActivity {
     Button bAgregarCanto, bModificarEsquema;
     EditText etNombreEsquema;
     ListView rvCantosEsquema;
@@ -52,7 +46,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_nuevo_esquema);
+        setContentView(R.layout.activity_nuevo_esquema_sjt);
 
         esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
 
@@ -90,7 +84,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     }
 
     private void cantoPulsado(View v, int indice) {
-        final PopupMenu popupMenu = new PopupMenu(ModificarEsquemaActivity.this, v);
+        final PopupMenu popupMenu = new PopupMenu(ModificarEsquemaActivitySJT.this, v);
         popupMenu.getMenuInflater().inflate(R.menu.menu_canto_esquema, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(menuItem -> {
             switch (menuItem.getItemId()) {
@@ -126,7 +120,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.eliminar) {
-            dr = fd.getReference("esquemas");
+            dr = fd.getReference("esquemas-sjt");
             FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
             if(usuario != null && usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
@@ -138,7 +132,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                 builder.setPositiveButton("SI", (dialog, which) -> {
                     dr.child(esquema.getId()).removeValue();
 
-                    Toast.makeText(ModificarEsquemaActivity.this, "Esquema eliminado",
+                    Toast.makeText(ModificarEsquemaActivitySJT.this, "Esquema eliminado",
                             Toast.LENGTH_SHORT).show();
 
                     onBackPressed();
@@ -149,7 +143,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                 android.app.AlertDialog alert = builder.create();
                 alert.show();
             } else {
-                Toast.makeText(ModificarEsquemaActivity.this, "No tienes permiso para esta operación",
+                Toast.makeText(ModificarEsquemaActivitySJT.this, "No tienes permiso para esta operación",
                         Toast.LENGTH_SHORT).show();
             }
         }
@@ -209,7 +203,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         esquemaMod.setFecha_modificacion(fechaActual.toString());
 
         dr = fd.getReference();
-        dr.child("esquemas").child(esquemaMod.getId()).setValue(esquemaMod);
+        dr.child("esquemas-sjt").child(esquemaMod.getId()).setValue(esquemaMod);
 
         Toast.makeText(this, "Esquema modificado", Toast.LENGTH_SHORT).show();
 

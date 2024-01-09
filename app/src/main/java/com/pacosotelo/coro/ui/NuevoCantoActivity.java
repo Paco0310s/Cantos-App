@@ -28,6 +28,7 @@ import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.tools.Constantes;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -280,6 +281,8 @@ public class NuevoCantoActivity extends AppCompatActivity {
         canto_mod.setMomentos(momentosSeleccionados);
         canto_mod.setTiempos(tiemposSeleccionados);
 
+        LocalDateTime fechaActual = LocalDateTime.now();
+
         switch (tipo) {
             case 0:
                 canto_mod.setId(String.valueOf(maxid + 1));
@@ -287,6 +290,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 assert currentUser != null;
                 canto_mod.setCreado_por(currentUser.getUid());
                 canto_mod.setModificado_por(currentUser.getUid());
+                canto_mod.setFecha_creacion(fechaActual.toString());
 
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 
@@ -301,6 +305,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
                 assert currentUser != null;
                 canto_mod.setModificado_por(currentUser.getUid());
+                canto_mod.setFecha_modificacion(fechaActual.toString());
 
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 

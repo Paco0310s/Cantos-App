@@ -4,19 +4,19 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ProgressBar;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
@@ -27,19 +27,20 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.AdaptadorEsquemas;
+import com.pacosotelo.coro.tools.AdaptadorEsquemasSJT;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ListaEsquemasFragment extends Fragment {
+public class ListaEsquemasFragmentSJT extends Fragment {
     private final List<Esquema> listaEsquemas = new ArrayList<>();
     private final List<Esquema> listaRespaldo = new ArrayList<>();
     private RecyclerView rvEsquemas;
-    private AdaptadorEsquemas adapter;
+    private AdaptadorEsquemasSJT adapter;
     private ProgressBar progressBar;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +51,7 @@ public class ListaEsquemasFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_lista_esquemas, container, false);
+        View root = inflater.inflate(R.layout.fragment_lista_esquemas_sjt, container, false);
 
         rvEsquemas = root.findViewById(R.id.rvEsquemas);
 
@@ -90,7 +91,7 @@ public class ListaEsquemasFragment extends Fragment {
 
     private void inicializarFirebase() {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        DatabaseReference dr = fd.getReference("esquemas");
+        DatabaseReference dr = fd.getReference("esquemas-sjt");
 
         progressBar.setVisibility(View.VISIBLE);
 
@@ -109,7 +110,7 @@ public class ListaEsquemasFragment extends Fragment {
 
                 //Collections.reverse(listaEsquemas);
 
-                adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
+                adapter = new AdaptadorEsquemasSJT(listaEsquemas, getActivity());
                 rvEsquemas.setHasFixedSize(true);
                 rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
                 rvEsquemas.setAdapter(adapter);
@@ -129,7 +130,7 @@ public class ListaEsquemasFragment extends Fragment {
     private void nuevoEsquema() {
         Activity activity = getActivity();
 
-        Intent i = new Intent(activity, NuevoEsquemaActivity.class);
+        Intent i = new Intent(activity, NuevoEsquemaActivitySJT.class);
         i.putExtra("getTipo", 0);
         startActivity(i);
 
@@ -174,7 +175,7 @@ public class ListaEsquemasFragment extends Fragment {
                 }
             }
 
-            adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
+            adapter = new AdaptadorEsquemasSJT(listaEsquemas, getActivity());
             rvEsquemas.setHasFixedSize(true);
             rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
             rvEsquemas.setAdapter(adapter);

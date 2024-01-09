@@ -13,5 +13,11 @@
         android:visible="true"
         android:id="@+id/nav_listaEsquemas"
         android:icon="@drawable/ic_lista"
-        android:title="@string/esquemas" />
+        android:title="Esquemas SAP" />
+
+    <item
+        android:visible="true"
+        android:id="@+id/nav_listaEsquemasSJT"
+        android:icon="@drawable/ic_lista"
+        android:title="Esquemas SJT" />
 </menu>

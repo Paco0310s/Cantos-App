@@ -73,6 +73,7 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
             itemView.setOnClickListener(v -> {
                 Canto canto = listaCantos.get(getAbsoluteAdapterPosition());
 
+                // Toast.makeText(contexto, canto.getId(), Toast.LENGTH_SHORT).show();
                 Intent i = new Intent(contexto, CantoActivity.class);
                 i.putExtra("canto",canto);
 
