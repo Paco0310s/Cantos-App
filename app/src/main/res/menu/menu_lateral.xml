@@ -13,11 +13,11 @@
         android:visible="true"
         android:id="@+id/nav_listaEsquemas"
         android:icon="@drawable/ic_lista"
-        android:title="Esquemas SAP" />
+        android:title="Esquemas" />
 
     <item
-        android:visible="true"
+        android:visible="false"
         android:id="@+id/nav_listaEsquemasSJT"
         android:icon="@drawable/ic_lista"
-        android:title="Esquemas SJT" />
+        android:title="Esquemas" />
 </menu>
