@@ -240,7 +240,7 @@ public class CantoActivity extends AppCompatActivity {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         dr = fd.getReference("cantos");
 
-        dr.child(canto.getId()).addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.child(canto.getId()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()) {

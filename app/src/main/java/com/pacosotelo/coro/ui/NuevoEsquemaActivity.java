@@ -81,7 +81,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
         dr = fd.getReference("cantos");
 
-        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 arrayAdapter.clear();
