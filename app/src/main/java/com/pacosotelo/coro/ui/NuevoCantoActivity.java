@@ -145,7 +145,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         dr = fd.getReference("momentos");
 
-        dr.addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -173,7 +173,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
         });
 
         dr = fd.getReference("tiempos");
-        dr.addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -206,7 +206,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private void nuevoCanto() {
         bAgregar.setText(R.string.guardar);
 
-        dr.addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()) {

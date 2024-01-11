@@ -94,7 +94,7 @@ public class ListaEsquemasFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaEsquemas.clear();
