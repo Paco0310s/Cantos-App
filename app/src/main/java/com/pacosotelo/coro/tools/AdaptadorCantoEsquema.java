@@ -85,7 +85,7 @@ public class AdaptadorCantoEsquema extends RecyclerView.Adapter<AdaptadorCantoEs
 
             List<String> momentos = new ArrayList<>();
 
-            dr.addListenerForSingleValueEvent(new ValueEventListener() {
+            dr.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
 
