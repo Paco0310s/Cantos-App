@@ -27,6 +27,7 @@ import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.AdaptadorCantoEsquema;
+import com.pacosotelo.coro.tools.Constantes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
         dr = fd.getReference("cantos");
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        dr.orderByChild("app").equalTo(Constantes.APP).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 arrayAdapter.clear();
@@ -92,6 +93,9 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
                         arrayAdapter.add(c);
                     }
                 }
+
+                // Ordenar los cantos alfabéticamente por nombre
+                arrayAdapter.sort((c1, c2) -> c1.getNombre().compareTo(c2.getNombre()));
             }
 
             @Override
@@ -171,6 +175,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
         LocalDateTime fechaActual = LocalDateTime.now();
 
+        esquema.setApp(Constantes.APP);
         esquema.setId(UUID.randomUUID().toString());
         esquema.setNombre(etNombreEsquema.getText().toString());
 

@@ -9,6 +9,7 @@ public class Esquema implements Serializable {
     private ArrayList<Canto> cantos;
     private String fecha_creacion;
     private String fecha_modificacion;
+    private String app;
 
     public Esquema() {
         cantos = new ArrayList<>();
@@ -52,5 +53,13 @@ public class Esquema implements Serializable {
 
     public void setFecha_modificacion(String fecha_modificacion) {
         this.fecha_modificacion = fecha_modificacion;
+    }
+
+    public String getApp() {
+        return app;
+    }
+
+    public void setApp(String app) {
+        this.app = app;
     }
 }

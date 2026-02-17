@@ -9,6 +9,8 @@ import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,6 +29,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.AdaptadorEsquemas;
+import com.pacosotelo.coro.tools.Constantes;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -94,7 +97,7 @@ public class ListaEsquemasFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        dr.orderByChild("app").equalTo(Constantes.APP).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaEsquemas.clear();
@@ -102,12 +105,17 @@ public class ListaEsquemasFragment extends Fragment {
 
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
                     if(objSnap!=null) {
-                        Esquema e = objSnap.getValue(Esquema.class);
-                        listaEsquemas.add(e);
+                        try {
+                            Esquema e = objSnap.getValue(Esquema.class);
+                            listaEsquemas.add(e);
+                        } catch (Exception e) {
+                            Log.e("Error", objSnap.getKey());
+                        }
                     }
                 }
 
-                //Collections.reverse(listaEsquemas);
+                // Ordenamos la lista por nombre
+                Collections.sort(listaEsquemas, (o1, o2) -> o1.getNombre().compareTo(o2.getNombre()));
 
                 adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
                 rvEsquemas.setHasFixedSize(true);

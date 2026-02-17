@@ -30,6 +30,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Esquema;
+import com.pacosotelo.coro.tools.Constantes;
 import com.pacosotelo.coro.tools.TemplatePDF;
 import com.pacosotelo.coro.modelos.Canto;
 import java.util.HashMap;
@@ -314,19 +315,44 @@ public class CantoActivity extends AppCompatActivity {
         }
     }
     private void modificarCanto() {
-        canto.setLetra(letra);
-        Intent i = new Intent(CantoActivity.this, NuevoCantoActivity.class);
-        i.putExtra("tipo", 1);
-        i.putExtra("canto", canto);
-        startActivity(i);
-        overridePendingTransition(R.anim.left_in,R.anim.left_out);
-        finish();
+        FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (usuario == null) {
+            Toast.makeText(CantoActivity.this, "Usuario no autenticado",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!canto.getApp().equals(Constantes.APP)) {
+            Toast.makeText(CantoActivity.this, "No puedes modificar este canto",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+//        if (usuario.getUid().equals(canto.getCreado_por()) || usuario.getUid().equals(canto.getModificado_por()) || usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
+            canto.setLetra(letra);
+            Intent i = new Intent(CantoActivity.this, NuevoCantoActivity.class);
+            i.putExtra("tipo", 1);
+            i.putExtra("canto", canto);
+            startActivity(i);
+            overridePendingTransition(R.anim.left_in,R.anim.left_out);
+            finish();
+//        } else {
+//            Toast.makeText(CantoActivity.this, "Solo el creador o modificador puede editar este canto",
+//                    Toast.LENGTH_SHORT).show();
+//        }
     }
 
     private void eliminarCanto() {
         FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
-        if(usuario != null && usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
+        if (usuario == null) {
+            Toast.makeText(CantoActivity.this, "Usuario no autenticado",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if(usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
             builder.setTitle("Confirmar");

@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,10 +30,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.tools.AdaptadorCantos;
+import com.pacosotelo.coro.tools.Constantes;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ListaCantosFragment extends Fragment {
@@ -87,11 +90,49 @@ public class ListaCantosFragment extends Fragment {
             case R.id.info:
                 alertaAcercaDe();
                 break;
+            case R.id.cambiarApp:
+                cambiarApp();
+                break;
             case R.id.cerrarSesion:
                 cerrarSesion();
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void cambiarApp(){
+        FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (usuario == null) {
+            Toast.makeText(getActivity(), "No hay usuario autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if(!usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
+            Toast.makeText(getActivity(), "No tienes permisos para cambiar de app", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        builder.setTitle(R.string.cambiar_app);
+        String[] apps = Constantes.APPS;
+        int indiceActual = 0;
+        for (int i = 0; i < apps.length; i++) {
+            if(apps[i].equals(Constantes.APP)){
+                indiceActual = i;
+                break;
+            }
+        }
+        builder.setSingleChoiceItems(apps, indiceActual, (dialog, which) -> {
+            Constantes.APP = apps[which];
+            Toast.makeText(getActivity(), "App cambiada a " + Constantes.APP, Toast.LENGTH_SHORT).show();
+            inicializarFirebase();
+            dialog.dismiss();
+        });
+        builder.setCancelable(true);
+        builder.setNegativeButton(R.string.cancelar, (dialog, which) -> dialog.dismiss());
+        AlertDialog alerta = builder.create();
+        alerta.show();
     }
 
     private void inicializarFirebase() {
@@ -100,7 +141,7 @@ public class ListaCantosFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        dr.orderByChild("app").equalTo(Constantes.APP).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaCantos.clear();
@@ -112,6 +153,9 @@ public class ListaCantosFragment extends Fragment {
                         listaCantos.add(c);
                     }
                 }
+
+                // Ordenar la lista por nombre
+                listaCantos.sort((c1, c2) -> c1.getNombre().compareTo(c2.getNombre()));
 
                 adapter = new AdaptadorCantos(listaCantos, getActivity());
                 lista.setHasFixedSize(true);
@@ -143,8 +187,8 @@ public class ListaCantosFragment extends Fragment {
     private void alertaAcercaDe(){
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle(R.string.acerca_de);
-        String mensaje = "\u00a9 Paco Sotelo 2024 para el mundo \n\nCreditos: \nLogo: Santiago Romo \n\n" +
-                "Versión 4.5";
+        String mensaje = "\u00a9 Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCreditos: \nLogo: Santiago Romo \n\n" +
+                "Versión: 4.8.0" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nApp: " + Constantes.APP;
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());

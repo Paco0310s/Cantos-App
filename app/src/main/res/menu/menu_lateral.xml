@@ -7,17 +7,23 @@
     <item
         android:id="@+id/nav_listaCantos"
         android:icon="@drawable/hogar"
-        android:title="Mis cantos" />
+        android:title="@string/app_name" />
+
+    <!--item
+        android:id="@+id/nav_listaTodosCantos"
+        android:icon="@drawable/outline_browse_24"
+        android:title="Todos" /-->
+
+    <!-- item
+        android:visible="true"
+        android:id="@+id/nav_listaGrupos"
+        android:icon="@drawable/baseline_group_24"
+        android:title="Grupos" / -->
 
     <item
         android:visible="true"
         android:id="@+id/nav_listaEsquemas"
         android:icon="@drawable/ic_lista"
-        android:title="Esquemas SAP" />
+        android:title="Esquemas" />
 
-    <item
-        android:visible="true"
-        android:id="@+id/nav_listaEsquemasSJT"
-        android:icon="@drawable/ic_lista"
-        android:title="Esquemas SJT" />
 </menu>

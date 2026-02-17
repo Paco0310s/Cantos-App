@@ -276,6 +276,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
         }
 
         Canto canto_mod = new Canto();
+        canto_mod.setApp(Constantes.APP);
         canto_mod.setNombre(etNombre.getText().toString());
         canto_mod.setLetra(etLetra.getText().toString());
         canto_mod.setMomentos(momentosSeleccionados);

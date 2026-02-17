@@ -18,6 +18,7 @@
     <string name="nuevo">Nuevo</string>
     <string name="quitar_tonos">Quitar tonos</string>
     <string name="ver_tonos">Ver tonos</string>
+    <string name="todos">Todos</string>
     <string name="momento">Momento</string>
     <string name="tiempo">Tiempo</string>
     <string name="cancelar">Cancelar</string>
@@ -41,6 +42,8 @@
     <string name="nav_header_subtitle">Tu canto al alcance de tu mano</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="mis_cantos">Mis Cantos</string>
+
 
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
@@ -48,6 +51,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="esquemas">Esquemas</string>
+    <string name="grupos">Grupos</string>
     <string name="afinador">Afinador</string>
 
     <string name="Re">D</string>
@@ -88,4 +92,5 @@
     <string name="eliminar_de_la_lista">Eliminar del esquema</string>
     <string name="duracion">Duracion</string>
     <string name="todo">TODO</string>
+    <string name="cambiar_app">Cambiar App</string>
 </resources>

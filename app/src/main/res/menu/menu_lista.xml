@@ -23,6 +23,12 @@
         />
 
     <item
+        android:id="@+id/cambiarApp"
+        android:title="@string/cambiar_app"
+        app:showAsAction="never"
+        />
+
+    <item
         android:id="@+id/cerrarSesion"
         android:title="@string/cerrar_sesion"
         app:showAsAction="never"

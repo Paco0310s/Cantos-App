@@ -5,6 +5,8 @@
     android:layout_height="match_parent"
     android:background="@drawable/fondo"
     android:gravity="center"
+    style="@style/barra"
+    android:fitsSystemWindows="true"
     tools:context=".ui.SplashActivity">
 
     <LinearLayout
@@ -46,7 +48,7 @@
             style="@style/texto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="v4.5"
+            android:text="v4.8.0"
             android:layout_marginTop="20dp"
             android:fontFamily="@font/mywife"
             android:textAlignment="center"

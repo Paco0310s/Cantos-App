@@ -21,6 +21,8 @@ public class Canto implements Serializable {
     private boolean publico;
     private boolean visible;
 
+    private String app;
+
     public Canto() {
         momentos = new ArrayList<>();
         tiempos = new ArrayList<>();
@@ -157,5 +159,13 @@ public class Canto implements Serializable {
     @Override
     public String toString() {
         return nombre;
+    }
+
+    public String getApp() {
+        return app;
+    }
+
+    public void setApp(String app) {
+        this.app = app;
     }
 }

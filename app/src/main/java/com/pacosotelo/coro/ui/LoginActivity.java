@@ -238,7 +238,10 @@ public class LoginActivity extends AppCompatActivity {
 
         // Si es un nuevo usuario
         if(nuevo) {
-            LocalDateTime fechaActual = LocalDateTime.now();
+            LocalDateTime fechaActual = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                fechaActual = LocalDateTime.now();
+            }
 
             // Suponemos que es de google
             // Creamos un objeto usuario y le asignamos los datos de google

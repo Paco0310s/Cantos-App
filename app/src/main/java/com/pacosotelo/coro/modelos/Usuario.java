@@ -1,6 +1,7 @@
 package com.pacosotelo.coro.modelos;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Usuario implements Serializable {
     String nombre;
@@ -9,6 +10,7 @@ public class Usuario implements Serializable {
     String uid;
     String number_phone;
     String fecha_creacion;
+    ArrayList<String> grupos;
 
     public Usuario() {
         this.nombre = "";
@@ -17,6 +19,7 @@ public class Usuario implements Serializable {
         this.uid = "";
         this.number_phone = "";
         this.fecha_creacion = "";
+        this.grupos = new ArrayList<>();
     }
 
     public String getNombre() {
@@ -65,5 +68,13 @@ public class Usuario implements Serializable {
 
     public void setFecha_creacion(String fecha_creacion) {
         this.fecha_creacion = fecha_creacion;
+    }
+
+    public ArrayList<String> getGrupos() {
+        return grupos;
+    }
+
+    public void setGrupos(ArrayList<String> grupos) {
+        this.grupos = grupos;
     }
 }

@@ -25,13 +25,13 @@ public class ViewPDFActivity extends AppCompatActivity {
 
         if(bundle != null) {
             file = new File(bundle.getString("path",""));
-            if(file == null) Toast.makeText(this, "null", Toast.LENGTH_SHORT).show();
+//            if(file == null) Toast.makeText(this, "null", Toast.LENGTH_SHORT).show();
 
             pdfView.fromFile(file)
                     .enableSwipe(true)
-                    .swipeHorizontal(false)
+//                    .swipeHorizontal(false)
                     .enableDoubletap(true)
-                    .enableAntialiasing(true)
+//                    .enableAntialiasing(true)
                     .load();
         }
     }

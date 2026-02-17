@@ -129,7 +129,19 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             dr = fd.getReference("esquemas");
             FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
-            if(usuario != null && usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
+            if (usuario == null) {
+                Toast.makeText(ModificarEsquemaActivity.this, "Usuario no autenticado",
+                        Toast.LENGTH_SHORT).show();
+                return super.onOptionsItemSelected(item);
+            }
+
+            if (!esquema.getApp().equals(Constantes.APP)) {
+                Toast.makeText(ModificarEsquemaActivity.this, "No puede eliminar este esquema",
+                        Toast.LENGTH_SHORT).show();
+                return super.onOptionsItemSelected(item);
+            }
+
+            if (usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
                 android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
 
                 builder.setTitle("Confirmar");
@@ -165,7 +177,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
         dr = fd.getReference("cantos");
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        dr.orderByChild("app").equalTo(Constantes.APP).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 arrayAdapter.clear();
@@ -176,6 +188,9 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                         arrayAdapter.add(c);
                     }
                 }
+
+                // Ordenar los cantos alfabéticamente por nombre
+                arrayAdapter.sort((c1, c2) -> c1.getNombre().compareTo(c2.getNombre()));
             }
 
             @Override
@@ -203,6 +218,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
         LocalDateTime fechaActual = LocalDateTime.now();
 
+        esquemaMod.setApp(Constantes.APP);
         esquemaMod.setId(esquema.getId());
         esquemaMod.setNombre(etNombreEsquema.getText().toString());
         esquemaMod.setCantos(listaCantos);
