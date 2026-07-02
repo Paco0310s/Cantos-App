@@ -8,6 +8,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,12 +34,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.UUID;
 
 public class NuevoCantoActivity extends AppCompatActivity {
     private EditText etNombre, etLetra;
     private Button bAgregar;
     private DatabaseReference dr;
-    private long maxid = 0;
+//    private long maxid = 0;
     private int tipo = 0;
     private Canto canto;
     private ArrayList<String> momentos, tiempos;
@@ -145,7 +147,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         dr = fd.getReference("momentos");
 
-        dr.addValueEventListener(new ValueEventListener() {
+        dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -173,7 +175,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
         });
 
         dr = fd.getReference("tiempos");
-        dr.addValueEventListener(new ValueEventListener() {
+        dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -206,19 +208,19 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private void nuevoCanto() {
         bAgregar.setText(R.string.guardar);
 
-        dr.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()) {
-                    maxid = (snapshot.getChildrenCount());
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+//        dr.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                if(snapshot.exists()) {
+//                    maxid = (snapshot.getChildrenCount());
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
     }
 
     private void modificarCanto() {
@@ -275,18 +277,29 @@ public class NuevoCantoActivity extends AppCompatActivity {
             return;
         }
 
+        String app = switch (Constantes.GRUPO_SELECCIONADO) {
+            case "1ddb5b17-58ec-47aa-a6f5-297b26b06c2b" -> "SJTJ";
+            case "2920155f-81ad-4ad6-9706-e92c8a057408" -> "SAP";
+            case "816df4f3-542a-477a-b508-9b990f01ba47" -> "SJT";
+            default -> "";
+        };
+
         Canto canto_mod = new Canto();
-        canto_mod.setApp(Constantes.APP);
+        canto_mod.setApp(app);
+        canto_mod.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
         canto_mod.setNombre(etNombre.getText().toString());
         canto_mod.setLetra(etLetra.getText().toString());
         canto_mod.setMomentos(momentosSeleccionados);
         canto_mod.setTiempos(tiemposSeleccionados);
 
-        LocalDateTime fechaActual = LocalDateTime.now();
+        LocalDateTime fechaActual = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            fechaActual = LocalDateTime.now();
+        }
 
         switch (tipo) {
             case 0:
-                canto_mod.setId(String.valueOf(maxid + 1));
+                canto_mod.setId(UUID.randomUUID().toString());
 
                 assert currentUser != null;
                 canto_mod.setCreado_por(currentUser.getUid());

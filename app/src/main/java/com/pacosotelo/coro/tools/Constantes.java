@@ -7,12 +7,8 @@ public class Constantes {
     public static final String[] tonos = {"DO#","REb","RE#","MIb","FA#","SOLb",
             "SOL#","LAb","LA#","SIb","DO","RE","MI","FA","SOL","LA","SI"};
     public static final String[] extras = {"","m","7","m7"};
-    public static final int VERSION = 10;
+    public static final int VERSION = 11;
 
-    public static final String[] APPS = {
-            "SJT", "SAP", "SJTJ", "SJTA"
-    };
-
-    public static String APP = APPS[1];
+    public static String GRUPO_SELECCIONADO = "";
 
 }

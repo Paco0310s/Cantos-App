@@ -11,7 +11,6 @@ public class Canto implements Serializable {
     private String autor;
     private String tono;
     private ArrayList<String> momentos, tiempos;
-    private String id_grupo;
     private String fecha_creacion;
     private String fecha_modificacion;
     private String fecha_eliminacion;
@@ -22,6 +21,8 @@ public class Canto implements Serializable {
     private boolean visible;
 
     private String app;
+
+    private String grupo_id;
 
     public Canto() {
         momentos = new ArrayList<>();
@@ -66,14 +67,6 @@ public class Canto implements Serializable {
 
     public void setTiempos(ArrayList<String> tiempos) {
         this.tiempos = tiempos;
-    }
-
-    public String getId_grupo() {
-        return id_grupo;
-    }
-
-    public void setId_grupo(String id_grupo) {
-        this.id_grupo = id_grupo;
     }
 
     public String getFecha_creacion() {
@@ -168,4 +161,13 @@ public class Canto implements Serializable {
     public void setApp(String app) {
         this.app = app;
     }
+
+    public String getGrupo_id() {
+        return grupo_id;
+    }
+
+    public void setGrupo_id(String grupo_id) {
+        this.grupo_id = grupo_id;
+    }
+
 }

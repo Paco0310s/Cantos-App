@@ -35,4 +35,37 @@
         android:backgroundTint="#ffffff"
         android:visibility="gone"
         />
+    <!-- Mostrar cuando el usuario no pertenece a ningun grupo -->
+    <LinearLayout
+        android:id="@+id/no_group_container_esquemas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvNoGroupEsquemas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No estás en ningún grupo. Crea un grupo para poder crear cantos y esquemas o únete a un grupo existente para obtener los cantos de ese grupo."
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textAlignment="center"
+            android:paddingBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCrearGrupoEsquemas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Crear grupo"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnUnirseGrupoEsquemas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Unirse a un grupo" />
+
+    </LinearLayout>
 </FrameLayout>

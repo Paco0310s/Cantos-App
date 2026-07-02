@@ -40,8 +40,29 @@ public class SplashActivity extends AppCompatActivity {
         //Obtenemos el usuario actual
         currentUser = auth.getCurrentUser();
 
+        dr.child("constantes").child("mantenimiento").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if(task.getResult().getValue() == null) mostrarErrorMantenimiento();
+                else {
+                    String mantenimiento_str = task.getResult().getValue().toString();
+                    boolean mantenimiento = Boolean.parseBoolean(mantenimiento_str);
+
+                    if(mantenimiento) {
+                        mostrarMensajeMantenimiento();
+                    }
+                    else {
+                        comprobarVersion();
+                    }
+                }
+            } else {
+                mostrarErrorMantenimiento();
+            }
+        });
+    }
+
+    private void comprobarVersion() {
         //Obtenemos la version de la ultima acualización
-       dr.child("constantes").child("version").get().addOnCompleteListener(task -> {
+        dr.child("constantes").child("version").get().addOnCompleteListener(task -> {
 
             if (task.isSuccessful()) {
                 if(task.getResult().getValue() == null) mostrarErrorVersion();
@@ -62,10 +83,32 @@ public class SplashActivity extends AppCompatActivity {
         });
     }
 
+    private void mostrarMensajeMantenimiento() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Aviso");
+        String mensaje = "La aplicación se encuentra en mantenimiento \nIntente nuevamente mas tarde";
+        builder.setMessage(mensaje);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
+        AlertDialog alerta = builder.create();
+        alerta.show();
+    }
+
     private void mostrarMensajeActualización() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Aviso");
         String mensaje = "Actualice la aplicación a la versión mas reciente";
+        builder.setMessage(mensaje);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
+        AlertDialog alerta = builder.create();
+        alerta.show();
+    }
+
+    private void mostrarErrorMantenimiento() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error");
+        String mensaje = "Ocurrió un error al obtener la información de mantenimiento \nVerifique su conexión a internet";
         builder.setMessage(mensaje);
         builder.setCancelable(false);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());

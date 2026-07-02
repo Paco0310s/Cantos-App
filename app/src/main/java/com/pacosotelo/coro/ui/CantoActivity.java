@@ -241,7 +241,7 @@ public class CantoActivity extends AppCompatActivity {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         dr = fd.getReference("cantos");
 
-        dr.child(canto.getId()).addValueEventListener(new ValueEventListener() {
+        dr.child(canto.getId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()) {
@@ -300,8 +300,7 @@ public class CantoActivity extends AppCompatActivity {
     }
 
     private void crearPDF() {
-        if(ActivityCompat.checkSelfPermission(CantoActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED){
+        try {
             TemplatePDF templatePDF = new TemplatePDF(getApplicationContext());
             templatePDF.openDocument(canto.getNombre());
             templatePDF.addMetaData(canto.getNombre(), "Canto", "Paco Sotelo");
@@ -309,11 +308,13 @@ public class CantoActivity extends AppCompatActivity {
             templatePDF.addParagraph(eLetra.getText().toString());
             templatePDF.closeDocument();
             templatePDF.viewPDF();
-            //templatePDF.appViewPDF(this);
-        }else{
-            ActivityCompat.requestPermissions(CantoActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            Toast.makeText(CantoActivity.this, "PDF creado correctamente", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(CantoActivity.this, "Error al crear PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    // ...existing onRequestPermissionsResult defined earlier handles permission results
     private void modificarCanto() {
         FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -323,7 +324,7 @@ public class CantoActivity extends AppCompatActivity {
             return;
         }
 
-        if (!canto.getApp().equals(Constantes.APP)) {
+        if (!canto.getGrupo_id().equals(Constantes.GRUPO_SELECCIONADO)) {
             Toast.makeText(CantoActivity.this, "No puedes modificar este canto",
                     Toast.LENGTH_SHORT).show();
             return;

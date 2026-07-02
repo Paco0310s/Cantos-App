@@ -8,25 +8,25 @@
     <fragment
         android:id="@+id/nav_listaCantos"
         android:name="com.pacosotelo.coro.ui.ListaCantosFragment"
-        android:label="@string/app_name"
+        android:label="Mis Cantos"
         tools:layout="@layout/fragment_lista_cantos" />
 
     <fragment
         android:id="@+id/nav_listaGrupos"
         android:name="com.pacosotelo.coro.ui.ListaGruposFragment"
-        android:label="@string/grupos"
+        android:label="Mis Grupos"
         tools:layout="@layout/fragment_lista_grupos" />
 
     <fragment
         android:id="@+id/nav_listaEsquemas"
         android:name="com.pacosotelo.coro.ui.ListaEsquemasFragment"
-        android:label="@string/esquemas"
+        android:label="Mis Esquemas"
         tools:layout="@layout/fragment_lista_esquemas" />
 
     <fragment
         android:id="@+id/nav_listaTodosCantos"
         android:name="com.pacosotelo.coro.ui.ListaTodosCantosFragment"
-        android:label="@string/todos"
+        android:label="Cantos"
         tools:layout="@layout/fragment_lista_todos_cantos" />
 
     <fragment

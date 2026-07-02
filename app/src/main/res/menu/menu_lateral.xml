@@ -7,23 +7,23 @@
     <item
         android:id="@+id/nav_listaCantos"
         android:icon="@drawable/hogar"
-        android:title="@string/app_name" />
+        android:title="Mis Cantos" />
 
-    <!--item
+    <item
+        android:visible="true"
+        android:id="@+id/nav_listaEsquemas"
+        android:icon="@drawable/ic_lista"
+        android:title="Mis Esquemas" />
+
+    <item
         android:id="@+id/nav_listaTodosCantos"
-        android:icon="@drawable/outline_browse_24"
-        android:title="Todos" /-->
+        android:icon="@drawable/world"
+        android:title="Publico" />
 
     <!-- item
         android:visible="true"
         android:id="@+id/nav_listaGrupos"
         android:icon="@drawable/baseline_group_24"
         android:title="Grupos" / -->
-
-    <item
-        android:visible="true"
-        android:id="@+id/nav_listaEsquemas"
-        android:icon="@drawable/ic_lista"
-        android:title="Esquemas" />
 
 </menu>

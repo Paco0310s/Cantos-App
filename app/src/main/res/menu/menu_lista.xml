@@ -22,9 +22,15 @@
         app:showAsAction="never"
         />
 
+<!--    <item-->
+<!--        android:id="@+id/cambiarApp"-->
+<!--        android:title="@string/cambiar_app"-->
+<!--        app:showAsAction="never"-->
+<!--        />-->
+
     <item
-        android:id="@+id/cambiarApp"
-        android:title="@string/cambiar_app"
+        android:id="@+id/cambiarGrupo"
+        android:title="Cambiar grupo"
         app:showAsAction="never"
         />
 

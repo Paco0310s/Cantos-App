@@ -10,6 +10,7 @@ public class Esquema implements Serializable {
     private String fecha_creacion;
     private String fecha_modificacion;
     private String app;
+    private String grupo_id;
 
     public Esquema() {
         cantos = new ArrayList<>();
@@ -61,5 +62,13 @@ public class Esquema implements Serializable {
 
     public void setApp(String app) {
         this.app = app;
+    }
+
+    public String getGrupo_id() {
+        return grupo_id;
+    }
+
+    public void setGrupo_id(String grupo_id) {
+        this.grupo_id = grupo_id;
     }
 }

@@ -84,9 +84,9 @@ public class MenuLateralActivity extends AppCompatActivity {
             usuario = new Usuario();
         }
 
-        civFoto.setOnClickListener(v -> {
-            foto();
-        });
+//        civFoto.setOnClickListener(v -> {
+//            foto();
+//        });
 
     }
 

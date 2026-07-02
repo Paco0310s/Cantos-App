@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -56,7 +55,9 @@ public class TemplatePDF {
     }
 
     private void createFile(String nombre) {
-        folder = new File(Environment.getExternalStorageDirectory().toString(), "Cantos");
+        // Usar getExternalFilesDir() para app-scoped storage (mejor en Android 11+)
+        // Esto no requiere WRITE_EXTERNAL_STORAGE y evita problemas de permisos
+        folder = new File(contexto.getExternalFilesDir(null), "Cantos");
 
         if(!folder.exists()) folder.mkdir();
 

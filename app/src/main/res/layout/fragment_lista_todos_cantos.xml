@@ -39,4 +39,25 @@
         android:visibility="gone"
         />
 
+    <TextView
+        android:id="@+id/tvSinInternet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Sin conexión a internet"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:visibility="gone"
+        style="@style/fondo"
+        />
+
+    <TextView
+        android:id="@+id/tvInstruccion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Escribe mínimo 3 letras para buscar un canto \n(Requiere Internet)"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:visibility="visible"
+        style="@style/fondo"
+        />
 </FrameLayout>

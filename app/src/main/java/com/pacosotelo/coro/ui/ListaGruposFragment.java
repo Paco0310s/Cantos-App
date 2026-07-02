@@ -81,7 +81,7 @@ public class ListaGruposFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        dr.orderByChild("nombre").addValueEventListener(new ValueEventListener() {
+        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaGrupos.clear();

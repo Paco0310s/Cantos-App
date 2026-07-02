@@ -154,8 +154,22 @@ public class LoginActivity extends AppCompatActivity {
                     // Si se pudo iniciar sesión
                     if (task.isSuccessful()) {
                         Log.d(TAG_GOOGLE, "signInWithCredential:success");
-                        // Llamamos el metodo ingresado como un nuevo usuario
-                        ingresado(true);
+
+                        // Detectar si es un usuario nuevo o existente
+                        FirebaseUser currentUser = auth.getCurrentUser();
+                        if (currentUser != null && currentUser.getMetadata() != null) {
+                            // Si el timestamp de creación es igual al de último login,
+                            // es la primera vez que inicia sesión
+                            long creationTime = currentUser.getMetadata().getCreationTimestamp();
+                            long lastSignInTime = currentUser.getMetadata().getLastSignInTimestamp();
+
+                            // Permitir pequeño margen (1 segundo) para diferencias de sincronización
+                            boolean esNuevo = (lastSignInTime - creationTime) < 1000;
+                            ingresado(esNuevo);
+                        } else {
+                            // Si no podemos obtener metadata, asumir que es usuario existente
+                            ingresado(false);
+                        }
                     } else {
                         // Si no, mandamos un error
                         Log.w(TAG_GOOGLE, "signInWithCredential:failure", task.getException());

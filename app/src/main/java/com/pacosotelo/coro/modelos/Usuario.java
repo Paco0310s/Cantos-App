@@ -11,6 +11,7 @@ public class Usuario implements Serializable {
     String number_phone;
     String fecha_creacion;
     ArrayList<String> grupos;
+    String grupoActual;
 
     public Usuario() {
         this.nombre = "";
@@ -76,5 +77,13 @@ public class Usuario implements Serializable {
 
     public void setGrupos(ArrayList<String> grupos) {
         this.grupos = grupos;
+    }
+
+    public String getGrupoActual() {
+        return grupoActual;
+    }
+
+    public void setGrupoActual(String grupoActual) {
+        this.grupoActual = grupoActual;
     }
 }

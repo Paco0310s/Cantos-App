@@ -13,4 +13,16 @@
         android:title="@string/eliminar_de_la_lista"
         app:showAsAction="never"
         />
+
+    <item
+        android:id="@+id/moverArriba"
+        android:title="Mover arriba"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/moverAbajo"
+        android:title="Mover abajo"
+        app:showAsAction="never"
+        />
 </menu>
