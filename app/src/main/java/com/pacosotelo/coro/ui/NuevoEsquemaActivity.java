@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -31,6 +32,7 @@ import com.pacosotelo.coro.tools.Constantes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.UUID;
 
 public class NuevoEsquemaActivity extends AppCompatActivity {
@@ -85,15 +87,22 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         lv.setAdapter(arrayAdapter);
 
         dr = fd.getReference("cantos");
-        dr.orderByChild("grupo_id").equalTo(Constantes.GRUPO_SELECCIONADO).addListenerForSingleValueEvent(new ValueEventListener() {
+        dr.orderByChild("grupo_id").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 arrayAdapter.clear();
 
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
                     if(objSnap!=null) {
-                        Canto c = objSnap.getValue(Canto.class);
-                        arrayAdapter.add(c);
+                        try {
+                            Canto c = objSnap.getValue(Canto.class);
+
+                            if (c != null && Constantes.GRUPO_SELECCIONADO.equals(c.getGrupo_id())) {
+                                arrayAdapter.add(c);
+                            }
+                        } catch (Exception e) {
+                            Log.e("Error", Objects.requireNonNull(objSnap.getKey()));
+                        }
                     }
                 }
 
