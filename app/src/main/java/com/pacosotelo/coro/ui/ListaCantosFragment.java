@@ -3,6 +3,7 @@ package com.pacosotelo.coro.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -44,6 +45,7 @@ import com.pacosotelo.coro.tools.Constantes;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -52,8 +54,8 @@ import java.util.stream.Collectors;
 import android.widget.EditText;
 
 public class ListaCantosFragment extends Fragment {
-    private final List<Canto> listaCantos = new ArrayList<>();
-    private final List<Canto> listaRespaldo = new ArrayList<>();
+    private List<Canto> listaCantos = new ArrayList<>();
+    private List<Canto> listaRespaldo = new ArrayList<>();
     private RecyclerView lista;
     private AdaptadorCantos adapter;
     private ProgressBar progressBar;
@@ -66,6 +68,14 @@ public class ListaCantosFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Cada vez que el fragmento sea visible para el usuario,
+        // se descargará la lista actualizada de Firebase de forma óptima
+        inicializarFirebase();
     }
 
     @Override
@@ -119,7 +129,15 @@ public class ListaCantosFragment extends Fragment {
             }
         });
 
-        inicializarFirebase();
+        // Inicializas las listas vacías para que el adapter no empiece en null
+        listaCantos = new ArrayList<>();
+        listaRespaldo = new ArrayList<>();
+
+        // Configuras el RecyclerView una sola vez aquí
+        adapter = new AdaptadorCantos(listaCantos, getActivity());
+        lista.setHasFixedSize(true);
+        lista.setLayoutManager(new LinearLayoutManager(getActivity()));
+        lista.setAdapter(adapter);
 
         return root;
     }
@@ -604,47 +622,61 @@ public class ListaCantosFragment extends Fragment {
     }
 
     private void cargarCantos() {
+        // 1. Mostrar el progress bar al iniciar la carga (por si acaso viene de otra pantalla)
+        progressBar.setVisibility(View.VISIBLE);
+
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         DatabaseReference dr = fd.getReference("cantos");
 
         final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
 
-        dr.orderByChild("grupo_id").addListenerForSingleValueEvent(new ValueEventListener() {
+        // 2. Traemos indexados únicamente los cantos de ese grupo desde el servidor
+        dr.orderByChild("grupo_id").equalTo(grupoSeleccionado)
+        .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaCantos.clear();
                 listaRespaldo.clear();
 
+                // 3. Llenamos la lista con los datos ya filtrados en la nube
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    if(objSnap!=null) {
+                    if (objSnap != null) {
                         try {
                             Canto c = objSnap.getValue(Canto.class);
-
-                            if (c != null && grupoSeleccionado.equals(c.getGrupo_id())) {
+                            if (c != null) {
                                 listaCantos.add(c);
                             }
                         } catch (Exception e) {
-                            Toast.makeText(getActivity(), "Error al cargar el canto: " + objSnap.getValue(), Toast.LENGTH_SHORT).show();
-                            Log.e("Error", Objects.requireNonNull(objSnap.getKey()));
+                            Toast.makeText(getActivity(), "Error al parsear el canto", Toast.LENGTH_SHORT).show();
+                            Log.e("Error_Firebase", "Llave con error: " + objSnap.getKey(), e);
                         }
                     }
                 }
 
-                // Ordenar la lista por nombre
-                listaCantos.sort((c1, c2) -> c1.getNombre().compareTo(c2.getNombre()));
+                // 4. Ordenar alfabéticamente ignorando mayúsculas/minúsculas
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    listaCantos.sort((c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
+                } else {
+                    Collections.sort(listaCantos, (c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
+                }
 
-                adapter = new AdaptadorCantos(listaCantos, getActivity());
-                lista.setHasFixedSize(true);
-                lista.setLayoutManager(new LinearLayoutManager(getActivity()));
-                lista.setAdapter(adapter);
-
+                // 5. Clonamos la lista ordenada para tu buscador/respaldo
                 listaRespaldo.addAll(listaCantos);
+
+                // 6. ¡La magia del rendimiento! Solo le avisamos al adaptador existente que refresque los datos
+                if (adapter != null) {
+                    adapter.notifyDataSetChanged();
+                }
+
+                // 7. Ocultamos el indicador de carga
                 progressBar.setVisibility(View.GONE);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                progressBar.setVisibility(View.GONE);
+                Log.e("Firebase_Error", "Error en consulta: " + error.getMessage());
+                Toast.makeText(getActivity(), "Error de conexión con la base de datos", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -664,7 +696,7 @@ public class ListaCantosFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle(R.string.acerca_de);
         String mensaje = "\u00a9 Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCreditos: \nLogo: Santiago Romo \n\n" +
-                "Versión: 5.0.0" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nGrupo Seleccionado: " + (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty() ? "Ninguno" : Constantes.GRUPO_SELECCIONADO);
+                "Versión: 5.0.1" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nGrupo Seleccionado: " + (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty() ? "Ninguno" : Constantes.GRUPO_SELECCIONADO);
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());

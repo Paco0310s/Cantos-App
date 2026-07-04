@@ -3,6 +3,7 @@ package com.pacosotelo.coro.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
@@ -52,8 +53,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ListaEsquemasFragment extends Fragment {
-    private final List<Esquema> listaEsquemas = new ArrayList<>();
-    private final List<Esquema> listaRespaldo = new ArrayList<>();
+    private List<Esquema> listaEsquemas = new ArrayList<>();
+    private List<Esquema> listaRespaldo = new ArrayList<>();
     private RecyclerView rvEsquemas;
     private AdaptadorEsquemas adapter;
     private ProgressBar progressBar;
@@ -65,6 +66,14 @@ public class ListaEsquemasFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Cada vez que el fragmento sea visible para el usuario,
+        // se descargará la lista actualizada de Firebase de forma óptima
+        inicializarFirebase();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -124,8 +133,15 @@ public class ListaEsquemasFragment extends Fragment {
             return false;
         });
 
+        listaEsquemas = new ArrayList<>();
+        listaRespaldo = new ArrayList<>();
 
-        inicializarFirebase();
+        adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
+        rvEsquemas.setHasFixedSize(true);
+        rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
+        rvEsquemas.setAdapter(adapter);
+
+//        inicializarFirebase();
 
         return root;
     }
@@ -182,48 +198,59 @@ public class ListaEsquemasFragment extends Fragment {
     }
 
     private void cargarEsquemas() {
+        progressBar.setVisibility(View.VISIBLE);
+
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         DatabaseReference dr = fd.getReference("esquemas");
 
         final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
 
-        dr.orderByChild("grupo_id").addListenerForSingleValueEvent(new ValueEventListener() {
+        // 1. Filtramos directamente en el servidor gracias al índice .indexOn
+        dr.orderByChild("grupo_id").equalTo(grupoSeleccionado)
+        .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaEsquemas.clear();
                 listaRespaldo.clear();
 
+                // 2. Recorremos únicamente los esquemas que ya pertenecen al grupo seleccionado
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    if(objSnap!=null) {
+                    if (objSnap != null) {
                         try {
                             Esquema e = objSnap.getValue(Esquema.class);
-                            if (e != null && e.getGrupo_id().trim().equals(grupoSeleccionado)) {
-                                e.setNombre(e.getNombre());
+                            if (e != null) {
                                 listaEsquemas.add(e);
                             }
                         } catch (Exception e) {
-                            Toast.makeText(getActivity(), "Error al cargar el esquema: " + objSnap.getValue(), Toast.LENGTH_SHORT).show();
-                            Log.e("Error", Objects.requireNonNull(objSnap.getKey()));
+                            Toast.makeText(getActivity(), "Error al parsear el esquema", Toast.LENGTH_SHORT).show();
+                            Log.e("Error_Firebase", "Llave con error: " + objSnap.getKey(), e);
                         }
                     }
                 }
 
-                // Ordenamos la lista por nombre
-                Collections.sort(listaEsquemas, (o1, o2) -> o1.getNombre().compareTo(o2.getNombre()));
+                // 3. Ordenamos alfabéticamente de manera correcta (ignorando mayúsculas/minúsculas)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    listaEsquemas.sort((o1, o2) -> o1.getNombre().compareToIgnoreCase(o2.getNombre()));
+                } else {
+                    Collections.sort(listaEsquemas, (o1, o2) -> o1.getNombre().compareToIgnoreCase(o2.getNombre()));
+                }
 
-                adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
-                rvEsquemas.setHasFixedSize(true);
-                rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
-                rvEsquemas.setAdapter(adapter);
-
+                // 4. Clonamos la lista filtrada y ordenada para las búsquedas posteriores
                 listaRespaldo.addAll(listaEsquemas);
+
+                // 5. Le avisamos al adaptador existente que actualice la interfaz sin parpadeos
+                if (adapter != null) {
+                    adapter.notifyDataSetChanged();
+                }
 
                 progressBar.setVisibility(View.GONE);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                progressBar.setVisibility(View.GONE);
+                Log.e("Firebase_Error", "Error en consulta esquemas: " + error.getMessage());
+                Toast.makeText(getActivity(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });
     }

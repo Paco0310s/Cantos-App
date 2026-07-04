@@ -16,6 +16,8 @@ import android.text.style.ClickableSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -43,6 +45,11 @@ public class CantoActivity extends AppCompatActivity {
     private String letra;
     private final int tamLetra = 16;
     private int ValorTexto = 0;
+    private float currentTextSize = 0f;
+    private ScaleGestureDetector scaleGestureDetector;
+    private final float MIN_TEXT_SIZE = 10f;
+    private final float MAX_TEXT_SIZE = 72f;
+    private boolean isScaling = false;
     private DatabaseReference dr;
     private Canto canto;
     private Esquema esquema;
@@ -66,6 +73,28 @@ public class CantoActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         eLetra = findViewById(R.id.eLetra);
+
+        // Initialize pinch-to-zoom detector and touch handling for the lyric EditText
+        scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
+        eLetra.setOnTouchListener((v, event) -> {
+            // Let the ScaleGestureDetector inspect all touch events
+            scaleGestureDetector.onTouchEvent(event);
+
+            // If there are multiple pointers (fingers) or a scale gesture is
+            // currently in progress, consume the event so the EditText doesn't
+            // interpret it as a scroll/selection gesture. This helps when the
+            // user starts the pinch while the view might otherwise scroll.
+            if (event.getPointerCount() > 1 || isScaling) {
+                // For accessibility lint: call performClick on ACTION_UP when appropriate
+                if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                    v.performClick();
+                }
+                return true;
+            }
+
+            // Otherwise allow the EditText to handle the event (scrolling, selection)
+            return false;
+        });
 
         canto = (Canto) this.getIntent().getSerializableExtra("canto");
         bandera = this.getIntent().getBooleanExtra("bandera", false);
@@ -287,6 +316,11 @@ public class CantoActivity extends AppCompatActivity {
         if (ValorTexto == 0){
             ValorTexto = tamLetra;
             eLetra.setTextSize(ValorTexto);
+            currentTextSize = ValorTexto;
+        }
+        // Ensure currentTextSize is set even if ValorTexto was already initialized
+        if (currentTextSize == 0f) {
+            currentTextSize = (ValorTexto == 0) ? tamLetra : ValorTexto;
         }
     }
 
@@ -384,6 +418,7 @@ public class CantoActivity extends AppCompatActivity {
         }
         if (ValorTexto < 30){
             ValorTexto += 1;
+            currentTextSize = ValorTexto;
             eLetra.setTextSize(ValorTexto);
         }
     }
@@ -394,6 +429,7 @@ public class CantoActivity extends AppCompatActivity {
         }
         if (ValorTexto > 10){
             ValorTexto -= 1;
+            currentTextSize = ValorTexto;
             eLetra.setTextSize(ValorTexto);
         }
     }
@@ -458,5 +494,39 @@ public class CantoActivity extends AppCompatActivity {
 
         letra = nuevaLetra.toString();
         eLetra.setText(letra.replaceAll("'", ""));
+    }
+
+    /**
+     * Scale gesture listener that updates the EditText text size when the user pinches.
+     */
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            isScaling = true;
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+            isScaling = false;
+            super.onScaleEnd(detector);
+        }
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            float scaleFactor = detector.getScaleFactor();
+
+            if (currentTextSize == 0f) {
+                currentTextSize = (ValorTexto == 0) ? tamLetra : ValorTexto;
+            }
+
+            // Apply the relative scale factor to the current text size
+            currentTextSize = Math.max(MIN_TEXT_SIZE, Math.min(MAX_TEXT_SIZE, currentTextSize * scaleFactor));
+
+            // Update integer tracking value and the EditText size (in sp)
+            ValorTexto = Math.round(currentTextSize);
+            eLetra.setTextSize(ValorTexto);
+
+            return true;
+        }
     }
 }

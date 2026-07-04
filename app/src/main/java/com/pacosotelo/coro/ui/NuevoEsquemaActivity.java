@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -86,36 +87,45 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         ArrayAdapter<Canto> arrayAdapter = new ArrayAdapter<>(this, R.layout.item_canto_esquema);
         lv.setAdapter(arrayAdapter);
 
-        dr = fd.getReference("cantos");
-        dr.orderByChild("grupo_id").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                arrayAdapter.clear();
+        // 1. Declaramos la lista de respaldo local para este diálogo
+        final ArrayList<Canto> listaRespaldoDialogo = new ArrayList<>();
 
-                for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    if(objSnap!=null) {
-                        try {
-                            Canto c = objSnap.getValue(Canto.class);
+        DatabaseReference drCantos = fd.getReference("cantos");
+        final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
 
-                            if (c != null && Constantes.GRUPO_SELECCIONADO.equals(c.getGrupo_id())) {
-                                arrayAdapter.add(c);
+        drCantos.orderByChild("grupo_id").equalTo(grupoSeleccionado)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        arrayAdapter.clear();
+                        listaRespaldoDialogo.clear(); // Limpiamos por seguridad
+
+                        for (DataSnapshot objSnap : snapshot.getChildren()) {
+                            if (objSnap != null) {
+                                try {
+                                    Canto c = objSnap.getValue(Canto.class);
+                                    if (c != null) {
+                                        arrayAdapter.add(c);
+                                        listaRespaldoDialogo.add(c); // <--- Guardamos una copia intacta aquí
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("Error_Firebase", "Llave con error en diálogo: " + objSnap.getKey(), e);
+                                }
                             }
-                        } catch (Exception e) {
-                            Log.e("Error", Objects.requireNonNull(objSnap.getKey()));
                         }
+
+                        arrayAdapter.sort((c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
+                        // También ordenamos la de respaldo para que al borrar la búsqueda coincida el orden
+                        listaRespaldoDialogo.sort((c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
                     }
-                }
 
-                // Ordenar los cantos alfabéticamente por nombre
-                arrayAdapter.sort((c1, c2) -> c1.getNombre().compareTo(c2.getNombre()));
-            }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("Firebase_Error", "Cancelado en diálogo: " + error.getMessage());
+                    }
+                });
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
+        // 2. Vinculamos el buscador con nuestra función personalizada usando la lista de respaldo
         sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -124,7 +134,24 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                arrayAdapter.getFilter().filter(newText);
+                String query = newText.toLowerCase().trim();
+                arrayAdapter.clear();
+
+                if (query.isEmpty()) {
+                    // Si el buscador se vacía, restauramos todos los cantos desde el respaldo
+                    arrayAdapter.addAll(listaRespaldoDialogo);
+                } else {
+                    // Filtrado inteligente que no se rompe con espacios
+                    for (Canto canto : listaRespaldoDialogo) {
+                        if (canto != null && canto.getNombre() != null) {
+                            String nombreCanto = canto.getNombre().toLowerCase();
+                            if (nombreCanto.contains(query)) {
+                                arrayAdapter.add(canto);
+                            }
+                        }
+                    }
+                }
+                arrayAdapter.notifyDataSetChanged();
                 return true;
             }
         });
@@ -137,8 +164,10 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
             Canto c = arrayAdapter.getItem(position);
             if (c != null) {
                 listaCantos.add(c);
-                adapter2.add(c);
-                rvCantosEsquema.setAdapter(adapter2);
+                if (adapter2 != null) {
+                    adapter2.add(c);
+                    adapter2.notifyDataSetChanged();
+                }
             }
             dialog.dismiss();
         });
@@ -212,7 +241,10 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
         Esquema esquema = new Esquema();
 
-        LocalDateTime fechaActual = LocalDateTime.now();
+        LocalDateTime fechaActual = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            fechaActual = LocalDateTime.now();
+        }
 
         String app = switch (Constantes.GRUPO_SELECCIONADO) {
             case "1ddb5b17-58ec-47aa-a6f5-297b26b06c2b" -> "SJTJ";
