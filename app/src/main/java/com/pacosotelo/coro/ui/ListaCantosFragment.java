@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.Button;
 import android.widget.TextView;
@@ -34,10 +33,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
-import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.modelos.Grupo;
 import com.pacosotelo.coro.modelos.Usuario;
 import com.pacosotelo.coro.tools.AdaptadorCantos;
@@ -64,18 +63,14 @@ public class ListaCantosFragment extends Fragment {
     private Button btnCrearGrupo, btnUnirseGrupo;
     private TextView tvNoGroup;
 
+    // Control de listeners para tiempo real sin fugas de memoria
+    private ValueEventListener cantosListener;
+    private Query queryCantos;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Cada vez que el fragmento sea visible para el usuario,
-        // se descargará la lista actualizada de Firebase de forma óptima
-        inicializarFirebase();
     }
 
     @Override
@@ -84,12 +79,10 @@ public class ListaCantosFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_lista_cantos, container, false);
 
         lista = root.findViewById(R.id.lista);
-
         progressBar = root.findViewById(R.id.pbCantos);
 
         this.fabNuevo = root.findViewById(R.id.fabNuevoCanto);
         this.fabNuevo.setOnClickListener(v -> {
-            // Verificar que el usuario tenga un grupo seleccionado antes de permitir crear un canto
             if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) {
                 Toast.makeText(getActivity(), "Debes tener un grupo seleccionado para crear un canto", Toast.LENGTH_SHORT).show();
                 return;
@@ -103,7 +96,6 @@ public class ListaCantosFragment extends Fragment {
         btnUnirseGrupo = root.findViewById(R.id.btnUnirseGrupo);
 
         btnCrearGrupo.setOnClickListener(v -> {
-            // comprobar usuario y mostrar dialogo de crear
             FirebaseUser usuarioFirebase = FirebaseAuth.getInstance().getCurrentUser();
             if (usuarioFirebase != null) {
                 FirebaseDatabase.getInstance().getReference("usuarios").child(usuarioFirebase.getUid()).get()
@@ -129,37 +121,55 @@ public class ListaCantosFragment extends Fragment {
             }
         });
 
-        // Inicializas las listas vacías para que el adapter no empiece en null
+        // Configuración inicial del RecyclerView y Adaptador
         listaCantos = new ArrayList<>();
         listaRespaldo = new ArrayList<>();
-
-        // Configuras el RecyclerView una sola vez aquí
         adapter = new AdaptadorCantos(listaCantos, getActivity());
         lista.setHasFixedSize(true);
         lista.setLayoutManager(new LinearLayoutManager(getActivity()));
         lista.setAdapter(adapter);
 
+        // Se inicializa la primera carga al crear la vista únicamente
+        inicializarFirebase();
+
         return root;
     }
 
     @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Limpiamos el listener cuando el fragmento destruye su interfaz
+        detenerListenerCantos();
+    }
+
+    private void detenerListenerCantos() {
+        if (queryCantos != null && cantosListener != null) {
+            queryCantos.removeEventListener(cantosListener);
+            cantosListener = null;
+            queryCantos = null;
+        }
+    }
+
+    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater){
-        inflater.inflate(R.menu.menu_lista,menu);
+        inflater.inflate(R.menu.menu_lista, menu);
 
         MenuItem item = menu.findItem(R.id.buscar);
 
         SearchView buscador = (SearchView) item.getActionView();
-        buscador.setOnQueryTextListener(oyente);
-        buscador.setQueryHint(getString(R.string.buscar));
+        if (buscador != null) {
+            buscador.setOnQueryTextListener(oyente);
+            buscador.setQueryHint(getString(R.string.buscar));
+        }
 
         super.onCreateOptionsMenu(menu, inflater);
     }
 
     @SuppressLint("NonConstantResourceId")
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.nuevoCanto:
-                // Verificar que el usuario tenga un grupo seleccionado antes de permitir crear un canto
                 if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) {
                     Toast.makeText(getActivity(), "Debes tener un grupo seleccionado para crear un canto", Toast.LENGTH_SHORT).show();
                     return true;
@@ -172,9 +182,6 @@ public class ListaCantosFragment extends Fragment {
             case R.id.cambiarGrupo:
                 cambiarGrupo();
                 break;
-//            case R.id.cambiarApp:
-//                cambiarApp();
-//                break;
             case R.id.cerrarSesion:
                 cerrarSesion();
                 break;
@@ -205,7 +212,6 @@ public class ListaCantosFragment extends Fragment {
     }
 
     private void mostrarDialogoCambioGrupo(Usuario usuario) {
-        // Si no hay grupos, mostrar opciones de crear o unirse
         if (usuario.getGrupos() == null || usuario.getGrupos().isEmpty()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
             builder.setTitle("No tienes grupos");
@@ -219,7 +225,6 @@ public class ListaCantosFragment extends Fragment {
             return;
         }
 
-        // Obtener nombres de los grupos desde Firebase
         obtenerNombresGruposYMostrarDialogo(usuario);
     }
 
@@ -227,7 +232,6 @@ public class ListaCantosFragment extends Fragment {
         ArrayList<String> grupoUuids = usuario.getGrupos();
         ArrayList<String> grupoNombres = new ArrayList<>();
 
-        // Obtener nombres de los grupos
         FirebaseDatabase.getInstance().getReference("grupos").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -248,7 +252,6 @@ public class ListaCantosFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Si falla, mostrar los UUIDs directamente
                 for (String uuid : grupoUuids) {
                     grupoNombres.add(uuid);
                 }
@@ -261,7 +264,6 @@ public class ListaCantosFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Cambiar de grupo");
 
-        // Inflate custom layout with SearchView + ListView
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_searchable_list, null);
         androidx.appcompat.widget.SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
@@ -271,7 +273,6 @@ public class ListaCantosFragment extends Fragment {
         ArrayAdapter<String> adapterLocal = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_single_choice, nombresArray);
         lv.setAdapter(adapterLocal);
 
-        // Pre-select current group if present
         for (int i = 0; i < grupoUuids.size(); i++) {
             if (grupoUuids.get(i).equals(usuario.getGrupoActual())) {
                 lv.setItemChecked(i, true);
@@ -280,7 +281,6 @@ public class ListaCantosFragment extends Fragment {
             }
         }
 
-        // Wire search to filter adapter
         sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -307,7 +307,6 @@ public class ListaCantosFragment extends Fragment {
                 })
                 .create();
 
-        // Item click: change group
         lv.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < grupoUuids.size()) {
                 String grupoUuidSeleccionado = grupoUuids.get(position);
@@ -315,7 +314,6 @@ public class ListaCantosFragment extends Fragment {
                 Constantes.GRUPO_SELECCIONADO = grupoUuidSeleccionado;
                 Toast.makeText(getActivity(), "Grupo cambiado a " + nombresArray[position], Toast.LENGTH_SHORT).show();
                 alerta.dismiss();
-                // Actualizar la lista de cantos para el nuevo grupo
                 inicializarFirebase();
             }
         });
@@ -353,23 +351,19 @@ public class ListaCantosFragment extends Fragment {
     private void generarCodigoUnicoYCrearGrupo(Usuario usuario, String nombreGrupo, String uuid) {
         String codigo = generarCodigoAleatorio();
 
-        // Verificar que el código no exista
         FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").equalTo(codigo)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
-                            // El código ya existe, generar uno nuevo
                             generarCodigoUnicoYCrearGrupo(usuario, nombreGrupo, uuid);
                         } else {
-                            // Código disponible, crear el grupo
                             crearGrupoConCodigo(usuario, nombreGrupo, uuid, codigo);
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // En caso de error, intentar crear de todas formas con el código
                         crearGrupoConCodigo(usuario, nombreGrupo, uuid, codigo);
                     }
                 });
@@ -380,7 +374,6 @@ public class ListaCantosFragment extends Fragment {
 
         DatabaseReference refGrupos = FirebaseDatabase.getInstance().getReference("grupos").child(uuid);
         refGrupos.setValue(nuevoGrupo).addOnSuccessListener(aVoid -> {
-            // Agregar el grupo al usuario
             ArrayList<String> grupos = usuario.getGrupos();
             if (grupos == null) {
                 grupos = new ArrayList<>();
@@ -389,12 +382,9 @@ public class ListaCantosFragment extends Fragment {
             usuario.setGrupos(grupos);
             usuario.setGrupoActual(uuid);
 
-            // Actualizar usuario en Firebase
             FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario);
-
             Constantes.GRUPO_SELECCIONADO = uuid;
 
-            // Actualizar la lista de cantos para el nuevo grupo
             inicializarFirebase();
 
             Toast.makeText(getActivity(), "Grupo '" + nombreGrupo + "' creado exitosamente\nCódigo: " + codigo, Toast.LENGTH_LONG).show();
@@ -440,51 +430,28 @@ public class ListaCantosFragment extends Fragment {
     }
 
     private void buscarYUnirseAGrupo(Usuario usuario, String codigo) {
-        FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean encontrado = false;
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    Grupo grupo = dataSnapshot.getValue(Grupo.class);
-                    if (grupo != null && grupo.getCodigo().equals(codigo)) {
-                        agregarGrupoAlUsuario(usuario, grupo.getUuid(), grupo.getNombre());
-                        encontrado = true;
-                        break;
+        FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").equalTo(codigo)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                                Grupo grupo = dataSnapshot.getValue(Grupo.class);
+                                if (grupo != null) {
+                                    agregarGrupoAlUsuario(usuario, grupo.getUuid(), grupo.getNombre());
+                                    return;
+                                }
+                            }
+                        } else {
+                            Toast.makeText(getActivity(), "No se encontró un grupo con ese código", Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }
-                if (!encontrado) {
-                    Toast.makeText(getActivity(), "No se encontró un grupo con ese código", Toast.LENGTH_SHORT).show();
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getActivity(), "Error al buscar el grupo", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-//        FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").equalTo(codigo)
-//                .addListenerForSingleValueEvent(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                        if (snapshot.exists()) {
-//                            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-//                                Grupo grupo = dataSnapshot.getValue(Grupo.class);
-//                                if (grupo != null) {
-//                                    agregarGrupoAlUsuario(usuario, grupo.getUuid(), grupo.getNombre());
-//                                    return;
-//                                }
-//                            }
-//                        } else {
-//                            Toast.makeText(getActivity(), "No se encontró un grupo con ese código", Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(@NonNull DatabaseError error) {
-//                        Toast.makeText(getActivity(), "Error al buscar el grupo", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(getActivity(), "Error al buscar el grupo", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void agregarGrupoAlUsuario(Usuario usuario, String grupoUuid, String nombreGrupo) {
@@ -493,7 +460,6 @@ public class ListaCantosFragment extends Fragment {
             grupos = new ArrayList<>();
         }
 
-        // Verificar que el usuario aún no esté en este grupo
         if (grupos.contains(grupoUuid)) {
             Toast.makeText(getActivity(), "Ya eres miembro de este grupo", Toast.LENGTH_SHORT).show();
             return;
@@ -503,14 +469,10 @@ public class ListaCantosFragment extends Fragment {
         usuario.setGrupos(grupos);
         usuario.setGrupoActual(grupoUuid);
 
-        // Actualizar usuario en Firebase
         FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario)
                 .addOnSuccessListener(aVoid -> {
                     Constantes.GRUPO_SELECCIONADO = grupoUuid;
-
-                    // Actualizar la lista de cantos para el nuevo grupo
                     inicializarFirebase();
-
                     Toast.makeText(getActivity(), "Te has unido al grupo '" + nombreGrupo + "'", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -518,88 +480,24 @@ public class ListaCantosFragment extends Fragment {
                 });
     }
 
-//    private void cambiarApp(){
-//        FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
-//
-//        if (usuario == null) {
-//            Toast.makeText(getActivity(), "No hay usuario autenticado", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
-//
-//        if(!usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
-//            Toast.makeText(getActivity(), "No tienes permisos para cambiar de app", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
-//
-//        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-//        builder.setTitle(R.string.cambiar_app);
-//
-//        // Inflate custom layout with SearchView + ListView
-//        LayoutInflater inflater = requireActivity().getLayoutInflater();
-//        View dialogView = inflater.inflate(R.layout.dialog_searchable_list, null);
-//        androidx.appcompat.widget.SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
-//        ListView lv = dialogView.findViewById(R.id.dialogListView);
-//
-//        String[] apps = Constantes.APPS;
-//        // Use ArrayAdapter to allow filtering
-//        ArrayAdapter<String> adapterLocal = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_single_choice, apps);
-//        lv.setAdapter(adapterLocal);
-//
-//        // Pre-select current app if present
-//        for (int i = 0; i < apps.length; i++) {
-//            if (apps[i].equals(Constantes.APP)) {
-//                lv.setItemChecked(i, true);
-//                lv.setSelection(i);
-//                break;
-//            }
-//        }
-//
-//        // Wire search to filter adapter
-//        sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-//            @Override
-//            public boolean onQueryTextSubmit(String query) {
-//                return false;
-//            }
-//
-//            @Override
-//            public boolean onQueryTextChange(String newText) {
-//                adapterLocal.getFilter().filter(newText);
-//                return true;
-//            }
-//        });
-//
-//        AlertDialog alerta = builder.setView(dialogView)
-//                .setCancelable(true)
-//                .setNegativeButton(R.string.cancelar, (dialog, which) -> dialog.dismiss())
-//                .create();
-//
-//        // Item click: change app
-//        lv.setOnItemClickListener((parent, view, position, id) -> {
-//            String seleccionado = adapterLocal.getItem(position);
-//            if (seleccionado != null) {
-//                Constantes.APP = seleccionado;
-//                Toast.makeText(getActivity(), "App cambiada a " + Constantes.APP, Toast.LENGTH_SHORT).show();
-//                inicializarFirebase();
-//                alerta.dismiss();
-//            }
-//        });
-//
-//        alerta.show();
-//    }
-
     private void inicializarFirebase() {
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         DatabaseReference dr = fd.getReference("usuarios");
 
         progressBar.setVisibility(View.VISIBLE);
 
-        // Consultar grupo seleccionado y cargar cantos correspondientes
-        dr.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).get().addOnSuccessListener(dataSnapshot -> {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            progressBar.setVisibility(View.GONE);
+            return;
+        }
+
+        dr.child(currentUser.getUid()).get().addOnSuccessListener(dataSnapshot -> {
             if (dataSnapshot.exists()) {
                 Usuario u = dataSnapshot.getValue(Usuario.class);
                 if (u != null) {
-                    // Si el usuario no tiene grupos, mostrar mensaje y botones
                     if (u.getGrupos() == null || u.getGrupos().isEmpty() || u.getGrupoActual() == null || u.getGrupoActual().isEmpty()) {
+                        detenerListenerCantos();
                         noGroupContainer.setVisibility(View.VISIBLE);
                         lista.setVisibility(View.GONE);
                         fabNuevo.setVisibility(View.INVISIBLE);
@@ -613,32 +511,42 @@ public class ListaCantosFragment extends Fragment {
                         cargarCantos();
                     }
                 } else {
+                    progressBar.setVisibility(View.GONE);
                     Toast.makeText(getActivity(), "Error al cargar usuario", Toast.LENGTH_SHORT).show();
                 }
             } else {
+                progressBar.setVisibility(View.GONE);
                 Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
             }
-        }).addOnFailureListener(e -> Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e -> {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void cargarCantos() {
-        // 1. Mostrar el progress bar al iniciar la carga (por si acaso viene de otra pantalla)
         progressBar.setVisibility(View.VISIBLE);
 
         FirebaseDatabase fd = FirebaseDatabase.getInstance();
         DatabaseReference dr = fd.getReference("cantos");
 
+        if (Constantes.GRUPO_SELECCIONADO == null) {
+            progressBar.setVisibility(View.GONE);
+            return;
+        }
+
         final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
 
-        // 2. Traemos indexados únicamente los cantos de ese grupo desde el servidor
-        dr.orderByChild("grupo_id").equalTo(grupoSeleccionado)
-        .addListenerForSingleValueEvent(new ValueEventListener() {
+        detenerListenerCantos();
+
+        queryCantos = dr.orderByChild("grupo_id").equalTo(grupoSeleccionado);
+
+        cantosListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaCantos.clear();
                 listaRespaldo.clear();
 
-                // 3. Llenamos la lista con los datos ya filtrados en la nube
                 for (DataSnapshot objSnap : snapshot.getChildren()) {
                     if (objSnap != null) {
                         try {
@@ -647,28 +555,23 @@ public class ListaCantosFragment extends Fragment {
                                 listaCantos.add(c);
                             }
                         } catch (Exception e) {
-                            Toast.makeText(getActivity(), "Error al parsear el canto", Toast.LENGTH_SHORT).show();
                             Log.e("Error_Firebase", "Llave con error: " + objSnap.getKey(), e);
                         }
                     }
                 }
 
-                // 4. Ordenar alfabéticamente ignorando mayúsculas/minúsculas
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     listaCantos.sort((c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
                 } else {
                     Collections.sort(listaCantos, (c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
                 }
 
-                // 5. Clonamos la lista ordenada para tu buscador/respaldo
                 listaRespaldo.addAll(listaCantos);
 
-                // 6. ¡La magia del rendimiento! Solo le avisamos al adaptador existente que refresque los datos
                 if (adapter != null) {
                     adapter.notifyDataSetChanged();
                 }
 
-                // 7. Ocultamos el indicador de carga
                 progressBar.setVisibility(View.GONE);
             }
 
@@ -678,18 +581,22 @@ public class ListaCantosFragment extends Fragment {
                 Log.e("Firebase_Error", "Error en consulta: " + error.getMessage());
                 Toast.makeText(getActivity(), "Error de conexión con la base de datos", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+
+        queryCantos.addValueEventListener(cantosListener);
     }
 
     private void cerrarSesion(){
+        detenerListenerCantos();
         FirebaseAuth.getInstance().signOut();
 
         Activity activity = getActivity();
-        Intent i = new Intent(activity, LoginActivity.class);
-        startActivity(i);
-        assert activity != null;
-        activity.overridePendingTransition(R.anim.right_in,R.anim.right_out);
-        activity.finish();
+        if (activity != null) {
+            Intent i = new Intent(activity, LoginActivity.class);
+            startActivity(i);
+            activity.overridePendingTransition(R.anim.right_in, R.anim.right_out);
+            activity.finish();
+        }
     }
 
     private void alertaAcercaDe(){
@@ -706,32 +613,27 @@ public class ListaCantosFragment extends Fragment {
 
     private void nuevoCanto() {
         Activity activity = getActivity();
-
-        Intent i = new Intent(activity, NuevoCantoActivity.class);
-        i.putExtra("getTipo", 0);
-        startActivity(i);
-
-        assert activity != null;
-
-        activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
+        if (activity != null) {
+            Intent i = new Intent(activity, NuevoCantoActivity.class);
+            i.putExtra("getTipo", 0);
+            startActivity(i);
+            activity.overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        }
     }
 
     private void verCanto(Canto canto) {
         Activity activity = getActivity();
+        if (activity != null) {
+            Intent i = new Intent(activity, CantoActivity.class);
+            i.putExtra("getID", canto.getId());
+            i.putExtra("getNombre", canto.getNombre());
+            i.putExtra("getLetra", canto.getLetra());
+            i.putExtra("getMomentos", canto.getMomentos());
+            i.putExtra("getTiempos", canto.getTiempos());
 
-        Intent i = new Intent(activity, CantoActivity.class);
-        i.putExtra("getID", canto.getId());
-        i.putExtra("getNombre",canto.getNombre());
-        i.putExtra("getLetra", canto.getLetra());
-        i.putExtra("getMomentos", canto.getMomentos());
-        i.putExtra("getTiempos", canto.getTiempos());
-
-        startActivity(i);
-
-        assert activity != null;
-
-        activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
-        activity.finish();
+            startActivity(i);
+            activity.overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        }
     }
 
     public static String quitaDiacriticos(String s) {
@@ -740,7 +642,8 @@ public class ListaCantosFragment extends Fragment {
         return s;
     }
 
-    SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
+    // Buscador optimizado: No recrea el Adaptador en cada tecla presionada
+    private final SearchView.OnQueryTextListener oyente = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
             return false;
@@ -748,33 +651,29 @@ public class ListaCantosFragment extends Fragment {
 
         @Override
         public boolean onQueryTextChange(String s) {
-            //s.replace("ÁáÉéÍíÓóÚúÜü","");
             int longitud = s.length();
-            if(longitud == 0)
-            {
-                listaCantos.clear();
+            listaCantos.clear();
+
+            if (longitud == 0) {
                 listaCantos.addAll(listaRespaldo);
-            }else{
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    List<Canto> collecion = listaRespaldo.stream().filter
-                                    (i->quitaDiacriticos(i.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))).
-                            collect(Collectors.toList());
-                    listaCantos.clear();
-                    listaCantos.addAll(collecion);
-                }else {
-                    listaCantos.clear();
-                    for (Canto z: listaRespaldo) {
-                        if (quitaDiacriticos(z.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))){
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    List<Canto> coleccion = listaRespaldo.stream().filter(
+                            i -> quitaDiacriticos(i.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))
+                    ).collect(Collectors.toList());
+                    listaCantos.addAll(coleccion);
+                } else {
+                    for (Canto z : listaRespaldo) {
+                        if (quitaDiacriticos(z.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))) {
                             listaCantos.add(z);
                         }
                     }
                 }
             }
 
-            adapter = new AdaptadorCantos(listaCantos, getActivity());
-            lista.setHasFixedSize(true);
-            lista.setLayoutManager(new LinearLayoutManager(getActivity()));
-            lista.setAdapter(adapter);
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
 
             return true;
         }
