@@ -264,7 +264,7 @@ public class LoginActivity extends AppCompatActivity {
             usuario.setNombre(currentUser.getDisplayName());
             usuario.setEmail(currentUser.getEmail());
             usuario.setNumber_phone(currentUser.getPhoneNumber());
-            usuario.setFecha_creacion(fechaActual.toString());
+            usuario.setFecha_creacion(fechaActual != null ? fechaActual.toString() : "");
 
             // Si tiene foto le asignamos el link al objeto
             if (currentUser.getPhotoUrl() != null) {
@@ -294,7 +294,10 @@ public class LoginActivity extends AppCompatActivity {
                     Usuario usuario = task.getResult().getValue(Usuario.class);
 
                     // Mandamos un mensaje de bienvenida
-                    assert usuario != null;
+                    if (usuario == null) {
+                        Toast.makeText(LoginActivity.this, "Error al obtener usuario", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     Toast.makeText(LoginActivity.this, getString(R.string.bienvenida) +
                                     " " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
 

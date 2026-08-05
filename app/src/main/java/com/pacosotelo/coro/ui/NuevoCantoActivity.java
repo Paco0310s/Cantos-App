@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -44,8 +45,8 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private int tipo = 0;
     private Canto canto;
     private ArrayList<String> momentos, tiempos;
-    //private ListView listaMomentos, listaTiempos;
-    private ArrayAdapter<String> adapter;
+    private ListView listaMomentos, listaTiempos;
+    private ArrayAdapter<String> adapterMomentos, adapterTiempos;
     private boolean[] checkedItemsMomentos, checkedItemsTiempos;
     private String[] arrayMomentos, arrayTiempos;
     private ArrayList<String> momentosSeleccionados, tiemposSeleccionados;
@@ -63,8 +64,8 @@ public class NuevoCantoActivity extends AppCompatActivity {
         etNombre = findViewById(R.id.etNombre);
         etLetra = findViewById(R.id.etLetra);
         bAgregar = findViewById(R.id.bAgregar);
-        //listaMomentos = findViewById(R.id.listaMomentos);
-        //listaTiempos = findViewById(R.id.listaTiempos);
+        listaMomentos = findViewById(R.id.listaMomentos);
+        listaTiempos = findViewById(R.id.listaTiempos);
 
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
@@ -75,13 +76,38 @@ public class NuevoCantoActivity extends AppCompatActivity {
         tiempos = new ArrayList<>();
         tiemposSeleccionados = new ArrayList<>();
 
-        inicializarFirebase();
+        // Inicializar adaptadores para los ListViews
+        adapterMomentos = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, momentosSeleccionados);
+        adapterTiempos = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tiemposSeleccionados);
+        listaMomentos.setAdapter(adapterMomentos);
+        listaTiempos.setAdapter(adapterTiempos);
 
+        // Permitir eliminar momentos al hacer clic prolongado
+        listaMomentos.setOnItemLongClickListener((parent, view, position, id) -> {
+            momentosSeleccionados.remove(position);
+            adapterMomentos.notifyDataSetChanged();
+            return true;
+        });
+
+        // Permitir eliminar tiempos al hacer clic prolongado
+        listaTiempos.setOnItemLongClickListener((parent, view, position, id) -> {
+            tiemposSeleccionados.remove(position);
+            adapterTiempos.notifyDataSetChanged();
+            return true;
+        });
+
+        // Obtener extras y usuario antes de inicializar Firebase y manejar UI
         Bundle datos = this.getIntent().getExtras();
-
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        tipo = datos.getInt("tipo");
+        // El resto de la app usa la clave "getTipo" al crear el intent
+        if (datos != null) {
+            tipo = datos.getInt("getTipo", 0);
+        } else {
+            tipo = 0;
+        }
+
+        inicializarFirebase();
 
         switch (tipo) {
             case 0:
@@ -159,7 +185,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 for (int i = 0; i < arrayMomentos.length; i++) arrayMomentos[i] = momentos.get(i);
                 checkedItemsMomentos = new boolean[arrayMomentos.length];
 
-                if(tipo==1) {
+                if(tipo==1 && canto != null) {
                     for(int i = 0; i < arrayMomentos.length; i++) {
                         for (int j = 0; j < canto.getMomentos().size(); j++) {
                             if (Objects.equals(arrayMomentos[i], canto.getMomentos().get(j))) checkedItemsMomentos[i] = true;
@@ -187,7 +213,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 for (int i = 0; i < arrayTiempos.length; i++) arrayTiempos[i] = tiempos.get(i);
                 checkedItemsTiempos = new boolean[arrayTiempos.length];
 
-                if(tipo==1) {
+                if(tipo==1 && canto != null) {
                     for(int i = 0; i < arrayTiempos.length; i++) {
                         for (int j = 0; j < canto.getTiempos().size(); j++) {
                             if (Objects.equals(arrayTiempos[i], canto.getTiempos().get(j))) checkedItemsTiempos[i] = true;
@@ -223,23 +249,30 @@ public class NuevoCantoActivity extends AppCompatActivity {
 //        });
     }
 
-    private void modificarCanto() {
-        bAgregar.setText(R.string.modificar);
+     private void modificarCanto() {
+         bAgregar.setText(R.string.modificar);
 
-        canto = (Canto) this.getIntent().getSerializableExtra("canto");
+         canto = (Canto) this.getIntent().getSerializableExtra("canto");
+          if (canto == null) {
+              Toast.makeText(this, "Error al cargar el canto", Toast.LENGTH_SHORT).show();
+              finish();
+              return;
+          }
 
-        etNombre.setText(canto.getNombre());
-        etLetra.setText(canto.getLetra());
+          etNombre.setText(canto.getNombre());
+          etLetra.setText(canto.getLetra());
 
-        //Toast.makeText(this, arrayMomentos.length, Toast.LENGTH_SHORT).show();
+          // Cargar los momentos y tiempos anteriores en las listas visibles
+          if (canto.getMomentos() != null && !canto.getMomentos().isEmpty()) {
+              momentosSeleccionados.addAll(canto.getMomentos());
+              adapterMomentos.notifyDataSetChanged();
+          }
 
-        /*for (int i = 0; i < arrayMomentos.length; i++) {
-            if(arrayMomentos[i].equals(canto.getMomentos().get(i))) {
-                checkedItemsMomentos[i] = true;
-            }
-        }*/
-
-    }
+          if (canto.getTiempos() != null && !canto.getTiempos().isEmpty()) {
+              tiemposSeleccionados.addAll(canto.getTiempos());
+              adapterTiempos.notifyDataSetChanged();
+          }
+     }
 
     @Override
     public void onBackPressed() {
@@ -304,7 +337,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 assert currentUser != null;
                 canto_mod.setCreado_por(currentUser.getUid());
                 canto_mod.setModificado_por(currentUser.getUid());
-                canto_mod.setFecha_creacion(fechaActual.toString());
+                canto_mod.setFecha_creacion(fechaActual != null ? fechaActual.toString() : "");
 
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 
@@ -312,6 +345,22 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
                 etNombre.setText("");
                 etLetra.setText("");
+                
+                // Limpiar las listas de momentos y tiempos
+                momentosSeleccionados.clear();
+                tiemposSeleccionados.clear();
+                
+                // Limpiar las selecciones de los checkboxes
+                for (int i = 0; i < checkedItemsMomentos.length; i++) {
+                    checkedItemsMomentos[i] = false;
+                }
+                for (int i = 0; i < checkedItemsTiempos.length; i++) {
+                    checkedItemsTiempos[i] = false;
+                }
+                
+                // Notificar a los adaptadores
+                adapterMomentos.notifyDataSetChanged();
+                adapterTiempos.notifyDataSetChanged();
 
                 break;
             case 1:
@@ -319,7 +368,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
                 assert currentUser != null;
                 canto_mod.setModificado_por(currentUser.getUid());
-                canto_mod.setFecha_modificacion(fechaActual.toString());
+                canto_mod.setFecha_modificacion(fechaActual != null ? fechaActual.toString() : "");
 
                 dr.child(canto_mod.getId()).setValue(canto_mod);
 
@@ -341,13 +390,17 @@ public class NuevoCantoActivity extends AppCompatActivity {
         });
 
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> {
-
+            // Limpiar la lista anterior para evitar duplicados
+            momentosSeleccionados.clear();
 
             for (int i = 0; i < checkedItemsMomentos.length; i++) {
                 if(checkedItemsMomentos[i]) {
                     momentosSeleccionados.add(arrayMomentos[i]);
                 }
             }
+
+            // Notificar al adaptador de los cambios
+            adapterMomentos.notifyDataSetChanged();
 
         });
 
@@ -366,12 +419,17 @@ public class NuevoCantoActivity extends AppCompatActivity {
         });
 
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> {
+            // Limpiar la lista anterior para evitar duplicados
+            tiemposSeleccionados.clear();
 
             for (int i = 0; i < checkedItemsTiempos.length; i++) {
                 if(checkedItemsTiempos[i]) {
                     tiemposSeleccionados.add(arrayTiempos[i]);
                 }
             }
+
+            // Notificar al adaptador de los cambios
+            adapterTiempos.notifyDataSetChanged();
 
         });
 

@@ -20,7 +20,9 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            // Habilitar minimización para release ayuda a proteger el código.
+            // Asegúrate de revisar `proguard-rules.pro` si aparecen problemas en build.
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

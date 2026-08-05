@@ -79,7 +79,7 @@ public class MenuLateralActivity extends AppCompatActivity {
             tvEmailUser.setText(usuario.getEmail());
 
             String foto = usuario.getFoto();
-            if(!foto.isEmpty()) Picasso.get().load(foto).into(civFoto);
+            if (foto != null && !foto.isEmpty()) Picasso.get().load(foto).into(civFoto);
         } else {
             usuario = new Usuario();
         }
@@ -145,6 +145,11 @@ public class MenuLateralActivity extends AppCompatActivity {
     }
 
     private void subirImagen(Uri FileUri){
+        if (usuario == null || usuario.getUid() == null) {
+            Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String id = usuario.getUid();
 
         DatabaseReference dr = FirebaseDatabase.getInstance().getReference("usuarios");
@@ -152,11 +157,13 @@ public class MenuLateralActivity extends AppCompatActivity {
 
         final StorageReference file_name = Folder.child("IMG-USER-" + id);
 
-        file_name.putFile(FileUri).addOnSuccessListener(taskSnapshot -> file_name.getDownloadUrl().addOnSuccessListener(uri -> {
-            usuario.setFoto(String.valueOf(uri));
-            dr.child(id).setValue(usuario);
-            Toast.makeText(this, "Se ha subido la imagen", Toast.LENGTH_SHORT).show();
-        }));
+        file_name.putFile(FileUri)
+                .addOnSuccessListener(taskSnapshot -> file_name.getDownloadUrl().addOnSuccessListener(uri -> {
+                    usuario.setFoto(String.valueOf(uri));
+                    dr.child(id).setValue(usuario);
+                    Toast.makeText(this, "Se ha subido la imagen", Toast.LENGTH_SHORT).show();
+                }))
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al subir imagen: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {
@@ -170,16 +177,18 @@ public class MenuLateralActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == 2){
             if (resultCode == Activity.RESULT_OK){
-                assert data != null;
+                if (data == null || data.getExtras() == null) return;
                 Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+                if (bitmap == null) return;
                 civFoto.setImageBitmap(bitmap);
                 subirImagen(getImageUri(this,bitmap));
             }
         }
         if (requestCode == 1){
             if (resultCode == Activity.RESULT_OK){
-                assert data != null;
+                if (data == null) return;
                 Uri path = data.getData();
+                if (path == null) return;
                 civFoto.setImageURI(path);
                 subirImagen(path);
             }
