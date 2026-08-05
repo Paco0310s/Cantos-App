@@ -73,6 +73,8 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         adapter2 = new ArrayAdapter<>(this,
                 R.layout.item_canto_esquema2);
 
+        rvCantosEsquema.setAdapter(adapter2);
+
         rvCantosEsquema.setOnItemClickListener((adapterView, view, i, l) -> cantoPulsado(view, i));
     }
 
@@ -260,7 +262,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
 
         esquema.setCantos(listaCantos);
 
-        esquema.setFecha_creacion(fechaActual.toString());
+        esquema.setFecha_creacion(fechaActual != null ? fechaActual.toString() : "");
 
         dr = fd.getReference();
         dr.child("esquemas").child(esquema.getId()).setValue(esquema);
