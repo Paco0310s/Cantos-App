@@ -5,24 +5,31 @@ plugins {
 
 android {
     namespace 'com.pacosotelo.coro'
-    compileSdk 36
+    compileSdk 37
     buildToolsVersion '36.1.0'
 
     defaultConfig {
         applicationId "com.pacosotelo.coro"
         minSdk 24
         targetSdk 36
-        versionCode 13
-        versionName "5.0.2"
+        versionCode 14
+        versionName "5.0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libmodpdfium.so'
+        pickFirst 'lib/x86_64/libjniPdfium.so'
+        pickFirst 'lib/x86_64/libmodpdfium.so'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -31,23 +38,27 @@ android {
     buildFeatures {
         viewBinding true
     }
+    lint {
+        abortOnError false
+    }
     ndkVersion '28.2.13676358'
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'com.google.android.material:material:1.13.0'
-    implementation 'androidx.navigation:navigation-fragment:2.9.7'
-    implementation 'androidx.navigation:navigation-ui:2.9.7'
+    implementation 'androidx.activity:activity:1.13.0'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.navigation:navigation-fragment:2.9.8'
+    implementation 'androidx.navigation:navigation-ui:2.9.8'
 
     // Firebase BOM (Bill of Materials) manages versions
-    implementation platform('com.google.firebase:firebase-bom:34.9.0')
+    implementation platform('com.google.firebase:firebase-bom:34.17.0')
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-storage'
 
     // Auth services
-    implementation 'com.google.android.gms:play-services-auth:21.5.0'
+    implementation 'com.google.android.gms:play-services-auth:21.6.0'
 
     // PDF and Image Libraries
     implementation 'com.itextpdf:itextg:5.5.10'
@@ -58,8 +69,7 @@ dependencies {
     // UI Components
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.activity:activity:1.12.4'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

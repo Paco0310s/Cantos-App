@@ -55,6 +55,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_nuevo_esquema);
 
         esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");

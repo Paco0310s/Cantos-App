@@ -17,6 +17,7 @@ public class ViewPDFActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_viewpdf);
 
         pdfView = findViewById(R.id.pdfView);
