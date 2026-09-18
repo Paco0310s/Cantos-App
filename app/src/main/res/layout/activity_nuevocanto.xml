@@ -96,42 +96,91 @@
                 style="@style/texto"
                 /-->
 
+            <TextView
+                android:id="@+id/tvMomento"
+                android:layout_height="25dp"
+                android:layout_width="match_parent"
+                android:layout_marginTop="30dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/momento"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:fontFamily="@font/mywife"
+                style="@style/texto"
+                />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="10dp"
                 tools:ignore="UselessLeaf">
+
+                <ListView
+                    android:id="@+id/listaMomentos"
+                    android:layout_width="0dp"
+                    android:layout_height="200dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="15dp"
+                    tools:ignore="NestedScrolling" />
 
                 <Button
                     android:id="@+id/bMomento"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_mas"
+                    android:onClick="mostrarMomentos"
+                    android:textSize="20sp"
+                    style="@style/boton"
+                    tools:ignore="UsingOnClickInXml" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvTiempo"
+                android:layout_height="25dp"
+                android:layout_width="match_parent"
+                android:layout_marginTop="30dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/tiempo"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:fontFamily="@font/mywife"
+                style="@style/texto"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                tools:ignore="UselessLeaf">
+
+                <ListView
+                    android:id="@+id/listaTiempos"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="200dp"
                     android:layout_weight="1"
                     android:layout_marginStart="15dp"
-                    android:layout_marginEnd="30dp"
-                    android:layout_gravity="center_vertical"
-                    android:onClick="mostrarMomentos"
-                    android:text="@string/momento"
-                    android:textSize="20sp"
-                    android:textAllCaps="false"
-                    style="@style/boton"
-                    android:fontFamily="@font/mywife"
-                    tools:ignore="UsingOnClickInXml" />
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="15dp"
+                    tools:ignore="NestedScrolling" />
 
                 <Button
                     android:id="@+id/bTiempo"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:layout_marginEnd="15dp"
                     android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_mas"
                     android:onClick="mostrarTiempos"
-                    android:text="@string/tiempo"
                     android:textSize="20sp"
-                    android:textAllCaps="false"
                     style="@style/boton"
-                    android:fontFamily="@font/mywife"
                     tools:ignore="UsingOnClickInXml" />
             </LinearLayout>
 
@@ -149,77 +198,6 @@
                 style="@style/boton"
                 android:fontFamily="@font/mywife"
                 tools:ignore="UsingOnClickInXml" />
-
-            <!--LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                tools:ignore="UselessLeaf">
-
-                <ListView
-                    android:id="@+id/listaMomentos"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="15dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginEnd="15dp"
-                    tools:ignore="NestedScrolling" />
-
-                <Button
-                    android:id="@+id/bMomento"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginEnd="25dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/ic_mas"
-                    android:onClick="mostrarMomentos"
-                    android:text="@string/agregar_canto"
-                    android:textSize="20sp"
-                    tools:ignore="UsingOnClickInXml" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvTiempo"
-                android:layout_height="25dp"
-                android:layout_width="match_parent"
-                android:layout_marginTop="20dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:text="@string/tiempo"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                style="@style/texto"
-                />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                tools:ignore="UselessLeaf">
-
-                <ListView
-                    android:id="@+id/listaTiempos"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="15dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginEnd="15dp"
-                    tools:ignore="NestedScrolling" />
-
-                <Button
-                    android:id="@+id/bTiempo"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginEnd="25dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/ic_mas"
-                    android:onClick="mostrarTiempos"
-                    android:text="@string/agregar_tiempos"
-                    android:textSize="20sp"
-                    tools:ignore="UsingOnClickInXml" />
-            </LinearLayout-->
 
 
         </LinearLayout>

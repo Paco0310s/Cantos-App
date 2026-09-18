@@ -5,7 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
+// ...existing imports...
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -21,7 +21,7 @@ import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.ui.CantoActivity;
 import com.pacosotelo.coro.ui.ModificarEsquemaActivity;
-import com.pacosotelo.coro.ui.NuevoEsquemaActivity;
+// ...existing imports...
 
 import java.util.List;
 
@@ -39,12 +39,13 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
     @NonNull
     @Override
     public AdaptadorEsquemas.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.item_esquema, null);
+        View view = mInflater.inflate(R.layout.item_esquema, parent, false);
         return new AdaptadorEsquemas.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull AdaptadorEsquemas.ViewHolder holder, int position) {
+        if (listaEsquemas == null || position < 0 || position >= listaEsquemas.size()) return;
         holder.bindData(listaEsquemas.get(position));
     }
 
@@ -80,7 +81,9 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
             cvEsquema.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Esquema esquema = listaEsquemas.get(getAbsoluteAdapterPosition());
+                    int pos = getAbsoluteAdapterPosition();
+                    if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
+                    Esquema esquema = listaEsquemas.get(pos);
 
                     Intent i = new Intent(contexto, ModificarEsquemaActivity.class);
                     i.putExtra("esquema", esquema);
@@ -90,7 +93,11 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
             });
 
             listaCantosEsquema.setOnItemClickListener((adapterView, view, i, l) ->  {
-                Esquema esquema = listaEsquemas.get(getAbsoluteAdapterPosition());
+                int pos = getAbsoluteAdapterPosition();
+                if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
+
+                Esquema esquema = listaEsquemas.get(pos);
+                if (esquema == null || esquema.getCantos() == null || i < 0 || i >= esquema.getCantos().size()) return;
 
                 Intent intent = new Intent(contexto, CantoActivity.class);
                 intent.putExtra("canto", esquema.getCantos().get(i));
@@ -107,8 +114,10 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
         private void bindData(final Esquema esquema) {
             nombreEsquema.setText(esquema.getNombre());
 
+            List<Canto> cantos = esquema.getCantos();
+            if (cantos == null) cantos = new java.util.ArrayList<>();
             ArrayAdapter<Canto> adapter = new ArrayAdapter<>(contexto
-                    , R.layout.item_canto_esquema, esquema.getCantos());
+                    , R.layout.item_canto_esquema, cantos);
             listaCantosEsquema.setAdapter(adapter);
 
         }
