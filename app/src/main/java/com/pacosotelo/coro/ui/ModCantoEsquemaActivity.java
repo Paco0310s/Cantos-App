@@ -27,6 +27,7 @@ public class ModCantoEsquemaActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_mod_canto_esquema);
 
         Toolbar toolbar = findViewById(R.id.toolbar);

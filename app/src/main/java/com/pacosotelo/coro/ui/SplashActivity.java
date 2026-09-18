@@ -25,6 +25,7 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_splash);
 
         // Firebase Analytics, para poder observar informacion de la app posteriormente

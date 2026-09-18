@@ -46,6 +46,7 @@ public class MenuLateralActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
 
         com.pacosotelo.coro.databinding.ActivityMenuLateralBinding binding = ActivityMenuLateralBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

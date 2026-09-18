@@ -50,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_login);
 
         // Creamos nuestro GoogleSignInOptions para poder obtener el cliente

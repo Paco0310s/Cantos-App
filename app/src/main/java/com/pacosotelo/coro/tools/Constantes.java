@@ -8,7 +8,7 @@ public class Constantes {
     public static final String[] tonos = {"DO#","REb","RE#","MIb","FA#","SOLb",
             "SOL#","LAb","LA#","SIb","DO","RE","MI","FA","SOL","LA","SI"};
     public static final String[] extras = {"","m","7","m7"};
-    public static final int VERSION = 12;
+    public static final int VERSION = 16;
 
     // Usar volatile para visibilidad entre hilos
     public static volatile String GRUPO_SELECCIONADO = "";
