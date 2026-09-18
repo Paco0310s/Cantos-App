@@ -12,17 +12,16 @@ android {
         applicationId "com.pacosotelo.coro"
         minSdk 24
         targetSdk 36
-        versionCode 16
-        versionName "5.0.5"
+        versionCode 17
+        versionName "5.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            // Habilitar minimización para release ayuda a proteger el código.
-            // Asegúrate de revisar `proguard-rules.pro` si aparecen problemas en build.
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -41,20 +40,20 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.appcompat:appcompat:1.8.0'
     implementation 'androidx.activity:activity:1.13.0'
     implementation 'com.google.android.material:material:1.14.0'
-    implementation 'androidx.navigation:navigation-fragment:2.9.8'
-    implementation 'androidx.navigation:navigation-ui:2.9.8'
+    implementation 'androidx.navigation:navigation-fragment:2.10.1'
+    implementation 'androidx.navigation:navigation-ui:2.10.1'
 
     // Firebase BOM (Bill of Materials) manages versions
-    implementation platform('com.google.firebase:firebase-bom:34.17.0')
+    implementation platform('com.google.firebase:firebase-bom:34.19.0')
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-storage'
 
     // Auth services
-    implementation 'com.google.android.gms:play-services-auth:21.6.0'
+    implementation 'com.google.android.gms:play-services-auth:21.3.0'
 
     // PDF and Image Libraries
     implementation 'com.itextpdf:itextg:5.5.10'

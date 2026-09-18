@@ -1,12 +1,16 @@
 package com.pacosotelo.coro.ui;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -29,6 +33,13 @@ public class ModCantoEsquemaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_mod_canto_esquema);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                regresar();
+            }
+        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -69,14 +80,17 @@ public class ModCantoEsquemaActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        regresar();
         return false;
     }
 
-    @Override
-    public void onBackPressed() {
+    private void regresar() {
         finish();
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.right_in, R.anim.right_out);
+        } else {
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        }
     }
 
     public void modificarCanto(View view) {
@@ -93,10 +107,12 @@ public class ModCantoEsquemaActivity extends AppCompatActivity {
         canto.setNombre(etNombre.getText().toString());
         canto.setLetra(etLetra.getText().toString());
 
-        dr.setValue(canto);
+        dr.setValue(canto)
+                .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> DATOS ACTUALIZADOS CON ÉXITO: ModCantoEsquema (" + canto.getId() + ")"))
+                .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO DATOS: ModCantoEsquema (" + canto.getId() + ")", e));
         Toast.makeText(this, "Canto modificado", Toast.LENGTH_SHORT).show();
 
-        onBackPressed();
+        regresar();
     }
 
     private void comillas() {

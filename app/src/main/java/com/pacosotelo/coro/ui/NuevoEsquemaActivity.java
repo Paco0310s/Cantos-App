@@ -1,10 +1,12 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,21 +38,31 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.pacosotelo.coro.tools.CantoEsquemaEditAdapter;
+
 public class NuevoEsquemaActivity extends AppCompatActivity {
     Button bAgregarCanto, bGuardarEsquema;
     EditText etNombreEsquema;
-    ListView rvCantosEsquema;
+    RecyclerView rvCantosEsquema;
     DatabaseReference dr;
     FirebaseDatabase fd;
     private final ArrayList<Canto> listaCantos = new ArrayList<>();
-    //AdaptadorCantoEsquema adapter2;
-    ArrayAdapter<Canto> adapter2;
+    CantoEsquemaEditAdapter adapter2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_nuevo_esquema);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                regresar();
+            }
+        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -67,16 +79,13 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         bGuardarEsquema = findViewById(R.id.bGuardarEsquema);
         etNombreEsquema = findViewById(R.id.etNombreEsquema);
         rvCantosEsquema = findViewById(R.id.rvCantosEsquema);
+        rvCantosEsquema.setLayoutManager(new LinearLayoutManager(this));
 
         bAgregarCanto.setOnClickListener(v -> agregarCanto());
         bGuardarEsquema.setOnClickListener(v -> guardarEsquema());
 
-        adapter2 = new ArrayAdapter<>(this,
-                R.layout.item_canto_esquema2);
-
+        adapter2 = new CantoEsquemaEditAdapter(listaCantos, (view, position) -> cantoPulsado(view, position));
         rvCantosEsquema.setAdapter(adapter2);
-
-        rvCantosEsquema.setOnItemClickListener((adapterView, view, i, l) -> cantoPulsado(view, i));
     }
 
     private void agregarCanto() {
@@ -84,7 +93,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         builder.setTitle("Selecciona un canto");
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_searchable_list, null);
-        androidx.appcompat.widget.SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
+        SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
         ListView lv = dialogView.findViewById(R.id.dialogListView);
 
         ArrayAdapter<Canto> arrayAdapter = new ArrayAdapter<>(this, R.layout.item_canto_esquema);
@@ -129,7 +138,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
                 });
 
         // 2. Vinculamos el buscador con nuestra función personalizada usando la lista de respaldo
-        sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+        sv.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 return false;
@@ -168,8 +177,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
             if (c != null) {
                 listaCantos.add(c);
                 if (adapter2 != null) {
-                    adapter2.add(c);
-                    adapter2.notifyDataSetChanged();
+                    adapter2.notifyItemInserted(listaCantos.size() - 1);
                 }
             }
             dialog.dismiss();
@@ -191,19 +199,15 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
                     return true;
                 case R.id.eliminarCanto:
                     listaCantos.remove(indice);
-                    adapter2.clear();
-                    adapter2.addAll(listaCantos);
-                    rvCantosEsquema.setAdapter(adapter2);
+                    adapter2.notifyItemRemoved(indice);
+                    adapter2.notifyItemRangeChanged(indice, listaCantos.size());
                     return true;
                 case R.id.moverArriba:
                     if (indice > 0) {
                         Canto temp = listaCantos.get(indice);
                         listaCantos.set(indice, listaCantos.get(indice - 1));
                         listaCantos.set(indice - 1, temp);
-                        adapter2.clear();
-                        adapter2.addAll(listaCantos);
-                        rvCantosEsquema.setAdapter(adapter2);
-                        rvCantosEsquema.setSelection(indice - 1);
+                        adapter2.notifyItemMoved(indice, indice - 1);
                     } else {
                         Toast.makeText(NuevoEsquemaActivity.this, "El canto ya está al principio", Toast.LENGTH_SHORT).show();
                     }
@@ -213,10 +217,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
                         Canto temp = listaCantos.get(indice);
                         listaCantos.set(indice, listaCantos.get(indice + 1));
                         listaCantos.set(indice + 1, temp);
-                        adapter2.clear();
-                        adapter2.addAll(listaCantos);
-                        rvCantosEsquema.setAdapter(adapter2);
-                        rvCantosEsquema.setSelection(indice + 1);
+                        adapter2.notifyItemMoved(indice, indice + 1);
                     } else {
                         Toast.makeText(NuevoEsquemaActivity.this, "El canto ya está al final", Toast.LENGTH_SHORT).show();
                     }
@@ -266,28 +267,31 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         esquema.setFecha_creacion(fechaActual != null ? fechaActual.toString() : "");
 
         dr = fd.getReference();
-        dr.child("esquemas").child(esquema.getId()).setValue(esquema);
-
-        Toast.makeText(this, "Esquema agregado", Toast.LENGTH_SHORT).show();
-
-        regresar();
+        dr.child("esquemas").child(esquema.getId()).setValue(esquema)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FIREBASE_TRACE", "=====================> DATOS GUARDADOS CON ÉXITO: Esquema (" + esquema.getId() + ")");
+                    Toast.makeText(this, "Esquema agregado", Toast.LENGTH_SHORT).show();
+                    regresar();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FIREBASE_TRACE", "=====================> ERROR GUARDANDO DATOS: Esquema (" + esquema.getId() + ")", e);
+                    Toast.makeText(this, "Error al guardar esquema: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return false;
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
         regresar();
+        return false;
     }
 
     private void regresar() {
         finish();
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.right_in, R.anim.right_out);
+        } else {
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        }
     }
 
     /*public boolean onCreateOptionsMenu(Menu menu){

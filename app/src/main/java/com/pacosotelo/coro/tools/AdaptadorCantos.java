@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
@@ -36,13 +37,13 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
 
     @NonNull
     @Override
-    public AdaptadorCantos.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.item_canto, null);
-        return new AdaptadorCantos.ViewHolder(view);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AdaptadorCantos.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.bindData(listaCantos.get(position));
     }
 
@@ -53,6 +54,35 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
 
     public void setLista(List<Canto> listaCantos) {
         this.listaCantos = listaCantos;
+        notifyDataSetChanged();
+    }
+
+    public void actualizarLista(List<Canto> nuevaLista) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return listaCantos.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return nuevaLista.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return listaCantos.get(oldItemPosition).getId().equals(nuevaLista.get(newItemPosition).getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                return listaCantos.get(oldItemPosition).getNombre().equals(nuevaLista.get(newItemPosition).getNombre());
+            }
+        });
+
+        this.listaCantos.clear();
+        this.listaCantos.addAll(nuevaLista);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

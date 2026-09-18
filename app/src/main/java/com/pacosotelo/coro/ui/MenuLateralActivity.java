@@ -8,8 +8,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,7 +50,7 @@ public class MenuLateralActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
 
-        com.pacosotelo.coro.databinding.ActivityMenuLateralBinding binding = ActivityMenuLateralBinding.inflate(getLayoutInflater());
+        ActivityMenuLateralBinding binding = ActivityMenuLateralBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMenuLateral.toolbar);
@@ -71,7 +73,11 @@ public class MenuLateralActivity extends AppCompatActivity {
         TextView tvEmailUser = header.findViewById(R.id.tvEmailUser);
         civFoto = header.findViewById(R.id.civPhotoUser);
 
-        usuario = (Usuario) this.getIntent().getSerializableExtra("usuario");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            usuario = this.getIntent().getSerializableExtra("usuario", Usuario.class);
+        } else {
+            usuario = (Usuario) this.getIntent().getSerializableExtra("usuario");
+        }
 
         if(usuario != null) {
             Constantes.usuario = usuario;
@@ -161,7 +167,9 @@ public class MenuLateralActivity extends AppCompatActivity {
         file_name.putFile(FileUri)
                 .addOnSuccessListener(taskSnapshot -> file_name.getDownloadUrl().addOnSuccessListener(uri -> {
                     usuario.setFoto(String.valueOf(uri));
-                    dr.child(id).setValue(usuario);
+                    dr.child(id).setValue(usuario)
+                            .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> IMAGEN DE USUARIO GUARDADA EXITOSAMENTE"))
+                            .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR GUARDANDO IMAGEN DE USUARIO", e));
                     Toast.makeText(this, "Se ha subido la imagen", Toast.LENGTH_SHORT).show();
                 }))
                 .addOnFailureListener(e -> Toast.makeText(this, "Error al subir imagen: " + e.getMessage(), Toast.LENGTH_SHORT).show());

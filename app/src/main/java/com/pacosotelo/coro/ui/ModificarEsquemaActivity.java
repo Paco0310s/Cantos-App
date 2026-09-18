@@ -1,10 +1,12 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 
@@ -41,15 +43,18 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.pacosotelo.coro.tools.CantoEsquemaEditAdapter;
+
 public class ModificarEsquemaActivity extends AppCompatActivity {
     Button bAgregarCanto, bModificarEsquema;
     EditText etNombreEsquema;
-    ListView rvCantosEsquema;
+    RecyclerView rvCantosEsquema;
     DatabaseReference dr;
     FirebaseDatabase fd;
     private final ArrayList<Canto> listaCantos = new ArrayList<>();
-    //AdaptadorCantoEsquema adapter2;
-    ArrayAdapter<Canto> adapter2;
+    CantoEsquemaEditAdapter adapter2;
     Esquema esquema;
 
     @Override
@@ -57,6 +62,13 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_nuevo_esquema);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                regresar();
+            }
+        });
 
         esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
 
@@ -75,21 +87,19 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         bModificarEsquema = findViewById(R.id.bGuardarEsquema);
         etNombreEsquema = findViewById(R.id.etNombreEsquema);
         rvCantosEsquema = findViewById(R.id.rvCantosEsquema);
-
-        adapter2 = new ArrayAdapter<>(this,
-                R.layout.item_canto_esquema2);
+        rvCantosEsquema.setLayoutManager(new LinearLayoutManager(this));
 
         etNombreEsquema.setText(esquema.getNombre());
 
-        listaCantos.addAll(esquema.getCantos());
-        adapter2.addAll(listaCantos);
+        if (esquema.getCantos() != null) {
+            listaCantos.addAll(esquema.getCantos());
+        }
 
+        adapter2 = new CantoEsquemaEditAdapter(listaCantos, (view, position) -> cantoPulsado(view, position));
         rvCantosEsquema.setAdapter(adapter2);
 
         bAgregarCanto.setOnClickListener(v -> agregarCanto());
         bModificarEsquema.setOnClickListener(v -> modificarEsquema());
-
-        rvCantosEsquema.setOnItemClickListener((adapterView, view, i, l) -> cantoPulsado(view, i));
 
     }
 
@@ -109,19 +119,15 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                     return true;
                 case R.id.eliminarCanto:
                     listaCantos.remove(indice);
-                    adapter2.clear();
-                    adapter2.addAll(listaCantos);
-                    rvCantosEsquema.setAdapter(adapter2);
+                    adapter2.notifyItemRemoved(indice);
+                    adapter2.notifyItemRangeChanged(indice, listaCantos.size());
                     return true;
                 case R.id.moverArriba:
                     if (indice > 0) {
                         Canto temp = listaCantos.get(indice);
                         listaCantos.set(indice, listaCantos.get(indice - 1));
                         listaCantos.set(indice - 1, temp);
-                        adapter2.clear();
-                        adapter2.addAll(listaCantos);
-                        rvCantosEsquema.setAdapter(adapter2);
-                        rvCantosEsquema.setSelection(indice - 1);
+                        adapter2.notifyItemMoved(indice, indice - 1);
                     } else {
                         Toast.makeText(ModificarEsquemaActivity.this, "El canto ya está al principio", Toast.LENGTH_SHORT).show();
                     }
@@ -131,10 +137,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                         Canto temp = listaCantos.get(indice);
                         listaCantos.set(indice, listaCantos.get(indice + 1));
                         listaCantos.set(indice + 1, temp);
-                        adapter2.clear();
-                        adapter2.addAll(listaCantos);
-                        rvCantosEsquema.setAdapter(adapter2);
-                        rvCantosEsquema.setSelection(indice + 1);
+                        adapter2.notifyItemMoved(indice, indice + 1);
                     } else {
                         Toast.makeText(ModificarEsquemaActivity.this, "El canto ya está al final", Toast.LENGTH_SHORT).show();
                     }
@@ -203,7 +206,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         builder.setTitle("Selecciona un canto");
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_searchable_list, null);
-        androidx.appcompat.widget.SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
+        SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
         ListView lv = dialogView.findViewById(R.id.dialogListView);
 
         ArrayAdapter<Canto> arrayAdapter = new ArrayAdapter<>(this, R.layout.item_canto_esquema);
@@ -243,12 +246,12 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("Firebase_Error", "Cancelado en diálogo: " + error.getMessage());
+                        Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO CANTOS EN DIÁLOGO: ModificarEsquema", error.toException());
                     }
                 });
 
         // 2. Vinculamos el buscador con nuestra función personalizada usando la lista de respaldo
-        sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+        sv.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 return false;
@@ -287,8 +290,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             if (c != null) {
                 listaCantos.add(c);
                 if (adapter2 != null) {
-                    adapter2.add(c);
-                    adapter2.notifyDataSetChanged();
+                    adapter2.notifyItemInserted(listaCantos.size() - 1);
                 }
             }
             dialog.dismiss();
@@ -320,23 +322,22 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         esquemaMod.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
 
         dr = fd.getReference();
-        dr.child("esquemas").child(esquemaMod.getId()).setValue(esquemaMod);
-
-        Toast.makeText(this, "Esquema modificado", Toast.LENGTH_SHORT).show();
-
-        regresar();
+        dr.child("esquemas").child(esquemaMod.getId()).setValue(esquemaMod)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FIREBASE_TRACE", "=====================> DATOS ACTUALIZADOS CON ÉXITO: Esquema (" + esquemaMod.getId() + ")");
+                    Toast.makeText(this, "Esquema modificado", Toast.LENGTH_SHORT).show();
+                    regresar();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO DATOS: Esquema (" + esquemaMod.getId() + ")", e);
+                    Toast.makeText(this, "Error al guardar esquema: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return false;
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
         regresar();
+        return false;
     }
 
     private void regresar() {

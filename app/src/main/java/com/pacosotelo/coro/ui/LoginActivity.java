@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -235,7 +236,11 @@ public class LoginActivity extends AppCompatActivity {
     public void registrarse(){
         Intent i = new Intent(LoginActivity.this, RegistrarseActivity.class);
         startActivity(i);
-        overridePendingTransition(R.anim.left_in,R.anim.left_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.left_in, R.anim.left_out);
+        } else {
+            overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        }
         finish();
     }
 
@@ -254,7 +259,7 @@ public class LoginActivity extends AppCompatActivity {
         // Si es un nuevo usuario
         if(nuevo) {
             LocalDateTime fechaActual = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 fechaActual = LocalDateTime.now();
             }
 
@@ -273,7 +278,9 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // Lo escribimos en la base de datos
-            dr.child(currentUser.getUid()).setValue(usuario);
+            dr.child(currentUser.getUid()).setValue(usuario)
+                    .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> NUEVO USUARIO CREADO CON ÉXITO: " + currentUser.getUid()))
+                    .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR CREANDO NUEVO USUARIO: " + currentUser.getUid(), e));
 
             // Mandamos un mensaje de bienvenida
             Toast.makeText(LoginActivity.this, getString(R.string.bienvenida) +
@@ -283,7 +290,11 @@ public class LoginActivity extends AppCompatActivity {
             Intent i = new Intent(LoginActivity.this, MenuLateralActivity.class);
             i.putExtra("usuario", usuario); // Mandamos el usuario
             startActivity(i);
-            overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.fade_out);
+            } else {
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            }
             finish();
 
         } else { // Si es un usuario previamente registrado
@@ -307,7 +318,11 @@ public class LoginActivity extends AppCompatActivity {
                             MenuLateralActivity.class);
                     i.putExtra("usuario", usuario); // Mandamos el usuario
                     startActivity(i);
-                    overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.fade_out);
+                    } else {
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                    }
                     finish();
                 } else {
                     // Si no supo obtener la cuenta mandamos un error

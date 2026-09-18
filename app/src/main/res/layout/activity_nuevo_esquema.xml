@@ -62,16 +62,7 @@
             tools:ignore="UsingOnClickInXml" />
     </LinearLayout>
 
-    <!--androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvCantosEsquema"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bGuardarEsquema"
-        app:layout_constraintTop_toBottomOf="@+id/ll"
-        android:layout_margin="20dp"
-        tools:ignore="MissingConstraints" /-->
-
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCantosEsquema"
         android:layout_width="match_parent"
         android:layout_height="0dp"

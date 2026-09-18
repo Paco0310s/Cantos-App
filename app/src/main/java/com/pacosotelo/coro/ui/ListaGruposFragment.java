@@ -107,7 +107,7 @@ public class ListaGruposFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO GRUPOS", error.toException());
             }
         });
     }

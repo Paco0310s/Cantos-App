@@ -8,6 +8,8 @@ import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -131,6 +133,7 @@ public class ListaTodosCantosFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO TODOS LOS CANTOS", error.toException());
                 progressBar.setVisibility(View.GONE);
                 tvSinInternet.setVisibility(View.VISIBLE);
             }
