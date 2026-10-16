@@ -5,7 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
-// ...existing imports...
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -21,7 +21,7 @@ import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.ui.CantoActivity;
 import com.pacosotelo.coro.ui.ModificarEsquemaActivity;
-// ...existing imports...
+import com.pacosotelo.coro.ui.NuevoEsquemaActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +39,13 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.item_esquema, parent, false);
-        return new ViewHolder(view);
+    public AdaptadorEsquemas.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = mInflater.inflate(R.layout.item_esquema, null);
+        return new AdaptadorEsquemas.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (listaEsquemas == null || position < 0 || position >= listaEsquemas.size()) return;
+    public void onBindViewHolder(@NonNull AdaptadorEsquemas.ViewHolder holder, int position) {
         holder.bindData(listaEsquemas.get(position));
     }
 
