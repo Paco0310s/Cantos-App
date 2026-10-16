@@ -104,7 +104,8 @@ public class ListaCantosFragment extends Fragment {
                                 Usuario u = dataSnapshot.getValue(Usuario.class);
                                 if (u != null) mostrarDialogoCrearGrupo(u);
                             }
-                        });
+                        })
+                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Crear grupo)", e));
             }
         });
 
@@ -117,7 +118,8 @@ public class ListaCantosFragment extends Fragment {
                                 Usuario u = dataSnapshot.getValue(Usuario.class);
                                 if (u != null) mostrarDialogoUnirseGrupo(u);
                             }
-                        });
+                        })
+                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Unirse a grupo)", e));
             }
         });
 
@@ -208,7 +210,10 @@ public class ListaCantosFragment extends Fragment {
             } else {
                 Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
             }
-        }).addOnFailureListener(e -> Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e -> {
+            Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Cambiar grupo)", e);
+            Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void mostrarDialogoCambioGrupo(Usuario usuario) {
@@ -310,7 +315,9 @@ public class ListaCantosFragment extends Fragment {
         lv.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < grupoUuids.size()) {
                 String grupoUuidSeleccionado = grupoUuids.get(position);
-                FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).child("grupoActual").setValue(grupoUuidSeleccionado);
+                FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).child("grupoActual").setValue(grupoUuidSeleccionado)
+                        .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> GRUPO ACTUALIZADO EXITOSAMENTE"))
+                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO GRUPO", e));
                 Constantes.GRUPO_SELECCIONADO = grupoUuidSeleccionado;
                 Toast.makeText(getActivity(), "Grupo cambiado a " + nombresArray[position], Toast.LENGTH_SHORT).show();
                 alerta.dismiss();
@@ -382,7 +389,9 @@ public class ListaCantosFragment extends Fragment {
             usuario.setGrupos(grupos);
             usuario.setGrupoActual(uuid);
 
-            FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario);
+            FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario)
+                    .addOnSuccessListener(aVoidInner -> Log.d("FIREBASE_TRACE", "=====================> USUARIO ACTUALIZADO CON GRUPO NUEVO"))
+                    .addOnFailureListener(eInner -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO USUARIO CON GRUPO NUEVO", eInner));
             Constantes.GRUPO_SELECCIONADO = uuid;
 
             inicializarFirebase();
@@ -519,6 +528,7 @@ public class ListaCantosFragment extends Fragment {
                 Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> {
+            Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Inicializar Firebase)", e);
             progressBar.setVisibility(View.GONE);
             Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
         });
@@ -544,6 +554,7 @@ public class ListaCantosFragment extends Fragment {
         cantosListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("FIREBASE_TRACE", "=====================> CANTOS OBTENIDOS DE FIREBASE. Cantidad: " + snapshot.getChildrenCount());
                 listaCantos.clear();
                 listaRespaldo.clear();
 
@@ -569,7 +580,7 @@ public class ListaCantosFragment extends Fragment {
                 listaRespaldo.addAll(listaCantos);
 
                 if (adapter != null) {
-                    adapter.notifyDataSetChanged();
+                    adapter.actualizarLista(new ArrayList<>(listaCantos));
                 }
 
                 progressBar.setVisibility(View.GONE);
@@ -603,7 +614,7 @@ public class ListaCantosFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle(R.string.acerca_de);
         String mensaje = "\u00a9 Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCreditos: \nLogo: Santiago Romo \n\n" +
-                "Versión: 5.0.5" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nGrupo Seleccionado: " + (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty() ? "Ninguno" : Constantes.GRUPO_SELECCIONADO);
+                "Versión: 5.1.0" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nGrupo Seleccionado: " + (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty() ? "Ninguno" : Constantes.GRUPO_SELECCIONADO);
         builder.setMessage(mensaje);
         builder.setCancelable(true);
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
@@ -652,27 +663,27 @@ public class ListaCantosFragment extends Fragment {
         @Override
         public boolean onQueryTextChange(String s) {
             int longitud = s.length();
-            listaCantos.clear();
+            List<Canto> listaFiltrada = new ArrayList<>();
 
             if (longitud == 0) {
-                listaCantos.addAll(listaRespaldo);
+                listaFiltrada.addAll(listaRespaldo);
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     List<Canto> coleccion = listaRespaldo.stream().filter(
                             i -> quitaDiacriticos(i.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))
                     ).collect(Collectors.toList());
-                    listaCantos.addAll(coleccion);
+                    listaFiltrada.addAll(coleccion);
                 } else {
                     for (Canto z : listaRespaldo) {
                         if (quitaDiacriticos(z.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))) {
-                            listaCantos.add(z);
+                            listaFiltrada.add(z);
                         }
                     }
                 }
             }
 
             if (adapter != null) {
-                adapter.notifyDataSetChanged();
+                adapter.actualizarLista(listaFiltrada);
             }
 
             return true;

@@ -110,7 +110,8 @@ public class ListaEsquemasFragment extends Fragment {
                                 Usuario u = dataSnapshot.getValue(Usuario.class);
                                 if (u != null) mostrarDialogoCrearGrupo(u);
                             }
-                        });
+                        })
+                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Crear grupo, Esquemas)", e));
             }
         });
 
@@ -123,7 +124,8 @@ public class ListaEsquemasFragment extends Fragment {
                                 Usuario u = dataSnapshot.getValue(Usuario.class);
                                 if (u != null) mostrarDialogoUnirseGrupo(u);
                             }
-                        });
+                        })
+                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Unirse a grupo, Esquemas)", e));
             }
         });
 
@@ -194,7 +196,10 @@ public class ListaEsquemasFragment extends Fragment {
             } else {
                 Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
             }
-        }).addOnFailureListener(e -> Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e -> {
+            Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Inicializar Firebase, Esquemas)", e);
+            Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void cargarEsquemas() {
@@ -210,6 +215,7 @@ public class ListaEsquemasFragment extends Fragment {
         .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("FIREBASE_TRACE", "=====================> ESQUEMAS OBTENIDOS DE FIREBASE. Cantidad: " + snapshot.getChildrenCount());
                 listaEsquemas.clear();
                 listaRespaldo.clear();
 
@@ -322,7 +328,9 @@ public class ListaEsquemasFragment extends Fragment {
             usuario.setGrupoActual(uuid);
 
             // Actualizar usuario en Firebase
-            FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario);
+            FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario)
+                    .addOnSuccessListener(aVoidInner -> Log.d("FIREBASE_TRACE", "=====================> USUARIO ACTUALIZADO CON GRUPO NUEVO (Esquemas)"))
+                    .addOnFailureListener(eInner -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO USUARIO CON GRUPO NUEVO (Esquemas)", eInner));
 
             Constantes.GRUPO_SELECCIONADO = uuid;
 
@@ -454,31 +462,28 @@ public class ListaEsquemasFragment extends Fragment {
         @Override
         public boolean onQueryTextChange(String s) {
             int longitud = s.length();
-            if(longitud == 0)
-            {
-                listaEsquemas.clear();
-                listaEsquemas.addAll(listaRespaldo);
-            }else{
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            List<Esquema> listaFiltrada = new ArrayList<>();
+
+            if (longitud == 0) {
+                listaFiltrada.addAll(listaRespaldo);
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     List<Esquema> collecion = listaRespaldo.stream().filter
-                                    (i->quitaDiacriticos(i.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))).
+                            (i -> quitaDiacriticos(i.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))).
                             collect(Collectors.toList());
-                    listaEsquemas.clear();
-                    listaEsquemas.addAll(collecion);
-                }else {
-                    listaEsquemas.clear();
-                    for (Esquema z: listaRespaldo) {
-                        if (quitaDiacriticos(z.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))){
-                            listaEsquemas.add(z);
+                    listaFiltrada.addAll(collecion);
+                } else {
+                    for (Esquema z : listaRespaldo) {
+                        if (quitaDiacriticos(z.getNombre()).toLowerCase().contains(quitaDiacriticos(s.toLowerCase()))) {
+                            listaFiltrada.add(z);
                         }
                     }
                 }
             }
 
-            adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
-            rvEsquemas.setHasFixedSize(true);
-            rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
-            rvEsquemas.setAdapter(adapter);
+            if (adapter != null) {
+                adapter.actualizarLista(listaFiltrada);
+            }
 
             return true;
         }

@@ -1,5 +1,6 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,9 +15,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 import com.google.android.material.textfield.TextInputEditText;
@@ -59,7 +62,14 @@ public class RegistrarseActivity extends AppCompatActivity {
         usuario = new Usuario();
 
         bRegistrarse.setOnClickListener(v -> registrarse());
-        findViewById(R.id.ibAtras).setOnClickListener(v -> onBackPressed());
+        findViewById(R.id.ibAtras).setOnClickListener(v -> regresar());
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                regresar();
+            }
+        });
         civFoto.setOnClickListener(v -> {
             final PopupMenu popupMenu = new PopupMenu(RegistrarseActivity.this, civFoto);
             popupMenu.getMenuInflater().inflate(R.menu.menu_foto, popupMenu.getMenu());
@@ -89,11 +99,14 @@ public class RegistrarseActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void onBackPressed() {
+    private void regresar() {
         Intent i = new Intent(RegistrarseActivity.this, LoginActivity.class);
         startActivity(i);
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.right_in, R.anim.right_out);
+        } else {
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        }
         finish();
     }
 
@@ -133,7 +146,9 @@ public class RegistrarseActivity extends AppCompatActivity {
                     usuario.setEmail(email);
                     usuario.setNumber_phone(numero);
 
-                    dr.child(currentUser.getUid()).setValue(usuario);
+                    dr.child(currentUser.getUid()).setValue(usuario)
+                    .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> NUEVO USUARIO CREADO CON ÉXITO (Registro): " + currentUser.getUid()))
+                    .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR CREANDO NUEVO USUARIO (Registro): " + currentUser.getUid(), e));
 
                     Toast.makeText(RegistrarseActivity.this, "Se ha creado el " +
                             "usuario, bienvenido", Toast.LENGTH_SHORT).show();

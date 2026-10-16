@@ -1,5 +1,6 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,8 +12,10 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -69,6 +72,13 @@ public class CantoActivity extends AppCompatActivity {
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_canto);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                regresar();
+            }
+        });
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
@@ -97,7 +107,11 @@ public class CantoActivity extends AppCompatActivity {
             return false;
         });
 
-        canto = (Canto) this.getIntent().getSerializableExtra("canto");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            canto = this.getIntent().getSerializableExtra("canto", Canto.class);
+        } else {
+            canto = (Canto) this.getIntent().getSerializableExtra("canto");
+        }
         bandera = this.getIntent().getBooleanExtra("bandera", false);
 
         tonosArriba = new HashMap<>();
@@ -191,15 +205,14 @@ public class CantoActivity extends AppCompatActivity {
         letra();
     }
 
-    @Override
-    public void onBackPressed() {
+    public void regresar() {
         finish();
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        overridePendingTransition(R.anim.right_in, R.anim.right_out);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        regresar();
         return false;
     }
 
@@ -287,7 +300,7 @@ public class CantoActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO ESQUEMAS EN CANTO_ACTIVITY", error.toException());
             }
         });
     }
@@ -304,7 +317,7 @@ public class CantoActivity extends AppCompatActivity {
         eLetra.setFocusable(false);
         eLetra.setCursorVisible(false);
 
-        String letra2 = letra.replaceAll("'", "");
+        String letra2 = letra.replace("'", "");
         /*SpannableString ss = new SpannableString(letra2);
 
         ss.setSpan(spanTono(),0,4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -458,9 +471,9 @@ public class CantoActivity extends AppCompatActivity {
         }
 
         letra = nuevaLetra.toString();
-        letra = letra.replaceAll("○", " ");
-        letra = letra.replaceAll("\\|", " ");
-        letra = letra.replaceAll("---", "   ");
+        letra = letra.replace("○", " ");
+        letra = letra.replace("|", " ");
+        letra = letra.replace("---", "   ");
         letra = letra.replaceAll("(?m)^[ \t]*\r?\n", "");
         eLetra.setText(letra);
     }
@@ -478,7 +491,7 @@ public class CantoActivity extends AppCompatActivity {
         }
 
         letra = nuevaLetra.toString();
-        eLetra.setText(letra.replaceAll("'", ""));
+        eLetra.setText(letra.replace("'", ""));
     }
 
     private void bajarTono() {
@@ -494,7 +507,7 @@ public class CantoActivity extends AppCompatActivity {
         }
 
         letra = nuevaLetra.toString();
-        eLetra.setText(letra.replaceAll("'", ""));
+        eLetra.setText(letra.replace("'", ""));
     }
 
     /**

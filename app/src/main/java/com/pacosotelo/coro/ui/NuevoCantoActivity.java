@@ -1,5 +1,6 @@
 package com.pacosotelo.coro.ui;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,6 +11,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -57,6 +59,13 @@ public class NuevoCantoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
         setContentView(R.layout.activity_nuevocanto);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBackPress();
+            }
+        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -139,7 +148,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        handleBackPress();
         return false;
     }
 
@@ -171,7 +180,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO MOMENTOS", error.toException());
             }
         });
 
@@ -199,7 +208,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO TIEMPOS", error.toException());
             }
         });
 
@@ -242,8 +251,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onBackPressed() {
+    private void handleBackPress() {
         switch (tipo) {
             case 0:
                 regresar_lista();
@@ -256,14 +264,22 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
     private void regresar_lista() {
         finish();
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.right_in, R.anim.right_out);
+        } else {
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        }
     }
 
     private void verCanto() {
         Intent i = new Intent(NuevoCantoActivity.this, CantoActivity.class);
-        i.putExtra("canto",canto);
+        i.putExtra("canto", canto);
         startActivity(i);
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.right_in, R.anim.right_out);
+        } else {
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        }
         finish();
     }
 
@@ -307,12 +323,34 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 canto_mod.setModificado_por(currentUser.getUid());
                 canto_mod.setFecha_creacion(fechaActual.toString());
 
-                dr.child(canto_mod.getId()).setValue(canto_mod);
+                dr.child(canto_mod.getId()).setValue(canto_mod)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("FIREBASE_TRACE", "=====================> DATOS GUARDADOS CON ÉXITO: Canto (" + canto_mod.getId() + ")");
+                            Toast.makeText(this, "Canto agregado", Toast.LENGTH_SHORT).show();
+                            
+                            etNombre.setText("");
+                            etLetra.setText("");
 
-                Toast.makeText(this, "Canto agregado", Toast.LENGTH_SHORT).show();
+                            // Limpiar las listas de momentos y tiempos
+                            momentosSeleccionados.clear();
+                            tiemposSeleccionados.clear();
 
-                etNombre.setText("");
-                etLetra.setText("");
+                            // Limpiar las selecciones de los checkboxes
+                            for (int i = 0; i < checkedItemsMomentos.length; i++) {
+                                checkedItemsMomentos[i] = false;
+                            }
+                            for (int i = 0; i < checkedItemsTiempos.length; i++) {
+                                checkedItemsTiempos[i] = false;
+                            }
+
+                            // Notificar a los adaptadores
+                            adapterMomentos.notifyDataSetChanged();
+                            adapterTiempos.notifyDataSetChanged();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("FIREBASE_TRACE", "=====================> ERROR GUARDANDO DATOS: Canto (" + canto_mod.getId() + ")", e);
+                            Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
 
                 break;
             case 1:
@@ -322,13 +360,19 @@ public class NuevoCantoActivity extends AppCompatActivity {
                 canto_mod.setModificado_por(currentUser.getUid());
                 canto_mod.setFecha_modificacion(fechaActual.toString());
 
-                dr.child(canto_mod.getId()).setValue(canto_mod);
+                dr.child(canto_mod.getId()).setValue(canto_mod)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("FIREBASE_TRACE", "=====================> DATOS ACTUALIZADOS CON ÉXITO: Canto (" + canto_mod.getId() + ")");
+                            Toast.makeText(this, "Canto modificado", Toast.LENGTH_SHORT).show();
 
-                Toast.makeText(this, "Canto modificado", Toast.LENGTH_SHORT).show();
+                            canto = canto_mod;
 
-                canto = canto_mod;
-
-                verCanto();
+                            verCanto();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO DATOS: Canto (" + canto_mod.getId() + ")", e);
+                            Toast.makeText(this, "Error al actualizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
                 break;
         }
     }

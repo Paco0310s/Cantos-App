@@ -8,13 +8,13 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
@@ -23,6 +23,7 @@ import com.pacosotelo.coro.ui.CantoActivity;
 import com.pacosotelo.coro.ui.ModificarEsquemaActivity;
 import com.pacosotelo.coro.ui.NuevoEsquemaActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.ViewHolder> {
@@ -55,11 +56,40 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
 
     public void setLista(List<Esquema> listaEsquemas) {
         this.listaEsquemas = listaEsquemas;
+        notifyDataSetChanged();
+    }
+
+    public void actualizarLista(List<Esquema> nuevaLista) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return listaEsquemas.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return nuevaLista.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return listaEsquemas.get(oldItemPosition).getId().equals(nuevaLista.get(newItemPosition).getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                return listaEsquemas.get(oldItemPosition).getNombre().equals(nuevaLista.get(newItemPosition).getNombre());
+            }
+        });
+
+        this.listaEsquemas.clear();
+        this.listaEsquemas.addAll(nuevaLista);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView nombreEsquema;
-        ListView listaCantosEsquema;
+        RecyclerView listaCantosEsquema;
         CardView cvEsquema;
         RelativeLayout rlEsquema;
 
@@ -69,6 +99,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
 
             nombreEsquema = itemView.findViewById(R.id.tvNombreEsquema);
             listaCantosEsquema = itemView.findViewById(R.id.lvCantosEsquema);
+            listaCantosEsquema.setLayoutManager(new LinearLayoutManager(contexto));
             cvEsquema = itemView.findViewById(R.id.cvEsquema);
             rlEsquema = itemView.findViewById(R.id.itemEsquema);
 
@@ -77,40 +108,43 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                 return false;
             });
 
-            cvEsquema.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Esquema esquema = listaEsquemas.get(getAbsoluteAdapterPosition());
+            cvEsquema.setOnClickListener(view -> {
+                int pos = getAbsoluteAdapterPosition();
+                if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
+                Esquema esquema = listaEsquemas.get(pos);
 
-                    Intent i = new Intent(contexto, ModificarEsquemaActivity.class);
-                    i.putExtra("esquema", esquema);
-                    contexto.startActivity(i);
-                    ((Activity) contexto).overridePendingTransition(R.anim.left_in,R.anim.left_out);
+                Intent i = new Intent(contexto, ModificarEsquemaActivity.class);
+                i.putExtra("esquema", esquema);
+                contexto.startActivity(i);
+                if (contexto instanceof Activity) {
+                    ((Activity) contexto).overridePendingTransition(R.anim.left_in, R.anim.left_out);
                 }
-            });
-
-            listaCantosEsquema.setOnItemClickListener((adapterView, view, i, l) ->  {
-                Esquema esquema = listaEsquemas.get(getAbsoluteAdapterPosition());
-
-                Intent intent = new Intent(contexto, CantoActivity.class);
-                intent.putExtra("canto", esquema.getCantos().get(i));
-                intent.putExtra("esquema", esquema);
-                intent.putExtra("bandera",true);
-                intent.putExtra("indice",i);
-
-                contexto.startActivity(intent);
-                ((Activity) contexto).overridePendingTransition(R.anim.left_in,R.anim.left_out);
-
             });
         }
 
         private void bindData(final Esquema esquema) {
             nombreEsquema.setText(esquema.getNombre());
 
-            ArrayAdapter<Canto> adapter = new ArrayAdapter<>(contexto
-                    , R.layout.item_canto_esquema, esquema.getCantos());
-            listaCantosEsquema.setAdapter(adapter);
+            List<Canto> cantos = esquema.getCantos();
+            if (cantos == null) cantos = new ArrayList<>();
 
+            CantoItemAdapter adapter = new CantoItemAdapter(cantos, (canto, i) -> {
+                int pos = getAbsoluteAdapterPosition();
+                if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
+
+                Esquema esq = listaEsquemas.get(pos);
+                Intent intent = new Intent(contexto, CantoActivity.class);
+                intent.putExtra("canto", canto);
+                intent.putExtra("esquema", esq);
+                intent.putExtra("bandera", true);
+                intent.putExtra("indice", i);
+
+                contexto.startActivity(intent);
+                if (contexto instanceof Activity) {
+                    ((Activity) contexto).overridePendingTransition(R.anim.left_in, R.anim.left_out);
+                }
+            });
+            listaCantosEsquema.setAdapter(adapter);
         }
 
     }
