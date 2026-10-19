@@ -6,8 +6,17 @@
         android:id="@+id/buscar"
         android:icon="@drawable/ic_buscar"
         android:title="@string/buscar"
-        app:showAsAction="ifRoom"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
-        />
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/info"
+        android:title="@string/acerca_de"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/cerrarSesion"
+        android:title="@string/cerrar_sesion"
+        app:showAsAction="never" />
 
 </menu>

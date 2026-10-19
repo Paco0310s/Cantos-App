@@ -16,10 +16,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -35,11 +38,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
 public class NuevoCantoActivity extends AppCompatActivity {
-    private EditText etNombre, etLetra;
+    private EditText etNombre, etAutor, etLetra;
+    private AutoCompleteTextView etTono;
     private Button bAgregar;
     private DatabaseReference dr;
 //    private long maxid = 0;
@@ -71,8 +77,15 @@ public class NuevoCantoActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         etNombre = findViewById(R.id.etNombre);
+        etAutor = findViewById(R.id.etAutor);
+        etTono = findViewById(R.id.etTono);
         etLetra = findViewById(R.id.etLetra);
         bAgregar = findViewById(R.id.bAgregar);
+
+        if (etTono != null) {
+            ArrayAdapter<String> adapterTonos = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, Constantes.tonos);
+            etTono.setAdapter(adapterTonos);
+        }
         //listaMomentos = findViewById(R.id.listaMomentos);
         //listaTiempos = findViewById(R.id.listaTiempos);
 
@@ -141,6 +154,10 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
                     etLetra.setText(letra);
                 }
+                break;
+
+            case R.id.transportarTono:
+                mostrarDialogoTransportar();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -238,17 +255,23 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         canto = (Canto) this.getIntent().getSerializableExtra("canto");
 
-        etNombre.setText(canto.getNombre());
-        etLetra.setText(canto.getLetra());
+        if (canto != null) {
+            if (canto.getNombre() != null) etNombre.setText(canto.getNombre());
+            if (canto.getAutor() != null && etAutor != null) etAutor.setText(canto.getAutor());
+            if (canto.getTono() != null && etTono != null) etTono.setText(canto.getTono());
+            if (canto.getLetra() != null) etLetra.setText(canto.getLetra());
 
-        //Toast.makeText(this, arrayMomentos.length, Toast.LENGTH_SHORT).show();
-
-        /*for (int i = 0; i < arrayMomentos.length; i++) {
-            if(arrayMomentos[i].equals(canto.getMomentos().get(i))) {
-                checkedItemsMomentos[i] = true;
+            if (canto.getMomentos() != null) {
+                momentosSeleccionados.clear();
+                momentosSeleccionados.addAll(canto.getMomentos());
             }
-        }*/
 
+            if (canto.getTiempos() != null) {
+                tiemposSeleccionados.clear();
+                tiemposSeleccionados.addAll(canto.getTiempos());
+            }
+            actualizarEtiquetasVisibles();
+        }
     }
 
     private void handleBackPress() {
@@ -283,6 +306,114 @@ public class NuevoCantoActivity extends AppCompatActivity {
         finish();
     }
 
+    private void mostrarDialogoTransportar() {
+        String tonoRegistrado = null;
+        if (etTono != null && etTono.getText() != null && !etTono.getText().toString().trim().isEmpty()) {
+            tonoRegistrado = etTono.getText().toString().trim();
+        } else if (canto != null && canto.getTono() != null && !canto.getTono().trim().isEmpty()) {
+            tonoRegistrado = canto.getTono().trim();
+        }
+
+        if (tonoRegistrado == null) {
+            new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog)
+                    .setTitle("Tono Requerido")
+                    .setMessage("Para poder transportar este canto a otro tono, primero debes ingresar o seleccionar su tono original en el campo 'Tono / Clave'.")
+                    .setPositiveButton("Aceptar", null)
+                    .show();
+            return;
+        }
+
+        String tonoOriginalBruto = tonoRegistrado;
+        String tonoOriginal = tonoOriginalBruto.replaceAll("[mM]$", "");
+        String sufijo = tonoOriginalBruto.endsWith("m") || tonoOriginalBruto.endsWith("M") ? tonoOriginalBruto.substring(tonoOriginalBruto.length() - 1) : "";
+
+        String[] tonosDisponibles = {"DO", "DO#", "RE", "MIb", "MI", "FA", "FA#", "SOL", "SOL#", "LA", "SIb", "SI"};
+        
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle("Transportar a otro tono");
+
+        int checkedItem = -1;
+        for (int i = 0; i < tonosDisponibles.length; i++) {
+            if (tonosDisponibles[i].equals(tonoOriginal)) {
+                checkedItem = i;
+                break;
+            }
+        }
+
+        builder.setSingleChoiceItems(tonosDisponibles, checkedItem, (dialog, which) -> {
+            String tonoDestino = tonosDisponibles[which];
+            transportarTonoDirecto(tonoOriginal, tonoDestino);
+            
+            if (etTono != null) {
+                etTono.setText(tonoDestino + sufijo);
+            }
+            if (canto != null) {
+                canto.setTono(tonoDestino + sufijo);
+            }
+            dialog.dismiss();
+            Toast.makeText(this, "Tono transportado a " + tonoDestino + sufijo, Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
+    }
+
+    private void transportarTonoDirecto(String original, String destino) {
+        String[] escala = {"DO", "DO#", "RE", "MIb", "MI", "FA", "FA#", "SOL", "SOL#", "LA", "SIb", "SI"};
+        int idxOriginal = -1;
+        int idxDestino = -1;
+        
+        for (int i = 0; i < escala.length; i++) {
+            if (escala[i].equals(original)) idxOriginal = i;
+            if (escala[i].equals(destino)) idxDestino = i;
+        }
+        
+        if (idxOriginal == -1 || idxDestino == -1) return;
+        
+        int diferencia = idxDestino - idxOriginal;
+        if (diferencia < 0) diferencia += 12;
+
+        String letraActual = etLetra.getText().toString();
+        for (int i = 0; i < diferencia; i++) {
+            letraActual = subirMedioTono(letraActual);
+        }
+        etLetra.setText(letraActual);
+    }
+
+    private String subirMedioTono(String texto) {
+        String[] palabras = texto.split("'");
+        StringBuilder nuevaLetra = new StringBuilder();
+
+        Map<String, String> tonosArriba = new HashMap<>();
+        for (String extra : Constantes.extras) {
+            tonosArriba.put("DO" + extra, "DO#" + extra);
+            tonosArriba.put("DO#" + extra, "RE" + extra);
+            tonosArriba.put("REb" + extra, "RE" + extra);
+            tonosArriba.put("RE" + extra, "MIb" + extra);
+            tonosArriba.put("RE#" + extra, "MI" + extra);
+            tonosArriba.put("MIb" + extra, "MI" + extra);
+            tonosArriba.put("MI" + extra, "FA" + extra);
+            tonosArriba.put("FA" + extra, "FA#" + extra);
+            tonosArriba.put("FA#" + extra, "SOL" + extra);
+            tonosArriba.put("SOLb" + extra, "SOL" + extra);
+            tonosArriba.put("SOL" + extra, "SOL#" + extra);
+            tonosArriba.put("SOL#" + extra, "LA" + extra);
+            tonosArriba.put("LAb" + extra, "LA" + extra);
+            tonosArriba.put("LA" + extra, "SIb" + extra);
+            tonosArriba.put("LA#" + extra, "SI" + extra);
+            tonosArriba.put("SIb" + extra, "SI" + extra);
+            tonosArriba.put("SI" + extra, "DO" + extra);
+        }
+
+        for (String palabra : palabras) {
+            if(tonosArriba.get(palabra) != null) {
+                nuevaLetra.append("'").append(tonosArriba.get(palabra)).append("'");
+            } else {
+                nuevaLetra.append(palabra);
+            }
+        }
+        return nuevaLetra.toString();
+    }
+
     public void agregarCanto(View view) {
         if(etNombre.getText().toString().equals("")) {
             etNombre.setError("Requerido");
@@ -304,8 +435,10 @@ public class NuevoCantoActivity extends AppCompatActivity {
         Canto canto_mod = new Canto();
         canto_mod.setApp(app);
         canto_mod.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
-        canto_mod.setNombre(etNombre.getText().toString());
-        canto_mod.setLetra(etLetra.getText().toString());
+        canto_mod.setNombre(etNombre.getText().toString().trim());
+        if (etAutor != null) canto_mod.setAutor(etAutor.getText().toString().trim());
+        if (etTono != null) canto_mod.setTono(etTono.getText().toString().trim());
+        canto_mod.setLetra(etLetra.getText().toString().trim());
         canto_mod.setMomentos(momentosSeleccionados);
         canto_mod.setTiempos(tiemposSeleccionados);
 
@@ -342,10 +475,6 @@ public class NuevoCantoActivity extends AppCompatActivity {
                             for (int i = 0; i < checkedItemsTiempos.length; i++) {
                                 checkedItemsTiempos[i] = false;
                             }
-
-                            // Notificar a los adaptadores
-                            adapterMomentos.notifyDataSetChanged();
-                            adapterTiempos.notifyDataSetChanged();
                         })
                         .addOnFailureListener(e -> {
                             Log.e("FIREBASE_TRACE", "=====================> ERROR GUARDANDO DATOS: Canto (" + canto_mod.getId() + ")", e);
@@ -377,23 +506,68 @@ public class NuevoCantoActivity extends AppCompatActivity {
         }
     }
 
+    private void actualizarEtiquetasVisibles() {
+        TextView tvMomentosSeleccionados = findViewById(R.id.tvMomentosSeleccionados);
+        TextView tvTiemposSeleccionados = findViewById(R.id.tvTiemposSeleccionados);
+
+        if (tvMomentosSeleccionados != null) {
+            if (momentosSeleccionados != null && !momentosSeleccionados.isEmpty()) {
+                tvMomentosSeleccionados.setVisibility(View.VISIBLE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    tvMomentosSeleccionados.setText("Momentos: " + String.join(", ", momentosSeleccionados));
+                } else {
+                    tvMomentosSeleccionados.setText("Momentos: " + momentosSeleccionados.toString().replaceAll("[\\[\\]]", ""));
+                }
+            } else {
+                tvMomentosSeleccionados.setVisibility(View.GONE);
+            }
+        }
+
+        if (tvTiemposSeleccionados != null) {
+            if (tiemposSeleccionados != null && !tiemposSeleccionados.isEmpty()) {
+                tvTiemposSeleccionados.setVisibility(View.VISIBLE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    tvTiemposSeleccionados.setText("Tiempos: " + String.join(", ", tiemposSeleccionados));
+                } else {
+                    tvTiemposSeleccionados.setText("Tiempos: " + tiemposSeleccionados.toString().replaceAll("[\\[\\]]", ""));
+                }
+            } else {
+                tvTiemposSeleccionados.setVisibility(View.GONE);
+            }
+        }
+    }
+
     public void mostrarMomentos(View view) {
+        if (arrayMomentos == null) {
+            Toast.makeText(this, "Cargando momentos...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Momentos:");
 
-        builder.setMultiChoiceItems(arrayMomentos, checkedItemsMomentos, (dialog, which, isChecked) -> {
+        if (checkedItemsMomentos != null && arrayMomentos != null) {
+            for (int i = 0; i < arrayMomentos.length; i++) {
+                checkedItemsMomentos[i] = momentosSeleccionados.contains(arrayMomentos[i]);
+            }
+        }
 
+        builder.setMultiChoiceItems(arrayMomentos, checkedItemsMomentos, (dialog, which, isChecked) -> {
+            if (checkedItemsMomentos != null && which < checkedItemsMomentos.length) {
+                checkedItemsMomentos[which] = isChecked;
+            }
         });
 
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> {
-
-
-            for (int i = 0; i < checkedItemsMomentos.length; i++) {
-                if(checkedItemsMomentos[i]) {
-                    momentosSeleccionados.add(arrayMomentos[i]);
+            momentosSeleccionados.clear();
+            if (checkedItemsMomentos != null && arrayMomentos != null) {
+                for (int i = 0; i < checkedItemsMomentos.length; i++) {
+                    if (checkedItemsMomentos[i]) {
+                        momentosSeleccionados.add(arrayMomentos[i]);
+                    }
                 }
             }
-
+            actualizarEtiquetasVisibles();
         });
 
         builder.setNegativeButton(R.string.cancelar, null);
@@ -403,21 +577,36 @@ public class NuevoCantoActivity extends AppCompatActivity {
     }
 
     public void mostrarTiempos(View view) {
+        if (arrayTiempos == null) {
+            Toast.makeText(this, "Cargando tiempos...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Tiempos:");
 
-        builder.setMultiChoiceItems(arrayTiempos, checkedItemsTiempos, (dialog, which, isChecked) -> {
+        if (checkedItemsTiempos != null && arrayTiempos != null) {
+            for (int i = 0; i < arrayTiempos.length; i++) {
+                checkedItemsTiempos[i] = tiemposSeleccionados.contains(arrayTiempos[i]);
+            }
+        }
 
+        builder.setMultiChoiceItems(arrayTiempos, checkedItemsTiempos, (dialog, which, isChecked) -> {
+            if (checkedItemsTiempos != null && which < checkedItemsTiempos.length) {
+                checkedItemsTiempos[which] = isChecked;
+            }
         });
 
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> {
-
-            for (int i = 0; i < checkedItemsTiempos.length; i++) {
-                if(checkedItemsTiempos[i]) {
-                    tiemposSeleccionados.add(arrayTiempos[i]);
+            tiemposSeleccionados.clear();
+            if (checkedItemsTiempos != null && arrayTiempos != null) {
+                for (int i = 0; i < checkedItemsTiempos.length; i++) {
+                    if (checkedItemsTiempos[i]) {
+                        tiemposSeleccionados.add(arrayTiempos[i]);
+                    }
                 }
             }
-
+            actualizarEtiquetasVisibles();
         });
 
         builder.setNegativeButton(R.string.cancelar, null);

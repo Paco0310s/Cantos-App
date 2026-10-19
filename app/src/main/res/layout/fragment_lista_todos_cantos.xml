@@ -1,10 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_lista_todos_cantos"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/fondo"
-    android:id="@+id/fragment_lista_cantos"
     tools:context=".ui.ListaTodosCantosFragment">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -15,8 +16,133 @@
         android:layout_marginTop="7dp"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="0dp"
-        style="@style/fondo"
-        />
+        style="@style/fondo" />
+
+    <!-- Tarjeta de Instrucción de Búsqueda -->
+    <LinearLayout
+        android:id="@+id/containerInstruccion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="24dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/card_bg_color"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_stroke_color"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:contentDescription="@string/buscar"
+                    android:src="@drawable/world"
+                    app:tint="@color/card_title_color" />
+
+                <TextView
+                    android:id="@+id/tvTituloInstruccion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Buscador Público"
+                    android:textColor="@color/card_title_color"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInstruccion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Escribe al menos 3 letras en el buscador de arriba para consultar el catálogo general de canciones."
+                    android:textColor="@color/text_secondary_color"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/tag_tiempo_bg"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="🌐 Requiere conexión a Internet"
+                    android:textColor="@color/tag_tiempo_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <!-- Tarjeta de Sin Internet -->
+    <LinearLayout
+        android:id="@+id/containerSinInternet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="24dp"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/card_bg_color"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_stroke_color"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:id="@+id/tvSinInternet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sin Conexión a Internet"
+                    android:textColor="@color/card_title_color"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Verifica tu red para poder consultar el catálogo general de canciones."
+                    android:textColor="@color/text_secondary_color"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/pbTodosCantos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="#ffffff"
+        android:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabTodosNuevoCanto"
@@ -25,39 +151,9 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
+        android:contentDescription="@string/todo"
         android:visibility="invisible"
         app:srcCompat="@drawable/ic_add"
-        android:contentDescription="@string/todo"
         tools:ignore="ContentDescription" />
 
-    <ProgressBar
-        android:id="@+id/pbTodosCantos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:backgroundTint="#ffffff"
-        android:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/tvSinInternet"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Sin conexión a internet"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:visibility="gone"
-        style="@style/fondo"
-        />
-
-    <TextView
-        android:id="@+id/tvInstruccion"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Escribe mínimo 3 letras para buscar un canto \n(Requiere Internet)"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:visibility="visible"
-        style="@style/fondo"
-        />
 </FrameLayout>

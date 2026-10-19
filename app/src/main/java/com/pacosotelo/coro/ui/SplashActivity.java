@@ -6,40 +6,57 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DatabaseReference;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Usuario;
 import com.pacosotelo.coro.tools.Constantes;
 
+import com.pacosotelo.coro.databinding.ActivitySplashBinding;
+import com.pacosotelo.coro.tools.Transiciones;
+
+import androidx.lifecycle.ViewModelProvider;
+import com.pacosotelo.coro.viewmodel.AuthViewModel;
+
 //Clase que hace un splash mientras se obtiene el usuario
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
+    private ActivitySplashBinding binding;
     private FirebaseDatabase fd;
-    private FirebaseAuth auth;
     private DatabaseReference dr;
-    private FirebaseUser currentUser;
+    private AuthViewModel authViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
-        setContentView(R.layout.activity_splash);
+        binding = ActivitySplashBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // Firebase Analytics, para poder observar informacion de la app posteriormente
         //FirebaseAnalytics.getInstance(this);
 
         // Obtenemos la instancia de FirebaseDatabase y FirebaseAuth
         fd = FirebaseDatabase.getInstance();
-        auth = FirebaseAuth.getInstance();
+        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+
+        authViewModel.getUserAuthenticated().observe(this, usuario -> {
+            if (usuario != null) {
+                Intent i = new Intent(SplashActivity.this, MenuLateralActivity.class);
+                i.putExtra("usuario", usuario);
+                startActivity(i);
+                Transiciones.fade(this);
+                finish();
+            }
+        });
+
+        authViewModel.getErrorMessage().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         //Obtenemos la referencia de la base datos, root
         dr = fd.getReference();
-
-        //Obtenemos el usuario actual
-        currentUser = auth.getCurrentUser();
 
         dr.child("constantes").child("mantenimiento").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -130,32 +147,12 @@ public class SplashActivity extends AppCompatActivity {
 
     private void redireccionar() {
         // Si el usuario ya ha iniciado sesión previamente
-        if(currentUser != null) {
-            dr.child("usuarios").child(currentUser.getUid()).get().addOnCompleteListener(task -> {
-                // Verifica si se pudo obtener el usuario
-                if (task.isSuccessful()) {
-                    // Si si, obtenemos los datos del usuario
-                    Usuario usuario = task.getResult().getValue(Usuario.class);
-
-                    // Y nos dirigimos al Menu lateral
-                    Intent i = new Intent(SplashActivity.this,
-                            MenuLateralActivity.class);
-                    // Mandamos el usuario
-                    i.putExtra("usuario", usuario);
-                    startActivity(i);
-                    overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
-                    finish();
-                } else {
-                    // Si no se pudo mostramos un error
-                    Toast.makeText(SplashActivity.this,
-                            getString(R.string.error_obtener_cuenta) + ": " +
-                                    task.getException(), Toast.LENGTH_SHORT).show();
-                }
-            });
+        if(authViewModel.getCurrentFirebaseUser() != null) {
+            authViewModel.handleExistingUser();
         } else { // Si no ha iniciado sesión hacemos un intent al login
             Intent i = new Intent(SplashActivity.this, LoginActivity.class);
             startActivity(i);
-            overridePendingTransition(R.anim.fade_in,R.anim.fade_out);
+            Transiciones.fade(this);
             finish();
         }
     }

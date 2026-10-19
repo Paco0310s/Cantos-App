@@ -6,4 +6,48 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:background">@drawable/polygon</item>
     </style>
+
+    <style name="RoundedOutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxStrokeColor">@color/input_box_stroke_color</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxBackgroundColor">@color/input_fill_color</item>
+        <item name="startIconTint">@color/input_box_stroke_color</item>
+        <item name="endIconTint">@color/input_box_stroke_color</item>
+        <item name="hintTextColor">@color/text_secondary_color</item>
+    </style>
+
+    <style name="CustomPopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@color/card_bg_color</item>
+        <item name="android:textColor">@color/card_title_color</item>
+    </style>
+
+    <style name="CustomMaterialDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/CustomDialogCorner</item>
+        <item name="colorSurface">@color/card_bg_color</item>
+        <item name="colorOnSurface">@color/card_title_color</item>
+        <item name="colorPrimary">@color/tag_momento_text_color</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/CustomDialogTitleText</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/CustomDialogBodyText</item>
+    </style>
+
+    <style name="CustomDialogCorner">
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="CustomDialogTitleText" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/card_title_color</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="CustomDialogBodyText" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/text_secondary_color</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
 </resources>

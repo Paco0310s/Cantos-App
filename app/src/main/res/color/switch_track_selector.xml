@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pista encendida (Activa): Usamos un morado semitransparente -->
+    <item android:state_checked="true" android:color="#809B51E0" />
+
+    <!-- Pista apagada (Inactiva): Color gris genérico de sistema o adaptativo -->
+    <item android:state_enabled="false" android:color="@color/card_stroke_color" />
+    <item android:color="@color/text_secondary_color" />
+</selector>

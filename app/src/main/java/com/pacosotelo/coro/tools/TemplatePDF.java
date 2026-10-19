@@ -105,14 +105,31 @@ public class TemplatePDF {
 
     public void addParagraph(String text) {
         try {
-            paragraph = new Paragraph(text, fText);
+            paragraph = new Paragraph();
             paragraph.setSpacingAfter(5);
             paragraph.setSpacingBefore(5);
+
+            String[] lines = text.split("\n");
+            for (String line : lines) {
+                Paragraph lineP = new Paragraph();
+                lineP.setAlignment(Element.ALIGN_LEFT);
+
+                String[] words = line.split("(?<= )|(?= )");
+                for (String word : words) {
+                    if (word.startsWith("'") && word.endsWith("'")) {
+                        lineP.add(new Phrase(word, fHighText));
+                    } else if (word.matches("(?i).*(INTRO|CORO|ESTROFA|PUENTE|FINAL).*")) {
+                        lineP.add(new Phrase(word, new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.BOLDITALIC, BaseColor.BLUE)));
+                    } else {
+                        lineP.add(new Phrase(word, fText));
+                    }
+                }
+                paragraph.add(lineP);
+            }
             document.add(paragraph);
         } catch (DocumentException e) {
-            Log.e("addParagraph",e.toString());
+            Log.e("addParagraph", e.toString());
         }
-
     }
 
     public void createTable(String[] header, ArrayList<String[]> clients) {

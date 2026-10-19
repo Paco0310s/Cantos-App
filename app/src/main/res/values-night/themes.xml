@@ -11,10 +11,10 @@
         <item name="colorOnSecondary">#7A989F</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!--item name="android:statusBarColor">#122334</item-->
 
-        <!-- Customize your theme here. -->
-
+        <item name="popupMenuBackground">@color/card_bg_color</item>
+        <item name="android:itemBackground">@color/card_bg_color</item>
+        <item name="android:textColor">@color/card_title_color</item>
     </style>
 
     <style name="texto" parent="TextAppearance.AppCompat">
@@ -45,5 +45,17 @@
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:background">#3D3E3E</item>
     </style>
+
+    <style name="Theme.CantosCoro.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="popupMenuBackground">@color/card_bg_color</item>
+        <item name="android:itemBackground">@color/card_bg_color</item>
+        <item name="android:textColor">@color/card_title_color</item>
+    </style>
+
+    <style name="Theme.CantosCoro.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.CantosCoro.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
 
 </resources>

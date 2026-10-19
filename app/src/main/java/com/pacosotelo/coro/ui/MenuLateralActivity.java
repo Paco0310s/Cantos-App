@@ -12,12 +12,17 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.SharedPreferences;
+import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.navigation.NavigationView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.navigation.NavController;
@@ -34,15 +39,21 @@ import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.databinding.ActivityMenuLateralBinding;
 import com.pacosotelo.coro.modelos.Usuario;
 import com.pacosotelo.coro.tools.Constantes;
+import com.pacosotelo.coro.tools.MenuHelper;
 import com.squareup.picasso.Picasso;
 import java.io.ByteArrayOutputStream;
 import de.hdodenhof.circleimageview.CircleImageView;
+import androidx.lifecycle.ViewModelProvider;
+import com.pacosotelo.coro.viewmodel.GruposViewModel;
 
 public class MenuLateralActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private CircleImageView civFoto;
     private Usuario usuario;
+    private GruposViewModel gruposViewModel;
+    private NavController navController;
+    private NavigationView navigationView;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -56,22 +67,52 @@ public class MenuLateralActivity extends AppCompatActivity {
         setSupportActionBar(binding.appBarMenuLateral.toolbar);
 
         DrawerLayout drawer = binding.drawerLayout;
-        NavigationView navigationView = binding.navView;
+        navigationView = binding.navView;
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_listaCantos, R.id.nav_listaTodosCantos, R.id.nav_listaGrupos, R.id.nav_listaEsquemas, R.id.nav_afinador)
                 .setOpenableLayout(drawer)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_lateral);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_lateral);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Listener manual para forzar la selección del menu lateral al presionar
+        navigationView.setNavigationItemSelectedListener(item -> {
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (handled) {
+                drawer.closeDrawers();
+            }
+            return handled;
+        });
+
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            int currentId = destination.getId();
+            navigationView.setCheckedItem(currentId);
+        });
+
 
         View header = navigationView.getHeaderView(0);
         header.findViewById(R.id.header_title);
         TextView tvNameUser = header.findViewById(R.id.tvUser);
         TextView tvEmailUser = header.findViewById(R.id.tvEmailUser);
         civFoto = header.findViewById(R.id.civPhotoUser);
+
+        gruposViewModel = new ViewModelProvider(this).get(GruposViewModel.class);
+
+        gruposViewModel.getPhotoUploadSuccess().observe(this, photoUrl -> {
+            if (photoUrl != null && !photoUrl.isEmpty()) {
+                Picasso.get().load(photoUrl).into(civFoto);
+                Toast.makeText(this, "Se ha subido la imagen", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        gruposViewModel.getErrorMessage().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             usuario = this.getIntent().getSerializableExtra("usuario", Usuario.class);
@@ -91,10 +132,31 @@ public class MenuLateralActivity extends AppCompatActivity {
             usuario = new Usuario();
         }
 
-//        civFoto.setOnClickListener(v -> {
-//            foto();
-//        });
+    }
 
+    private void toggleTheme() {
+        MenuHelper.toggleTheme(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
+        MenuItem themeItem = menu.findItem(R.id.action_toggle_theme);
+        SharedPreferences pref = getSharedPreferences("theme_pref", MODE_PRIVATE);
+        boolean isDark = pref.getBoolean("is_dark_mode", false);
+        if (themeItem != null) {
+            themeItem.setIcon(isDark ? R.drawable.ic_light_mode : R.drawable.ic_night_mode);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_toggle_theme) {
+            toggleTheme();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -124,7 +186,7 @@ public class MenuLateralActivity extends AppCompatActivity {
     }
 
     private void foto() {
-        final PopupMenu popupMenu = new PopupMenu(MenuLateralActivity.this, civFoto);
+        final PopupMenu popupMenu = new PopupMenu(new ContextThemeWrapper(MenuLateralActivity.this, R.style.CustomPopupMenuStyle), civFoto);
         popupMenu.getMenuInflater().inflate(R.menu.menu_foto, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(menuItem -> {
             switch (menuItem.getItemId()) {
@@ -152,22 +214,9 @@ public class MenuLateralActivity extends AppCompatActivity {
     }
 
     private void subirImagen(Uri FileUri){
-        String id = usuario.getUid();
-
-        DatabaseReference dr = FirebaseDatabase.getInstance().getReference("usuarios");
-        StorageReference Folder = FirebaseStorage.getInstance().getReference().child("Fotos");
-
-        final StorageReference file_name = Folder.child("IMG-USER-" + id);
-
-        file_name.putFile(FileUri)
-                .addOnSuccessListener(taskSnapshot -> file_name.getDownloadUrl().addOnSuccessListener(uri -> {
-                    usuario.setFoto(String.valueOf(uri));
-                    dr.child(id).setValue(usuario)
-                            .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> IMAGEN DE USUARIO GUARDADA EXITOSAMENTE"))
-                            .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR GUARDANDO IMAGEN DE USUARIO", e));
-                    Toast.makeText(this, "Se ha subido la imagen", Toast.LENGTH_SHORT).show();
-                }))
-                .addOnFailureListener(e -> Toast.makeText(this, "Error al subir imagen: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        if (usuario != null && usuario.getUid() != null) {
+            gruposViewModel.uploadUserPhoto(usuario, FileUri);
+        }
     }
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {

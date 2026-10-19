@@ -1,296 +1,321 @@
 package com.pacosotelo.coro.ui;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.button.MaterialButton;
 import com.pacosotelo.coro.R;
-//import org.jtransforms.fft.DoubleFFT_1D;
-import java.text.DecimalFormat;
+import com.pacosotelo.coro.tools.MenuHelper;
+
+import java.util.Locale;
 
 public class AfinadorFragment extends Fragment {
 
-    private boolean stopped = true;
-    boolean buffer_ready = false;
-    private float f_fundamental = 0.0f;
-    private final int POW_FREC_SHOW = 11;
-    private final int POW_FFT_BUFFER = 16;
-    private final int BUFFER_SIZE_SHOW_FREQ = (int) Math.pow(2, POW_FREC_SHOW);
-    private final int BUFFER_SIZE_MICRO = (int) Math.pow(2, POW_FFT_BUFFER);
-    private final float[] Frecuencias = new float[BUFFER_SIZE_SHOW_FREQ];
-    private final float[] hanning = new float[BUFFER_SIZE_MICRO];
-    //private final DoubleFFT_1D fft = new DoubleFFT_1D(BUFFER_SIZE_MICRO);
-    double[] buffer_double = new double[BUFFER_SIZE_MICRO];
-    AudioRecord recorder = null;
-    short[] buffer = new short[BUFFER_SIZE_MICRO];
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
-    private boolean permissionToRecordAccepted = false;
-    private final String[] permissions = {Manifest.permission.RECORD_AUDIO};
-    private Activity activity;
-    private TextView mostrarFrec;
-    View root;
+    private static final int SAMPLE_RATE = 44100;
+    private static final int BUFFER_SIZE = 4096;
+
+    private TextView tvNoteName, tvFrequency, tvTuningStatus;
+    private View viewTrackBackground, viewNeedlePointer;
+    private MaterialButton bStartStopTuner;
+
+    private AudioRecord audioRecord;
+    private boolean isRecording = false;
+    private Thread recordingThread;
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startTuner();
+                } else {
+                    Toast.makeText(getActivity(), "Se requiere permiso de micrófono para afinar", Toast.LENGTH_SHORT).show();
+                }
+            });
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
-            permissionToRecordAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-        }
-        if (!permissionToRecordAccepted) requireActivity().finish();
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        root = inflater.inflate(R.layout.fragment_afinador, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_afinador, container, false);
 
-        mostrarFrec = root.findViewById(R.id.editText_frec);
+        tvNoteName = root.findViewById(R.id.tvNoteName);
+        tvFrequency = root.findViewById(R.id.tvFrequency);
+        tvTuningStatus = root.findViewById(R.id.tvTuningStatus);
+        viewTrackBackground = root.findViewById(R.id.viewTrackBackground);
+        viewNeedlePointer = root.findViewById(R.id.viewNeedlePointer);
+        bStartStopTuner = root.findViewById(R.id.bStartStopTuner);
 
-        mostrarFrec.setOnClickListener(v -> accion_boton_ini_fin());
-
-        activity = getActivity();
-
-        accion_boton_ini_fin();
-
-        ActivityCompat.requestPermissions(activity, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
-
-        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-
-            AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
-            int SampleRate = Integer.parseInt(audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE));
-            int BufferSizeMin = AudioRecord.getMinBufferSize(SampleRate, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
-
-            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                    SampleRate,
-                    AudioFormat.CHANNEL_IN_DEFAULT,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    BufferSizeMin);
-
-            //Hanning - Ventana
-            for (int i = 0; i < BUFFER_SIZE_MICRO; i++) {
-                //Funcion sacada de MATLAB
-                hanning[i] = (float) (0.5 - (0.5 * Math.cos((2 * Math.PI * i) / (BUFFER_SIZE_MICRO - 1))));
-            }
-
-            //Relleno del buffer mapeando las frecuencias 2^11 MUESTRAS
-            Frecuencias[0]=0.0f; //Hz
-            float PASOS = (float) SampleRate/((float) BUFFER_SIZE_MICRO -1);
-            //for(int i=1;i<BUFFER_SIZE_SHOW_FREQ;i++)
-            for(int i=1;i<BUFFER_SIZE_SHOW_FREQ;i++) {
-                // El valor 2,353 se saco de manera expiremental midiendo distintas
-                // frecuencias y ajustando hasta tener un valor aceptable.
-                Frecuencias[i] = Frecuencias[i-1] + PASOS;
-            }
-
-            new Thread(() -> {
-                while (true)
-                {
-                    if (!stopped) {
-                        activity.runOnUiThread(this::calcFFT);
-                    }
-
-                    // sleep
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException ignored) {
-
-                    }
-
-
-                }
-            }).start();
-            //------------------------------------------------------------------------------------------
-        }
+        bStartStopTuner.setOnClickListener(v -> toggleTuner());
 
         return root;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        verificarYPedirPermiso();
     }
 
-    //----------------------------------------------------------------------------------------------
-    //------------------------------ Boton de iniciar / parar --------------------------------------
-    //----------------------------------------------------------------------------------------------
-    private void accion_boton_ini_fin () {
-        // Si estaba encendido, solo apago
-        if (!stopped) {
-            stopped = true;
-            f_fundamental=0;
-            // Actualizo Frecuencia
-            String frec = f_fundamental+"Hz";
-            mostrarFrec.setText(frec);
-            mostrarFrec.setTextColor(Color.RED);
-            return;
-        } else {
-            stopped = false;
-            mostrarFrec.setTextColor(Color.GREEN);
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_lista, menu);
+
+        MenuItem buscarItem = menu.findItem(R.id.buscar);
+        if (buscarItem != null) {
+            buscarItem.setVisible(false);
         }
 
-
-        //---------------------------------- EJECUTO EL THREAD DE AUDIO RECORDER -------------------
-
-        // Este thread va a estar siempre grabando audio
-        new Thread(this::getDataAudio).start();
-
-
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
-    //----------------------------------------------------------------------------------------------
-    //------------------------------ CALC FFT - JAVA -----------------------------------------------
-    //----------------------------------------------------------------------------------------------
-    // Este método hace la FFT
-    private void calcFFT () {
-        // Solo si hay nuevos datos en el buffer...
-        if (buffer_ready) {
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.info) {
+            MenuHelper.alertaAcercaDe(getActivity());
+            return true;
+        } else if (itemId == R.id.cerrarSesion) {
+            MenuHelper.cerrarSesion(getActivity());
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-            // Pasamos a double como quiere la clase FFT
-            for (int i = 0; i < BUFFER_SIZE_MICRO; i++)
-            {
-                buffer_double[i] = buffer[i]*hanning[i]; //Ventaneo
+    private void verificarYPedirPermiso() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            if (!isRecording) {
+                startTuner();
+            }
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+        }
+    }
+
+    private void toggleTuner() {
+        if (isRecording) {
+            stopTuner();
+        } else {
+            verificarYPedirPermiso();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startTuner() {
+        int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int bufferSize = Math.max(BUFFER_SIZE, minBufferSize);
+
+        try {
+            audioRecord = new AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize
+            );
+
+            if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                Toast.makeText(getActivity(), "No se pudo inicializar el micrófono", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            // HAcemos la FFT. La salida va a estar en el mismo buffer. Solo saca la parte
-            // real (izquierda) de la FFT, intercalando la salida real y la imaginaria.
-            //fft.realForward(buffer_double);
+            audioRecord.startRecording();
+            isRecording = true;
+            bStartStopTuner.setText("Detener Afinador");
 
-            updateFFT_values();
-
-            DecimalFormat df = new DecimalFormat("#.00");
-            String resultado = df.format(f_fundamental);
-
-            // Actualizo Frecuencia
-            String frec = resultado + "Hz";
-            mostrarFrec.setText(frec);
-
-            //(); //Comparo las notas medidas con las patron
-
-            // Terminamos de procesar el buffer, reseteamos el flag
-            buffer_ready = false;
+            recordingThread = new Thread(this::processAudioData);
+            recordingThread.start();
+        } catch (Exception e) {
+            Log.e("AfinadorFragment", "Error al iniciar AudioRecord", e);
+            Toast.makeText(getActivity(), "Error al acceder al micrófono", Toast.LENGTH_SHORT).show();
         }
     }
 
-    //Actualización graficos FFT
-    private final float[] buffer_aux = new float[BUFFER_SIZE_SHOW_FREQ];
-
-    //Funcion que trabaja con los datos transformados
-    private void updateFFT_values() {
-        //En esta funcion se obtiene el modulo
-
-        for (int i=0;i<BUFFER_SIZE_SHOW_FREQ;i++)
-        {
-            //calculo el modulo
-            double aux_mod = Math.sqrt(buffer_double[i]*buffer_double[i] + buffer_double[i+1]*buffer_double[i+1]);
-
-            aux_mod = 20*Math.log(aux_mod);
-            buffer_aux[i] = (float) aux_mod;
+    private void stopTuner() {
+        isRecording = false;
+        if (recordingThread != null) {
+            recordingThread.interrupt();
+            recordingThread = null;
         }
 
-        findPeaks(); //busco puntos y se calcula la frecuencia fundamental
+        if (audioRecord != null) {
+            try {
+                if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                    audioRecord.stop();
+                }
+                audioRecord.release();
+            } catch (Exception e) {
+                Log.e("AfinadorFragment", "Error al detener AudioRecord", e);
+            }
+            audioRecord = null;
+        }
 
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                bStartStopTuner.setText("Iniciar Afinador");
+                tvNoteName.setText("--");
+                tvNoteName.setTextColor(ContextCompat.getColor(requireContext(), R.color.card_title_color));
+                tvFrequency.setText("0.0 Hz");
+                tvTuningStatus.setText("Presiona Iniciar");
+                tvTuningStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.tag_tiempo_text_color));
+                if (viewNeedlePointer != null) {
+                    viewNeedlePointer.setTranslationX(0f);
+                    viewNeedlePointer.setBackgroundColor(Color.parseColor("#FF9800"));
+                }
+            });
+        }
     }
 
+    private void processAudioData() {
+        short[] audioBuffer = new short[BUFFER_SIZE];
 
-    //Busco los picos y saco la frecuencia fundamental
-    private void findPeaks() {
-        int len_freq = 0;
-        float[] buff_freq =new float [(int) BUFFER_SIZE_SHOW_FREQ/2];
-        //float[] Amplitud_muestras = new float [(int) BUFFER_SIZE_SHOW_FREQ/2];
-
-        for(int i=1;i<buffer_aux.length-1;i++)
-        {
-            if( (buffer_aux[i]-buffer_aux[i-1])>0 && (buffer_aux[i+1]-buffer_aux[i])<=0 )
-            {
-                int NIVELMINIMO = 275;
-                if(buffer_aux[i]> NIVELMINIMO -10)
-                {
-                    //Amplitud_muestras[len_freq]=buffer_aux[i];
-
-                    float FREC_ELEGIDA = 80;
-                    if(Frecuencias[i]> FREC_ELEGIDA -20&& Frecuencias[i]< FREC_ELEGIDA +20){
-                        buff_freq[len_freq]= Frecuencias[i];
-                        len_freq++;
+        while (isRecording && audioRecord != null) {
+            int readSize = audioRecord.read(audioBuffer, 0, BUFFER_SIZE);
+            if (readSize > 0) {
+                float pitch = detectPitch(audioBuffer, readSize, SAMPLE_RATE);
+                if (pitch > 50 && pitch < 1200) {
+                    PitchResult result = calculateNote(pitch);
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> updateUI(result));
                     }
-
                 }
             }
         }
-
-        // Busco el maximo de picos obtenidos (f fundamental)
-        // luego busco a que frecuencia pertenece y es la que aparece por pantalla
-
-        if(len_freq!=0)
-        {
-
-            f_fundamental =  findmax(buff_freq);//buff_freq[findmax(Amplitud_muestras)-1];
-        }
-
-        if (len_freq==0) f_fundamental=0;
     }
 
-    //Funcion que sirve para encontrar el pico más alto despues de transformar
-    //private int findmax(float aux[]){
-    private float findmax(float[] aux){
-        int arg=0;
-        float suma=0;
-        for(int i=0;i<aux.length-1;i++){
-            if(aux[i]==0){
-                arg=i;
-                i= aux.length;
+    private float detectPitch(short[] buffer, int length, int sampleRate) {
+        double sumSq = 0;
+        for (int i = 0; i < length; i++) {
+            sumSq += buffer[i] * buffer[i];
+        }
+        double rms = Math.sqrt(sumSq / length);
+        if (rms < 250) {
+            return -1f;
+        }
+
+        int minLag = sampleRate / 1000;
+        int maxLag = sampleRate / 65;
+
+        float[] r = new float[maxLag + 1];
+        for (int lag = minLag; lag <= maxLag; lag++) {
+            float sum = 0;
+            for (int i = 0; i < length - lag; i++) {
+                sum += (buffer[i] * buffer[i + lag]);
             }
-            else suma=suma+aux[i];
+            r[lag] = sum;
         }
-        suma=suma/arg;
-        //return arg;
-        return suma;
-    }
 
-    //----------------------------------------------------------------------------------------------
-    //------------------------------ CAPTURAR AUDIO ------------------------------------------------
-    //----------------------------------------------------------------------------------------------
-    private void getDataAudio() {
-
-        // Seteamos la prioridad
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-
-        // intentamos crear el grqabador de audio y grabar...
-
-        try {
-
-            // Empezamos a grabar
-            recorder.startRecording();
-
-            // Mientras no me digan que pare...
-            while(!stopped) {
-                //Log.d("PRUEBA", "Estoy grabando");
-
-                // Leo las muestras de audio
-                recorder.read(buffer,0, BUFFER_SIZE_MICRO);
-
-                // Si llego aca es que hay nueva info, seteo el flag para la FFT
-                buffer_ready = true;
-
+        int peakLag = -1;
+        float maxVal = -1;
+        for (int lag = minLag; lag <= maxLag; lag++) {
+            if (r[lag] > maxVal) {
+                maxVal = r[lag];
+                peakLag = lag;
             }
-        } catch(Throwable x) {
-            Log.w("Error Audio: ","Error reading voice audio",x);
+        }
+
+        if (peakLag <= minLag || peakLag >= maxLag) return -1f;
+
+        float alpha = r[peakLag - 1];
+        float beta = r[peakLag];
+        float gamma = r[peakLag + 1];
+
+        float denominator = (2 * (2 * beta - alpha - gamma));
+        if (denominator == 0) return sampleRate / (float) peakLag;
+
+        float delta = (gamma - alpha) / denominator;
+        float trueLag = peakLag + delta;
+
+        return sampleRate / trueLag;
+    }
+
+    private static class PitchResult {
+        String noteName;
+        float frequency;
+        float cents;
+        boolean isInTune;
+    }
+
+    private PitchResult calculateNote(float frequency) {
+        double midiNumber = 69 + 12 * (Math.log(frequency / 440.0) / Math.log(2.0));
+        int roundedMidi = (int) Math.round(midiNumber);
+        double cents = (midiNumber - roundedMidi) * 100;
+
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        int noteIndex = (roundedMidi % 12 + 12) % 12;
+        int octave = (roundedMidi / 12) - 1;
+
+        PitchResult result = new PitchResult();
+        result.frequency = frequency;
+        result.noteName = noteNames[noteIndex] + octave;
+        result.cents = (float) cents;
+        result.isInTune = Math.abs(cents) <= 6;
+
+        return result;
+    }
+
+    private void updateUI(PitchResult result) {
+        if (!isAdded()) return;
+
+        tvNoteName.setText(result.noteName);
+        tvFrequency.setText(String.format(Locale.US, "%.1f Hz", result.frequency));
+
+        if (viewTrackBackground != null && viewNeedlePointer != null) {
+            int trackWidth = viewTrackBackground.getWidth();
+            int pointerWidth = viewNeedlePointer.getWidth();
+            if (trackWidth > 0 && pointerWidth > 0) {
+                float clampedCents = Math.max(-50f, Math.min(50f, result.cents));
+                float fraction = (clampedCents + 50f) / 100f;
+                float translationX = (fraction - 0.5f) * (trackWidth - pointerWidth);
+                viewNeedlePointer.setTranslationX(translationX);
+            }
+        }
+
+        if (result.isInTune) {
+            tvNoteName.setTextColor(Color.parseColor("#4CAF50"));
+            if (viewNeedlePointer != null) viewNeedlePointer.setBackgroundColor(Color.parseColor("#4CAF50"));
+            tvTuningStatus.setText("AFINADO ✅");
+            tvTuningStatus.setTextColor(Color.parseColor("#4CAF50"));
+        } else if (result.cents < -6) {
+            tvNoteName.setTextColor(Color.parseColor("#FF9800"));
+            if (viewNeedlePointer != null) viewNeedlePointer.setBackgroundColor(Color.parseColor("#FF9800"));
+            tvTuningStatus.setText("SUBIR ⬆️");
+            tvTuningStatus.setTextColor(Color.parseColor("#FF9800"));
+        } else {
+            tvNoteName.setTextColor(Color.parseColor("#FF5722"));
+            if (viewNeedlePointer != null) viewNeedlePointer.setBackgroundColor(Color.parseColor("#FF5722"));
+            tvTuningStatus.setText("BAJAR ⬇️");
+            tvTuningStatus.setTextColor(Color.parseColor("#FF5722"));
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        stopTuner();
+    }
 }
-

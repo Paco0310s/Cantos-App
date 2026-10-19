@@ -3,30 +3,36 @@ package com.pacosotelo.coro.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.widget.SearchView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import android.widget.Button;
-import android.widget.TextView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -41,6 +47,10 @@ import com.pacosotelo.coro.modelos.Grupo;
 import com.pacosotelo.coro.modelos.Usuario;
 import com.pacosotelo.coro.tools.AdaptadorCantos;
 import com.pacosotelo.coro.tools.Constantes;
+import com.pacosotelo.coro.tools.MenuHelper;
+import com.pacosotelo.coro.tools.Transiciones;
+import com.pacosotelo.coro.viewmodel.CantosViewModel;
+import com.pacosotelo.coro.viewmodel.GruposViewModel;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -48,13 +58,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import android.widget.EditText;
 
 public class ListaCantosFragment extends Fragment {
-    private List<Canto> listaCantos = new ArrayList<>();
-    private List<Canto> listaRespaldo = new ArrayList<>();
+    private List<Canto> listaCantos;
+    private List<Canto> listaRespaldo;
     private RecyclerView lista;
     private AdaptadorCantos adapter;
     private ProgressBar progressBar;
@@ -63,9 +70,8 @@ public class ListaCantosFragment extends Fragment {
     private Button btnCrearGrupo, btnUnirseGrupo;
     private TextView tvNoGroup;
 
-    // Control de listeners para tiempo real sin fugas de memoria
-    private ValueEventListener cantosListener;
-    private Query queryCantos;
+    private CantosViewModel cantosViewModel;
+    private GruposViewModel gruposViewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,9 +80,29 @@ public class ListaCantosFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.trim().isEmpty()) {
+            inicializarFirebase();
+        } else {
+            cargarCantos();
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_lista_cantos, container, false);
+
+        cantosViewModel = new ViewModelProvider(requireActivity()).get(CantosViewModel.class);
+        gruposViewModel = new ViewModelProvider(requireActivity()).get(GruposViewModel.class);
+
+        gruposViewModel.getGroupCreatedMessage().observe(getViewLifecycleOwner(), mensaje -> {
+            if (mensaje != null && !mensaje.isEmpty()) {
+                Toast.makeText(getActivity(), mensaje, Toast.LENGTH_LONG).show();
+                gruposViewModel.clearGroupCreatedMessage();
+            }
+        });
 
         lista = root.findViewById(R.id.lista);
         progressBar = root.findViewById(R.id.pbCantos);
@@ -84,7 +110,7 @@ public class ListaCantosFragment extends Fragment {
         this.fabNuevo = root.findViewById(R.id.fabNuevoCanto);
         this.fabNuevo.setOnClickListener(v -> {
             if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) {
-                Toast.makeText(getActivity(), "Debes tener un grupo seleccionado para crear un canto", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), getString(R.string.msg_grupo_necesario_canto), Toast.LENGTH_SHORT).show();
                 return;
             }
             nuevoCanto();
@@ -95,31 +121,27 @@ public class ListaCantosFragment extends Fragment {
         btnCrearGrupo = root.findViewById(R.id.btnCrearGrupo);
         btnUnirseGrupo = root.findViewById(R.id.btnUnirseGrupo);
 
-        btnCrearGrupo.setOnClickListener(v -> {
-            FirebaseUser usuarioFirebase = FirebaseAuth.getInstance().getCurrentUser();
-            if (usuarioFirebase != null) {
-                FirebaseDatabase.getInstance().getReference("usuarios").child(usuarioFirebase.getUid()).get()
-                        .addOnSuccessListener(dataSnapshot -> {
-                            if (dataSnapshot.exists()) {
-                                Usuario u = dataSnapshot.getValue(Usuario.class);
-                                if (u != null) mostrarDialogoCrearGrupo(u);
-                            }
-                        })
-                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Crear grupo)", e));
+        btnCrearGrupo.setOnClickListener(v -> MenuHelper.mostrarDialogoCrearGrupo(requireActivity(), gruposViewModel));
+        btnUnirseGrupo.setOnClickListener(v -> MenuHelper.mostrarDialogoUnirseGrupo(requireActivity(), gruposViewModel));
+
+        // Observar estado de carga
+        cantosViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        });
+
+        // Observar errores
+        cantosViewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(getActivity(), error, Toast.LENGTH_SHORT).show();
             }
         });
 
-        btnUnirseGrupo.setOnClickListener(v -> {
-            FirebaseUser usuarioFirebase = FirebaseAuth.getInstance().getCurrentUser();
-            if (usuarioFirebase != null) {
-                FirebaseDatabase.getInstance().getReference("usuarios").child(usuarioFirebase.getUid()).get()
-                        .addOnSuccessListener(dataSnapshot -> {
-                            if (dataSnapshot.exists()) {
-                                Usuario u = dataSnapshot.getValue(Usuario.class);
-                                if (u != null) mostrarDialogoUnirseGrupo(u);
-                            }
-                        })
-                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Unirse a grupo)", e));
+        // Observar los cantos para la lista
+        cantosViewModel.getCantos().observe(getViewLifecycleOwner(), cantos -> {
+            listaRespaldo.clear();
+            listaRespaldo.addAll(cantos);
+            if (adapter != null) {
+                adapter.actualizarLista(cantos);
             }
         });
 
@@ -131,30 +153,14 @@ public class ListaCantosFragment extends Fragment {
         lista.setLayoutManager(new LinearLayoutManager(getActivity()));
         lista.setAdapter(adapter);
 
-        // Se inicializa la primera carga al crear la vista únicamente
         inicializarFirebase();
 
         return root;
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        // Limpiamos el listener cuando el fragmento destruye su interfaz
-        detenerListenerCantos();
-    }
-
-    private void detenerListenerCantos() {
-        if (queryCantos != null && cantosListener != null) {
-            queryCantos.removeEventListener(cantosListener);
-            cantosListener = null;
-            queryCantos = null;
-        }
-    }
-
-    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater){
-        inflater.inflate(R.menu.menu_lista, menu);
+        inflater.inflate(R.menu.menu_lista_todos_cantos, menu);
 
         MenuItem item = menu.findItem(R.id.buscar);
 
@@ -170,456 +176,52 @@ public class ListaCantosFragment extends Fragment {
     @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.nuevoCanto:
-                if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) {
-                    Toast.makeText(getActivity(), "Debes tener un grupo seleccionado para crear un canto", Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                nuevoCanto();
-                break;
-            case R.id.info:
-                alertaAcercaDe();
-                break;
-            case R.id.cambiarGrupo:
-                cambiarGrupo();
-                break;
-            case R.id.cerrarSesion:
-                cerrarSesion();
-                break;
+        int itemId = item.getItemId();
+        if (itemId == R.id.info) {
+            MenuHelper.alertaAcercaDe(getActivity());
+            return true;
+        } else if (itemId == R.id.cerrarSesion) {
+            MenuHelper.cerrarSesion(getActivity());
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void cambiarGrupo(){
-        FirebaseUser usuarioFirebase = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (usuarioFirebase == null) {
-            Toast.makeText(getActivity(), "No hay usuario autenticado", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        FirebaseDatabase.getInstance().getReference("usuarios").child(usuarioFirebase.getUid()).get().addOnSuccessListener(dataSnapshot -> {
-            if (dataSnapshot.exists()) {
-                Usuario u = dataSnapshot.getValue(Usuario.class);
-                if (u != null) {
-                    mostrarDialogoCambioGrupo(u);
-                } else {
-                    Toast.makeText(getActivity(), "Error al cargar usuario", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
-            }
-        }).addOnFailureListener(e -> {
-            Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Cambiar grupo)", e);
-            Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    private void mostrarDialogoCambioGrupo(Usuario usuario) {
-        if (usuario.getGrupos() == null || usuario.getGrupos().isEmpty()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-            builder.setTitle("No tienes grupos");
-            builder.setMessage("Crea un nuevo grupo o únete a uno existente");
-            builder.setCancelable(true);
-            builder.setNeutralButton("Crear grupo", (dialog, which) -> mostrarDialogoCrearGrupo(usuario));
-            builder.setPositiveButton("Unirse a grupo", (dialog, which) -> mostrarDialogoUnirseGrupo(usuario));
-            builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
-            AlertDialog alerta = builder.create();
-            alerta.show();
-            return;
-        }
-
-        obtenerNombresGruposYMostrarDialogo(usuario);
-    }
-
-    private void obtenerNombresGruposYMostrarDialogo(Usuario usuario) {
-        ArrayList<String> grupoUuids = usuario.getGrupos();
-        ArrayList<String> grupoNombres = new ArrayList<>();
-
-        FirebaseDatabase.getInstance().getReference("grupos").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    for (String uuid : grupoUuids) {
-                        DataSnapshot grupoSnapshot = snapshot.child(uuid);
-                        if (grupoSnapshot.exists()) {
-                            Grupo grupo = grupoSnapshot.getValue(Grupo.class);
-                            if (grupo != null) {
-                                grupoNombres.add(grupo.getNombre() + "\n(Código: " + grupo.getCodigo() + ")");
-                            }
-                        }
-                    }
-                }
-
-                mostrarDialogoConNombres(usuario, grupoUuids, grupoNombres);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                for (String uuid : grupoUuids) {
-                    grupoNombres.add(uuid);
-                }
-                mostrarDialogoConNombres(usuario, grupoUuids, grupoNombres);
-            }
-        });
-    }
-
-    private void mostrarDialogoConNombres(Usuario usuario, ArrayList<String> grupoUuids, ArrayList<String> grupoNombres) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("Cambiar de grupo");
-
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_searchable_list, null);
-        androidx.appcompat.widget.SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
-        ListView lv = dialogView.findViewById(R.id.dialogListView);
-
-        String[] nombresArray = grupoNombres.toArray(new String[0]);
-        ArrayAdapter<String> adapterLocal = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_single_choice, nombresArray);
-        lv.setAdapter(adapterLocal);
-
-        for (int i = 0; i < grupoUuids.size(); i++) {
-            if (grupoUuids.get(i).equals(usuario.getGrupoActual())) {
-                lv.setItemChecked(i, true);
-                lv.setSelection(i);
-                break;
-            }
-        }
-
-        sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                adapterLocal.getFilter().filter(newText);
-                return true;
-            }
-        });
-
-        AlertDialog alerta = builder.setView(dialogView)
-                .setCancelable(true)
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
-                .setNeutralButton("Crear nuevo grupo", (dialog, which) -> {
-                    dialog.dismiss();
-                    mostrarDialogoCrearGrupo(usuario);
-                })
-                .setPositiveButton("Unirse a grupo", (dialog, which) -> {
-                    dialog.dismiss();
-                    mostrarDialogoUnirseGrupo(usuario);
-                })
-                .create();
-
-        lv.setOnItemClickListener((parent, view, position, id) -> {
-            if (position >= 0 && position < grupoUuids.size()) {
-                String grupoUuidSeleccionado = grupoUuids.get(position);
-                FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).child("grupoActual").setValue(grupoUuidSeleccionado)
-                        .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> GRUPO ACTUALIZADO EXITOSAMENTE"))
-                        .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO GRUPO", e));
-                Constantes.GRUPO_SELECCIONADO = grupoUuidSeleccionado;
-                Toast.makeText(getActivity(), "Grupo cambiado a " + nombresArray[position], Toast.LENGTH_SHORT).show();
-                alerta.dismiss();
-                inicializarFirebase();
-            }
-        });
-
-        alerta.show();
-    }
-
-    private void mostrarDialogoCrearGrupo(Usuario usuario) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("Crear nuevo grupo");
-
-        EditText input = new EditText(requireActivity());
-        input.setHint("Nombre del grupo");
-        builder.setView(input);
-        builder.setCancelable(true);
-        builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
-        builder.setPositiveButton("Crear", (dialog, which) -> {
-            String nombreGrupo = input.getText().toString().trim();
-            if (!nombreGrupo.isEmpty()) {
-                crearGrupoEnFirebase(usuario, nombreGrupo);
-            } else {
-                Toast.makeText(getActivity(), "Por favor ingresa un nombre para el grupo", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        AlertDialog alerta = builder.create();
-        alerta.show();
-    }
-
-    private void crearGrupoEnFirebase(Usuario usuario, String nombreGrupo) {
-        String uuid = UUID.randomUUID().toString();
-        generarCodigoUnicoYCrearGrupo(usuario, nombreGrupo, uuid);
-    }
-
-    private void generarCodigoUnicoYCrearGrupo(Usuario usuario, String nombreGrupo, String uuid) {
-        String codigo = generarCodigoAleatorio();
-
-        FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").equalTo(codigo)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            generarCodigoUnicoYCrearGrupo(usuario, nombreGrupo, uuid);
-                        } else {
-                            crearGrupoConCodigo(usuario, nombreGrupo, uuid, codigo);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        crearGrupoConCodigo(usuario, nombreGrupo, uuid, codigo);
-                    }
-                });
-    }
-
-    private void crearGrupoConCodigo(Usuario usuario, String nombreGrupo, String uuid, String codigo) {
-        Grupo nuevoGrupo = new Grupo(uuid, nombreGrupo, codigo);
-
-        DatabaseReference refGrupos = FirebaseDatabase.getInstance().getReference("grupos").child(uuid);
-        refGrupos.setValue(nuevoGrupo).addOnSuccessListener(aVoid -> {
-            ArrayList<String> grupos = usuario.getGrupos();
-            if (grupos == null) {
-                grupos = new ArrayList<>();
-            }
-            grupos.add(uuid);
-            usuario.setGrupos(grupos);
-            usuario.setGrupoActual(uuid);
-
-            FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario)
-                    .addOnSuccessListener(aVoidInner -> Log.d("FIREBASE_TRACE", "=====================> USUARIO ACTUALIZADO CON GRUPO NUEVO"))
-                    .addOnFailureListener(eInner -> Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO USUARIO CON GRUPO NUEVO", eInner));
-            Constantes.GRUPO_SELECCIONADO = uuid;
-
-            inicializarFirebase();
-
-            Toast.makeText(getActivity(), "Grupo '" + nombreGrupo + "' creado exitosamente\nCódigo: " + codigo, Toast.LENGTH_LONG).show();
-        }).addOnFailureListener(e -> {
-            Toast.makeText(getActivity(), "Error al crear el grupo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    private String generarCodigoAleatorio() {
-        String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder codigo = new StringBuilder();
-        Random random = new Random();
-
-        for (int i = 0; i < 6; i++) {
-            codigo.append(caracteres.charAt(random.nextInt(caracteres.length())));
-        }
-
-        return codigo.toString();
-    }
-
-    private void mostrarDialogoUnirseGrupo(Usuario usuario) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("Unirse a un grupo");
-        builder.setMessage("Ingresa el código de 6 caracteres del grupo");
-
-        EditText input = new EditText(requireActivity());
-        input.setHint("Código del grupo (6 caracteres)");
-        input.setAllCaps(true);
-        builder.setView(input);
-        builder.setCancelable(true);
-        builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
-        builder.setPositiveButton("Unirse", (dialog, which) -> {
-            String codigo = input.getText().toString().trim().toUpperCase();
-            if (codigo.length() == 6) {
-                buscarYUnirseAGrupo(usuario, codigo);
-            } else {
-                Toast.makeText(getActivity(), "El código debe tener exactamente 6 caracteres", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        AlertDialog alerta = builder.create();
-        alerta.show();
-    }
-
-    private void buscarYUnirseAGrupo(Usuario usuario, String codigo) {
-        FirebaseDatabase.getInstance().getReference("grupos").orderByChild("codigo").equalTo(codigo)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                Grupo grupo = dataSnapshot.getValue(Grupo.class);
-                                if (grupo != null) {
-                                    agregarGrupoAlUsuario(usuario, grupo.getUuid(), grupo.getNombre());
-                                    return;
-                                }
-                            }
-                        } else {
-                            Toast.makeText(getActivity(), "No se encontró un grupo con ese código", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(getActivity(), "Error al buscar el grupo", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void agregarGrupoAlUsuario(Usuario usuario, String grupoUuid, String nombreGrupo) {
-        ArrayList<String> grupos = usuario.getGrupos();
-        if (grupos == null) {
-            grupos = new ArrayList<>();
-        }
-
-        if (grupos.contains(grupoUuid)) {
-            Toast.makeText(getActivity(), "Ya eres miembro de este grupo", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        grupos.add(grupoUuid);
-        usuario.setGrupos(grupos);
-        usuario.setGrupoActual(grupoUuid);
-
-        FirebaseDatabase.getInstance().getReference("usuarios").child(usuario.getUid()).setValue(usuario)
-                .addOnSuccessListener(aVoid -> {
-                    Constantes.GRUPO_SELECCIONADO = grupoUuid;
-                    inicializarFirebase();
-                    Toast.makeText(getActivity(), "Te has unido al grupo '" + nombreGrupo + "'", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getActivity(), "Error al unirse al grupo", Toast.LENGTH_SHORT).show();
-                });
-    }
-
     private void inicializarFirebase() {
-        FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        DatabaseReference dr = fd.getReference("usuarios");
-
-        progressBar.setVisibility(View.VISIBLE);
-
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            progressBar.setVisibility(View.GONE);
+            if (progressBar != null) progressBar.setVisibility(View.GONE);
             return;
         }
-
-        dr.child(currentUser.getUid()).get().addOnSuccessListener(dataSnapshot -> {
-            if (dataSnapshot.exists()) {
-                Usuario u = dataSnapshot.getValue(Usuario.class);
-                if (u != null) {
-                    if (u.getGrupos() == null || u.getGrupos().isEmpty() || u.getGrupoActual() == null || u.getGrupoActual().isEmpty()) {
-                        detenerListenerCantos();
-                        noGroupContainer.setVisibility(View.VISIBLE);
-                        lista.setVisibility(View.GONE);
-                        fabNuevo.setVisibility(View.INVISIBLE);
-                        progressBar.setVisibility(View.GONE);
-                        Constantes.GRUPO_SELECCIONADO = null;
-                    } else {
-                        noGroupContainer.setVisibility(View.GONE);
-                        lista.setVisibility(View.VISIBLE);
-                        fabNuevo.setVisibility(View.VISIBLE);
-                        Constantes.GRUPO_SELECCIONADO = u.getGrupoActual();
-                        cargarCantos();
-                    }
+        
+        gruposViewModel.startListeningUsuario(currentUser.getUid());
+        gruposViewModel.getUsuarioLiveData().observe(getViewLifecycleOwner(), u -> {
+            if (u != null) {
+                Constantes.usuario = u;
+                if (u.getGrupos() == null || u.getGrupos().isEmpty() || u.getGrupoActual() == null || u.getGrupoActual().isEmpty()) {
+                    if (noGroupContainer != null) noGroupContainer.setVisibility(View.VISIBLE);
+                    if (lista != null) lista.setVisibility(View.GONE);
+                    if (fabNuevo != null) fabNuevo.setVisibility(View.INVISIBLE);
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    Constantes.GRUPO_SELECCIONADO = null;
                 } else {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getActivity(), "Error al cargar usuario", Toast.LENGTH_SHORT).show();
+                    if (noGroupContainer != null) noGroupContainer.setVisibility(View.GONE);
+                    if (lista != null) lista.setVisibility(View.VISIBLE);
+                    if (fabNuevo != null) fabNuevo.setVisibility(View.VISIBLE);
+                    Constantes.GRUPO_SELECCIONADO = u.getGrupoActual();
+                    cargarCantos();
                 }
-            } else {
-                progressBar.setVisibility(View.GONE);
-                Toast.makeText(getActivity(), "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show();
             }
-        }).addOnFailureListener(e -> {
-            Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO USUARIO (Inicializar Firebase)", e);
-            progressBar.setVisibility(View.GONE);
-            Toast.makeText(getActivity(), "Error al acceder a la base de datos", Toast.LENGTH_SHORT).show();
         });
     }
 
     private void cargarCantos() {
-        progressBar.setVisibility(View.VISIBLE);
-
-        FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        DatabaseReference dr = fd.getReference("cantos");
-
         if (Constantes.GRUPO_SELECCIONADO == null) {
-            progressBar.setVisibility(View.GONE);
             return;
         }
 
         final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
-
-        detenerListenerCantos();
-
-        queryCantos = dr.orderByChild("grupo_id").equalTo(grupoSeleccionado);
-
-        cantosListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Log.d("FIREBASE_TRACE", "=====================> CANTOS OBTENIDOS DE FIREBASE. Cantidad: " + snapshot.getChildrenCount());
-                listaCantos.clear();
-                listaRespaldo.clear();
-
-                for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    if (objSnap != null) {
-                        try {
-                            Canto c = objSnap.getValue(Canto.class);
-                            if (c != null) {
-                                listaCantos.add(c);
-                            }
-                        } catch (Exception e) {
-                            Log.e("Error_Firebase", "Llave con error: " + objSnap.getKey(), e);
-                        }
-                    }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    listaCantos.sort((c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
-                } else {
-                    Collections.sort(listaCantos, (c1, c2) -> c1.getNombre().compareToIgnoreCase(c2.getNombre()));
-                }
-
-                listaRespaldo.addAll(listaCantos);
-
-                if (adapter != null) {
-                    adapter.actualizarLista(new ArrayList<>(listaCantos));
-                }
-
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                progressBar.setVisibility(View.GONE);
-                Log.e("Firebase_Error", "Error en consulta: " + error.getMessage());
-                Toast.makeText(getActivity(), "Error de conexión con la base de datos", Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        queryCantos.addValueEventListener(cantosListener);
-    }
-
-    private void cerrarSesion(){
-        detenerListenerCantos();
-        FirebaseAuth.getInstance().signOut();
-
-        Activity activity = getActivity();
-        if (activity != null) {
-            Intent i = new Intent(activity, LoginActivity.class);
-            startActivity(i);
-            activity.overridePendingTransition(R.anim.right_in, R.anim.right_out);
-            activity.finish();
-        }
-    }
-
-    private void alertaAcercaDe(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle(R.string.acerca_de);
-        String mensaje = "\u00a9 Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCreditos: \nLogo: Santiago Romo \n\n" +
-                "Versión: 5.1.0" + "\n\nUsuario: " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail() + "\n\nGrupo Seleccionado: " + (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty() ? "Ninguno" : Constantes.GRUPO_SELECCIONADO);
-        builder.setMessage(mensaje);
-        builder.setCancelable(true);
-        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
-        AlertDialog alerta = builder.create();
-        alerta.show();
+        cantosViewModel.loadCantosByGrupo(grupoSeleccionado);
     }
 
     private void nuevoCanto() {
@@ -628,22 +230,7 @@ public class ListaCantosFragment extends Fragment {
             Intent i = new Intent(activity, NuevoCantoActivity.class);
             i.putExtra("getTipo", 0);
             startActivity(i);
-            activity.overridePendingTransition(R.anim.left_in, R.anim.left_out);
-        }
-    }
-
-    private void verCanto(Canto canto) {
-        Activity activity = getActivity();
-        if (activity != null) {
-            Intent i = new Intent(activity, CantoActivity.class);
-            i.putExtra("getID", canto.getId());
-            i.putExtra("getNombre", canto.getNombre());
-            i.putExtra("getLetra", canto.getLetra());
-            i.putExtra("getMomentos", canto.getMomentos());
-            i.putExtra("getTiempos", canto.getTiempos());
-
-            startActivity(i);
-            activity.overridePendingTransition(R.anim.left_in, R.anim.left_out);
+            Transiciones.left(activity);
         }
     }
 
@@ -668,14 +255,11 @@ public class ListaCantosFragment extends Fragment {
             if (longitud == 0) {
                 listaFiltrada.addAll(listaRespaldo);
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    List<Canto> coleccion = listaRespaldo.stream().filter(
-                            i -> quitaDiacriticos(i.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))
-                    ).collect(Collectors.toList());
-                    listaFiltrada.addAll(coleccion);
-                } else {
-                    for (Canto z : listaRespaldo) {
-                        if (quitaDiacriticos(z.getNombre().toLowerCase()).contains(quitaDiacriticos(s.toLowerCase()))) {
+                for (Canto z : listaRespaldo) {
+                    if (z != null && z.getNombre() != null) {
+                        String busqueda = quitaDiacriticos(s.toLowerCase());
+                        String actual = quitaDiacriticos(z.getNombre().toLowerCase());
+                        if (actual.contains(busqueda)) {
                             listaFiltrada.add(z);
                         }
                     }

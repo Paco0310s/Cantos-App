@@ -1,23 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="16dp">
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/dialogSearchView"
+    <!-- Contenedor Redondeado del Buscador -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:queryHint="Buscar..." />
+        app:cardBackgroundColor="@color/input_fill_color"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/input_box_stroke_color"
+        app:strokeWidth="1.5dp">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/dialogSearchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:queryHint="@string/buscar" />
+
+    </com.google.android.material.card.MaterialCardView>
 
     <ListView
         android:id="@+id/dialogListView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="320dp"
+        android:layout_marginTop="12dp"
         android:choiceMode="singleChoice"
-        android:dividerHeight="1dp"
-        android:layout_marginTop="8dp" />
+        android:divider="@color/card_stroke_color"
+        android:dividerHeight="0.8dp" />
 
 </LinearLayout>
-

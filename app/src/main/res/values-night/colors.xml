@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme Colors (Dark Mode) -->
+    <color name="screen_bg_color">#121216</color>
+    <color name="card_bg_color">#1A1A22</color>
+    <color name="card_stroke_color">#2E2E38</color>
+    <color name="input_stroke_color">#D0D0E0</color>
+    <color name="input_stroke_focused_color">#FFFFFF</color>
+    <color name="input_fill_color">#22222C</color>
+    <color name="card_title_color">#F5F5F7</color>
+    <color name="text_secondary_color">#A0A0B0</color>
+    <color name="primary_button_bg">#3D4255</color>
+    <color name="primary_button_text">#FFFFFF</color>
+    <color name="tag_momento_bg_color">#3B2D54</color>
+    <color name="tag_momento_text_color">#CE93D8</color>
+    <color name="tag_tiempo_bg_color">#1E424A</color>
+    <color name="tag_tiempo_text_color">#80DEEA</color>
+    <color name="chord_highlight_color">#FFD54F</color>
+    <color name="directive_highlight_color">#FF8A65</color>
+</resources>

@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.ui.CantoActivity;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHolder> {
@@ -32,13 +33,13 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
     public AdaptadorCantos(List<Canto> listaCantos, Context contexto) {
         this.mInflater = LayoutInflater.from(contexto);
         this.contexto = contexto;
-        this.listaCantos = listaCantos;
+        this.listaCantos = new ArrayList<>(listaCantos);
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.item_canto, null);
+        View view = mInflater.inflate(R.layout.item_canto, parent, false);
         return new ViewHolder(view);
     }
 
@@ -53,8 +54,7 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
     }
 
     public void setLista(List<Canto> listaCantos) {
-        this.listaCantos = listaCantos;
-        notifyDataSetChanged();
+        actualizarLista(listaCantos);
     }
 
     public void actualizarLista(List<Canto> nuevaLista) {
@@ -108,7 +108,7 @@ public class AdaptadorCantos extends RecyclerView.Adapter<AdaptadorCantos.ViewHo
                 i.putExtra("canto",canto);
 
                 contexto.startActivity(i);
-                ((Activity) contexto).overridePendingTransition(R.anim.left_in,R.anim.left_out);
+                Transiciones.left((Activity) contexto);
             });
 
             /*bOpciones.setOnClickListener(v -> {

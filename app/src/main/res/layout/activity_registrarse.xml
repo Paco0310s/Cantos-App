@@ -4,168 +4,168 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/fondo"
+    android:background="@color/screen_bg_color"
     android:fitsSystemWindows="true"
-    style="@style/barra"
     tools:context=".ui.RegistrarseActivity">
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="10dp"
-        app:cardElevation="10dp"
-        android:backgroundTint="#393939"
-        android:layout_marginTop="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tvRegistrarse"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:fontFamily="@font/mywife"
-            android:text="@string/registrate"
-            android:textAlignment="center"
-            android:textColor="#E91E63"
-            android:textSize="25sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="20dp">
 
-    </androidx.cardview.widget.CardView>
+            <ImageButton
+                android:id="@+id/ibAtras"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Atrás"
+                android:src="@drawable/ic_atras"
+                app:tint="@color/card_title_color" />
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="70dp"
-        android:layout_marginBottom="30dp">
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:layout_marginTop="4dp"
+                android:src="@drawable/preicono" />
 
-        <ScrollView
-            android:layout_gravity="top"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tvRegistrarse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Crea tu cuenta"
+                android:textColor="@color/card_title_color"
+                android:textSize="26sp"
+                android:textStyle="bold" />
 
-            <LinearLayout
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Guarda y organiza tus cantos fácilmente"
+                android:textColor="@color/text_secondary_color"
+                android:textSize="14sp" />
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:orientation="vertical">
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/card_bg_color"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_stroke_color"
+                app:strokeWidth="1dp">
 
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/civPhotoUser"
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:layout_marginTop="10dp"
-                    android:src="@drawable/ic_usuario"
-                    android:layout_gravity="center"/>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    app:startIconDrawable="@drawable/ic_name"
-                    app:endIconMode="clear_text"
-                    android:hint="@string/nombre"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etNombre"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/RoundedOutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/mywife"
-                        android:inputType="textPersonName">
+                        android:hint="Nombre completo"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:endIconMode="clear_text"
+                        app:startIconDrawable="@drawable/ic_name">
 
-                    </com.google.android.material.textfield.TextInputEditText>
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNombre"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:textColor="@color/card_title_color" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    app:startIconDrawable="@drawable/ic_usuario2"
-                    app:endIconMode="clear_text"
-                    android:hint="Correo"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCorreo"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/RoundedOutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/mywife"
-                        android:inputType="textWebEmailAddress">
+                        android:layout_marginTop="16dp"
+                        android:hint="Correo electrónico"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:endIconMode="clear_text"
+                        app:startIconDrawable="@drawable/ic_usuario2">
 
-                    </com.google.android.material.textfield.TextInputEditText>
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etCorreo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textWebEmailAddress"
+                            android:textColor="@color/card_title_color" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:startIconDrawable="@drawable/ic_llave2"
-                    app:endIconMode="password_toggle"
-                    android:layout_marginTop="15dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:hint="@string/contrasena">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPass"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/RoundedOutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/mywife"
-                        android:inputType="textPassword">
+                        android:layout_marginTop="16dp"
+                        android:hint="@string/contrasena"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@drawable/ic_llave2">
 
-                    </com.google.android.material.textfield.TextInputEditText>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPass"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textColor="@color/card_title_color" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bRegistrarse"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="24dp"
+                        android:backgroundTint="@color/primary_button_bg"
+                        android:text="Crear cuenta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary_button_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="16dp" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    app:startIconDrawable="@drawable/ic_phone"
-                    app:endIconMode="clear_text"
-                    android:hint="@string/telefono"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etTelefono"
+                    <TextView
+                        android:id="@+id/tvYaTengoCuenta"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/mywife"
-                        android:inputType="phone">
+                        android:layout_marginTop="16dp"
+                        android:padding="8dp"
+                        android:text="¿Ya tienes cuenta? Inicia sesión"
+                        android:textAlignment="center"
+                        android:textColor="@color/tag_momento_text_color"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                    </com.google.android.material.textfield.TextInputEditText>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Button
-                    android:id="@+id/bRegistrarse"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:layout_marginTop="30dp"
-                    android:fontFamily="@font/mywife"
-                    android:backgroundTint="#303030"
-                    android:textColor="#fff"
-                    android:textAllCaps="false"
-                    android:text="@string/listo"
-                    android:textAlignment="center"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="10dp"
-                    android:textStyle="bold"/>
-
-                <ImageButton
-                    android:id="@+id/ibAtras"
-                    android:layout_gravity="center"
-                    android:layout_width="100dp"
-                    android:layout_height="50dp"
-                    android:src="@drawable/ic_atras"
-                    android:layout_marginBottom="20dp"
-                    />
                 </LinearLayout>
-        </ScrollView>
-    </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

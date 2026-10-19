@@ -39,17 +39,10 @@
         />
 
     <item
-        android:id="@+id/subirTono"
-        android:title="@string/subir_tono"
-        android:icon="@drawable/ic_up"
-        app:showAsAction="never"
-        />
-
-    <item
-        android:id="@+id/bajarTono"
-        android:title="@string/bajar_tono"
-        android:icon="@drawable/ic_down"
-        app:showAsAction="never"
+        android:id="@+id/transportarTono"
+        android:title="Transportar a otro tono"
+        android:icon="@drawable/ic_notes"
+        app:showAsAction="ifRoom"
         />
 
     <item

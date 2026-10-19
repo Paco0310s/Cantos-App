@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
@@ -24,7 +25,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,15 +40,20 @@ import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.Constantes;
+import com.pacosotelo.coro.tools.Transiciones;
+import androidx.lifecycle.ViewModelProvider;
+import com.pacosotelo.coro.viewmodel.EsquemasViewModel;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pacosotelo.coro.tools.CantoEsquemaEditAdapter;
+import java.util.Collections;
 
 public class ModificarEsquemaActivity extends AppCompatActivity {
     Button bAgregarCanto, bModificarEsquema;
@@ -56,6 +64,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     private final ArrayList<Canto> listaCantos = new ArrayList<>();
     CantoEsquemaEditAdapter adapter2;
     Esquema esquema;
+    private EsquemasViewModel esquemasViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,14 +79,18 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             }
         });
 
-        esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            esquema = this.getIntent().getSerializableExtra("esquema", Esquema.class);
+        } else {
+            esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
-        actionBar.setTitle("Modificar Esquema");
+        actionBar.setTitle(getString(R.string.titulo_modificar_esquema));
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         fd = FirebaseDatabase.getInstance();
@@ -85,18 +98,112 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
         bAgregarCanto = findViewById(R.id.bAgregarCanto);
         bModificarEsquema = findViewById(R.id.bGuardarEsquema);
+        if (bModificarEsquema != null) bModificarEsquema.setText(R.string.modificar);
+
+        TextView tvHeaderEsquema = findViewById(R.id.tvHeaderEsquema);
+        if (tvHeaderEsquema != null) tvHeaderEsquema.setText(R.string.titulo_modificar_esquema);
+
         etNombreEsquema = findViewById(R.id.etNombreEsquema);
         rvCantosEsquema = findViewById(R.id.rvCantosEsquema);
         rvCantosEsquema.setLayoutManager(new LinearLayoutManager(this));
 
-        etNombreEsquema.setText(esquema.getNombre());
+        esquemasViewModel = new ViewModelProvider(this).get(EsquemasViewModel.class);
 
-        if (esquema.getCantos() != null) {
-            listaCantos.addAll(esquema.getCantos());
+        // Mantener el esquema sincronizado con Firebase
+        if (esquema != null && esquema.getId() != null) {
+            FirebaseDatabase.getInstance().getReference("esquemas").child(esquema.getId()).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        Esquema e = snapshot.getValue(Esquema.class);
+                        if (e != null) {
+                            esquema = e;
+                            if (etNombreEsquema != null && !etNombreEsquema.hasFocus()) {
+                                etNombreEsquema.setText(esquema.getNombre());
+                            }
+                            if (esquema.getCantos() != null) {
+                                listaCantos.clear();
+                                listaCantos.addAll(esquema.getCantos());
+                                if (adapter2 != null) adapter2.notifyDataSetChanged();
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
         }
 
-        adapter2 = new CantoEsquemaEditAdapter(listaCantos, (view, position) -> cantoPulsado(view, position));
+        esquemasViewModel.getSaveSuccess().observe(this, isSuccess -> {
+            if (isSuccess) {
+                Toast.makeText(this, getString(R.string.msg_esquema_modificado), Toast.LENGTH_SHORT).show();
+                regresar();
+            }
+        });
+
+        esquemasViewModel.getDeleteSuccess().observe(this, isSuccess -> {
+            if (isSuccess) {
+                Toast.makeText(this, getString(R.string.msg_esquema_eliminado), Toast.LENGTH_SHORT).show();
+                regresar();
+            }
+        });
+
+        esquemasViewModel.getErrorMessage().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+            }
+        });
+
+        if (etNombreEsquema != null && esquema != null) {
+            etNombreEsquema.setText(esquema.getNombre() != null ? esquema.getNombre() : "");
+        }
+
+        adapter2 = new CantoEsquemaEditAdapter(listaCantos, (view, position) -> {
+            if (position >= 0 && position < listaCantos.size()) {
+                Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
+                intent.putExtra("canto", listaCantos.get(position));
+                intent.putExtra("esquema", esquema);
+                intent.putExtra("indice", position);
+                startActivity(intent);
+                Transiciones.left(this);
+            }
+        });
         rvCantosEsquema.setAdapter(adapter2);
+
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT
+        ) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                int fromPosition = viewHolder.getBindingAdapterPosition();
+                int toPosition = target.getBindingAdapterPosition();
+
+                if (fromPosition != RecyclerView.NO_POSITION && toPosition != RecyclerView.NO_POSITION) {
+                    Collections.swap(listaCantos, fromPosition, toPosition);
+                    adapter2.notifyItemMoved(fromPosition, toPosition);
+                    autoGuardarEsquema();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION && position < listaCantos.size()) {
+                    Canto cantoEliminado = listaCantos.remove(position);
+                    adapter2.notifyItemRemoved(position);
+                    adapter2.notifyItemRangeChanged(position, listaCantos.size());
+                    autoGuardarEsquema();
+                    Toast.makeText(ModificarEsquemaActivity.this, cantoEliminado.getNombre() + " removido", Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(rvCantosEsquema);
 
         bAgregarCanto.setOnClickListener(v -> agregarCanto());
         bModificarEsquema.setOnClickListener(v -> modificarEsquema());
@@ -104,47 +211,46 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     }
 
     private void cantoPulsado(View v, int indice) {
-        final PopupMenu popupMenu = new PopupMenu(ModificarEsquemaActivity.this, v);
+        final PopupMenu popupMenu = new PopupMenu(new ContextThemeWrapper(ModificarEsquemaActivity.this, R.style.CustomPopupMenuStyle), v);
         popupMenu.getMenuInflater().inflate(R.menu.menu_canto_esquema, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(menuItem -> {
-            switch (menuItem.getItemId()) {
-                case R.id.verCanto:
-                    Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
-                    intent.putExtra("canto", esquema.getCantos().get(indice));
-                    intent.putExtra("esquema", esquema);
-                    intent.putExtra("indice",indice);
+            int itemId = menuItem.getItemId();
+            if (itemId == R.id.verCanto) {
+                Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
+                intent.putExtra("canto", esquema.getCantos().get(indice));
+                intent.putExtra("esquema", esquema);
+                intent.putExtra("indice", indice);
 
-                    this.startActivity(intent);
-                    this.overridePendingTransition(R.anim.left_in,R.anim.left_out);
-                    return true;
-                case R.id.eliminarCanto:
-                    listaCantos.remove(indice);
-                    adapter2.notifyItemRemoved(indice);
-                    adapter2.notifyItemRangeChanged(indice, listaCantos.size());
-                    return true;
-                case R.id.moverArriba:
-                    if (indice > 0) {
-                        Canto temp = listaCantos.get(indice);
-                        listaCantos.set(indice, listaCantos.get(indice - 1));
-                        listaCantos.set(indice - 1, temp);
-                        adapter2.notifyItemMoved(indice, indice - 1);
-                    } else {
-                        Toast.makeText(ModificarEsquemaActivity.this, "El canto ya está al principio", Toast.LENGTH_SHORT).show();
-                    }
-                    return true;
-                case R.id.moverAbajo:
-                    if (indice < listaCantos.size() - 1) {
-                        Canto temp = listaCantos.get(indice);
-                        listaCantos.set(indice, listaCantos.get(indice + 1));
-                        listaCantos.set(indice + 1, temp);
-                        adapter2.notifyItemMoved(indice, indice + 1);
-                    } else {
-                        Toast.makeText(ModificarEsquemaActivity.this, "El canto ya está al final", Toast.LENGTH_SHORT).show();
-                    }
-                    return true;
-                default:
-                    return false;
+                this.startActivity(intent);
+                Transiciones.left(this);
+                return true;
+            } else if (itemId == R.id.eliminarCanto) {
+                listaCantos.remove(indice);
+                adapter2.notifyItemRemoved(indice);
+                adapter2.notifyItemRangeChanged(indice, listaCantos.size());
+                return true;
+            } else if (itemId == R.id.moverArriba) {
+                if (indice > 0) {
+                    Canto temp = listaCantos.get(indice);
+                    listaCantos.set(indice, listaCantos.get(indice - 1));
+                    listaCantos.set(indice - 1, temp);
+                    adapter2.notifyItemMoved(indice, indice - 1);
+                } else {
+                    Toast.makeText(ModificarEsquemaActivity.this, getString(R.string.msg_canto_al_principio), Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            } else if (itemId == R.id.moverAbajo) {
+                if (indice < listaCantos.size() - 1) {
+                    Canto temp = listaCantos.get(indice);
+                    listaCantos.set(indice, listaCantos.get(indice + 1));
+                    listaCantos.set(indice + 1, temp);
+                    adapter2.notifyItemMoved(indice, indice + 1);
+                } else {
+                    Toast.makeText(ModificarEsquemaActivity.this, getString(R.string.msg_canto_al_final), Toast.LENGTH_SHORT).show();
+                }
+                return true;
             }
+            return false;
         });
 
         popupMenu.show();
@@ -163,53 +269,64 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
             if (usuario == null) {
-                Toast.makeText(ModificarEsquemaActivity.this, "Usuario no autenticado",
+                Toast.makeText(ModificarEsquemaActivity.this, getString(R.string.msg_no_usuario),
                         Toast.LENGTH_SHORT).show();
                 return super.onOptionsItemSelected(item);
             }
 
-            if (!esquema.getGrupo_id().equals(Constantes.GRUPO_SELECCIONADO)) {
-                Toast.makeText(ModificarEsquemaActivity.this, "No puede eliminar este esquema",
-                        Toast.LENGTH_SHORT).show();
+            String grupoId = esquema != null && esquema.getGrupo_id() != null ? esquema.getGrupo_id() : Constantes.GRUPO_SELECCIONADO;
+            if (grupoId == null || grupoId.isEmpty()) {
+                Toast.makeText(this, "Error al identificar el grupo del esquema", Toast.LENGTH_SHORT).show();
                 return super.onOptionsItemSelected(item);
             }
 
-            if (usuario.getUid().equals("mYW9YLYZPmZdhaSwSS0ONF0EUe53")) {
-                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            FirebaseDatabase.getInstance().getReference("grupos")
+                    .child(grupoId)
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            String adminId = snapshot.child("admin_id").getValue(String.class);
+                            boolean esCoAdmin = snapshot.child("admins").hasChild(usuario.getUid());
 
-                builder.setTitle("Confirmar");
-                builder.setMessage("¿Desea eliminar el esquema?");
-
-                builder.setPositiveButton("SI", (dialog, which) -> {
-                    dr.child(esquema.getId()).removeValue();
-
-                    Toast.makeText(ModificarEsquemaActivity.this, "Esquema eliminado",
-                            Toast.LENGTH_SHORT).show();
-
-                    onBackPressed();
-                });
-
-                builder.setNegativeButton("NO", (dialog, which) -> dialog.dismiss());
-
-                android.app.AlertDialog alert = builder.create();
-                alert.show();
-            } else {
-                Toast.makeText(ModificarEsquemaActivity.this, "No tienes permiso para esta operación",
-                        Toast.LENGTH_SHORT).show();
-            }
+                            if (usuario.getUid().equals(adminId) || esCoAdmin || adminId == null) {
+                                mostrarConfirmacionEliminarEsquema();
+                            } else {
+                                Toast.makeText(ModificarEsquemaActivity.this, getString(R.string.msg_no_permisos), Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(ModificarEsquemaActivity.this, getString(R.string.msg_no_permisos), Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(ModificarEsquemaActivity.this, "Error de red al verificar permisos", Toast.LENGTH_SHORT).show());
         }
         return super.onOptionsItemSelected(item);
     }
 
+    private void mostrarConfirmacionEliminarEsquema() {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle(getString(R.string.titulo_confirmar));
+        builder.setMessage(getString(R.string.msg_eliminar_esquema));
+        builder.setPositiveButton(getString(R.string.btn_si), (dialog, which) -> {
+            esquemasViewModel.deleteEsquema(esquema.getId());
+        });
+        builder.setNegativeButton(getString(R.string.btn_no), (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
     private void agregarCanto() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Selecciona un canto");
+        if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.msg_grupo_necesario_esquema), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle(getString(R.string.titulo_selecciona_canto));
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_searchable_list, null);
         SearchView sv = dialogView.findViewById(R.id.dialogSearchView);
         ListView lv = dialogView.findViewById(R.id.dialogListView);
 
-        ArrayAdapter<Canto> arrayAdapter = new ArrayAdapter<>(this, R.layout.item_canto_esquema);
+        ArrayAdapter<Canto> arrayAdapter = new ArrayAdapter<>(this, R.layout.item_canto_esquema, R.id.textView);
         lv.setAdapter(arrayAdapter);
 
         // 1. Declaramos la lista de respaldo local para este diálogo
@@ -282,7 +399,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         });
 
         AlertDialog dialog = builder.setView(dialogView)
-                .setNegativeButton("Cancelar", (d, which) -> d.dismiss())
+                .setNegativeButton(getString(R.string.cancelar), (d, which) -> d.dismiss())
                 .create();
 
         lv.setOnItemClickListener((parent, view, position, id) -> {
@@ -292,6 +409,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                 if (adapter2 != null) {
                     adapter2.notifyItemInserted(listaCantos.size() - 1);
                 }
+                autoGuardarEsquema();
             }
             dialog.dismiss();
         });
@@ -299,7 +417,27 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void autoGuardarEsquema() {
+        try {
+            if (esquema != null) {
+                esquema.setCantos(listaCantos);
+                if (etNombreEsquema != null && etNombreEsquema.getText() != null) {
+                    esquema.setNombre(etNombreEsquema.getText().toString().trim());
+                }
+                esquema.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
+                esquemasViewModel.saveEsquemaSilencioso(esquema);
+            }
+        } catch (Exception e) {
+            Log.e("ModificarEsquema", "Error al auto-guardar esquema: " + e.getMessage());
+        }
+    }
+
     private void modificarEsquema() {
+        if (esquema != null && (esquema.getGrupo_id() == null || !esquema.getGrupo_id().equals(Constantes.GRUPO_SELECCIONADO))) {
+            Toast.makeText(this, getString(R.string.msg_no_eliminar_esquema), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Esquema esquemaMod = new Esquema();
 
         LocalDateTime fechaActual = null;
@@ -307,31 +445,14 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             fechaActual = LocalDateTime.now();
         }
 
-        String app = switch (Constantes.GRUPO_SELECCIONADO) {
-            case "1ddb5b17-58ec-47aa-a6f5-297b26b06c2b" -> "SJTJ";
-            case "2920155f-81ad-4ad6-9706-e92c8a057408" -> "SAP";
-            case "816df4f3-542a-477a-b508-9b990f01ba47" -> "SJT";
-            default -> "";
-        };
-
-        esquemaMod.setApp(app);
+        esquemaMod.setApp("");
         esquemaMod.setId(esquema.getId());
         esquemaMod.setNombre(etNombreEsquema.getText().toString());
         esquemaMod.setCantos(listaCantos);
         esquemaMod.setFecha_modificacion(fechaActual != null ? fechaActual.toString() : "");
         esquemaMod.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
 
-        dr = fd.getReference();
-        dr.child("esquemas").child(esquemaMod.getId()).setValue(esquemaMod)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("FIREBASE_TRACE", "=====================> DATOS ACTUALIZADOS CON ÉXITO: Esquema (" + esquemaMod.getId() + ")");
-                    Toast.makeText(this, "Esquema modificado", Toast.LENGTH_SHORT).show();
-                    regresar();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("FIREBASE_TRACE", "=====================> ERROR ACTUALIZANDO DATOS: Esquema (" + esquemaMod.getId() + ")", e);
-                    Toast.makeText(this, "Error al guardar esquema: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+        esquemasViewModel.saveEsquema(esquemaMod);
     }
 
     @Override
@@ -342,6 +463,6 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
     private void regresar() {
         finish();
-        overridePendingTransition(R.anim.right_in,R.anim.right_out);
+        Transiciones.right(this);
     }
 }

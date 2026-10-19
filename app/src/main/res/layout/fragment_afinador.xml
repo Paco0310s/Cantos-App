@@ -1,31 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_afinador"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_afinador"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/screen_bg_color"
     tools:context=".ui.AfinadorFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/Text_frec"
-        android:background="@drawable/fondo">
+        android:fillViewport="true">
 
-        <TextView
-            android:id="@+id/editText_frec"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Frecuencia"
-            android:textSize="50sp"
-            android:textStyle="bold"
-            android:textColor="#FFF"
-            android:fontFamily="@font/mywife"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="20dp">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/card_bg_color"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_stroke_color"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Afinador de Cuerdas"
+                        android:textColor="@color/card_title_color"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Toca una cuerda cerca del micrófono para detectar la nota"
+                        android:textColor="@color/text_secondary_color"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="24dp"
+                        app:dividerColor="@color/card_stroke_color" />
+
+                    <TextView
+                        android:id="@+id/tvNoteName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="@color/card_title_color"
+                        android:textSize="72sp"
+                        android:textStyle="bold"
+                        tools:text="A4"
+                        tools:textColor="#4CAF50" />
+
+                    <TextView
+                        android:id="@+id/tvFrequency"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="0.0 Hz"
+                        android:textColor="@color/text_secondary_color"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        tools:text="440.0 Hz" />
+
+                    <RelativeLayout
+                        android:id="@+id/containerTunerGauge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="28dp"
+                        android:paddingHorizontal="8dp">
+
+                        <View
+                            android:id="@+id/viewTrackBackground"
+                            android:layout_width="match_parent"
+                            android:layout_height="14dp"
+                            android:layout_centerInParent="true"
+                            android:background="@drawable/tuner_track_bg" />
+
+                        <View
+                            android:id="@+id/viewCenterTarget"
+                            android:layout_width="4dp"
+                            android:layout_height="24dp"
+                            android:layout_centerInParent="true"
+                            android:background="#4CAF50" />
+
+                        <View
+                            android:id="@+id/viewNeedlePointer"
+                            android:layout_width="14dp"
+                            android:layout_height="28dp"
+                            android:layout_centerInParent="true"
+                            android:background="@drawable/tuner_needle_pointer" />
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:paddingHorizontal="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:text="◀ Flojo"
+                            android:textColor="@color/text_secondary_color"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvTuningStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:text="AFINADO"
+                            android:textColor="#4CAF50"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="Tenso ▶"
+                            android:textColor="@color/text_secondary_color"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </RelativeLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bStartStopTuner"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="32dp"
+                        android:backgroundTint="@color/primary_button_bg"
+                        android:text="Iniciar Afinador"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary_button_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="14dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
+
 </FrameLayout>

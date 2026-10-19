@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -23,36 +24,37 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import androidx.lifecycle.ViewModelProvider;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Usuario;
+import com.pacosotelo.coro.tools.Transiciones;
+import com.pacosotelo.coro.viewmodel.AuthViewModel;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
+
+import com.pacosotelo.coro.databinding.ActivityLoginBinding;
 
 // Clase que nos servirá para iniciar sesión;
 public class LoginActivity extends AppCompatActivity {
+    private ActivityLoginBinding binding;
     // Constantes para iniciar sesión con Google
     private static final String TAG_GOOGLE = "GoogleActivity";
     private static final int RC_SIGN_IN = 9001;
     // Cliente de Google
     private GoogleSignInClient mGoogleSignInClient;
-    // Cajas de texto del correo y contraseña
-    private TextInputEditText etCorreo, etPass;
-    // FirebaseAuth para la autenticación de usuarios
-    private FirebaseAuth auth;
+    // ViewModel para la autenticación
+    private AuthViewModel authViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // EdgeToEdge.enable(this); // Uncomment when androidx.edge:edge is available
-        setContentView(R.layout.activity_login);
+        binding = ActivityLoginBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // Creamos nuestro GoogleSignInOptions para poder obtener el cliente
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(
@@ -64,60 +66,85 @@ public class LoginActivity extends AppCompatActivity {
         // Obtenemos el cliente de google
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // Obtenemos la instancia de FirebaseAuth
-        auth = FirebaseAuth.getInstance();
+        // Inicializamos el ViewModel
+        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        // Instanciamos los componentes visuales
-        SignInButton signInButton = findViewById(R.id.btngmail);
-        TextView tvRegistrarse = findViewById(R.id.tvRegistrate);
-        TextView tvResetear = findViewById(R.id.tvResetear);
-        Button bIniciarSesion = findViewById(R.id.bIniciarSesion);
-        etCorreo = findViewById(R.id.etCorreo);
-        etPass = findViewById(R.id.etPass);
+        // Observamos el estado de carga
+        authViewModel.getIsLoading().observe(this, isLoading -> {
+            if (isLoading) {
+                // Podríamos mostrar un ProgressBar aquí
+                binding.bIniciarSesion.setEnabled(false);
+                binding.btngmail.setEnabled(false);
+            } else {
+                binding.bIniciarSesion.setEnabled(true);
+                binding.btngmail.setEnabled(true);
+            }
+        });
+
+        // Observamos errores
+        authViewModel.getErrorMessage().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog)
+                    .setTitle("Error de Autenticación")
+                    .setMessage(error)
+                    .setPositiveButton("Aceptar", null)
+                    .show();
+            }
+        });
+
+        // Observamos éxito en inicio de sesión
+        authViewModel.getUserAuthenticated().observe(this, usuario -> {
+            if (usuario != null) {
+                Toast.makeText(this, getString(R.string.bienvenida) + " " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(LoginActivity.this, MenuLateralActivity.class);
+                i.putExtra("usuario", usuario);
+                startActivity(i);
+                Transiciones.fade(this);
+                finish();
+            }
+        });
+
+        // Observamos el estado de restablecer contraseña
+        authViewModel.getPasswordResetStatus().observe(this, status -> {
+            if (status != null && !status.isEmpty()) {
+                Toast.makeText(this, status, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Llamamos este metodo para cambiarle el texto Sign In a Google
-        setGoogleButtonText(signInButton, getString(R.string.google));
+        setGoogleButtonText(binding.btngmail, getString(R.string.google));
 
         // Si presionamos el boton inicar con google
-        signInButton.setOnClickListener(v -> iniciarConGoogle());
+        binding.btngmail.setOnClickListener(v -> iniciarConGoogle());
 
         // Si presionamos el boton de iniciar sesión
-        bIniciarSesion.setOnClickListener(v -> iniciarSesion());
+        binding.bIniciarSesion.setOnClickListener(v -> iniciarSesion());
 
         // Si presionamos el text de registrarse
-        tvRegistrarse.setOnClickListener(v -> registrarse());
+        binding.tvRegistrate.setOnClickListener(v -> registrarse());
 
-        tvResetear.setOnClickListener(v -> {
-            AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-            final EditText edittext = new EditText(this);
-            alert.setMessage("Ingresa tu correo electronico");
+        binding.tvResetear.setOnClickListener(v -> {
+            MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
             alert.setTitle("Resetear contraseña");
 
-            alert.setView(edittext);
+            View inputView = getLayoutInflater().inflate(R.layout.dialog_input_field, null);
+            TextInputLayout inputLayout = inputView.findViewById(R.id.dialogInputLayout);
+            TextInputEditText inputEditText = inputView.findViewById(R.id.dialogInputEditText);
+            inputLayout.setHint("Ingresa tu correo electrónico");
+            inputEditText.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
 
-            alert.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int whichButton) {
-                    String correo = edittext.getText().toString();
+            alert.setView(inputView);
+            alert.setPositiveButton("Aceptar", (dialog, whichButton) -> {
+                String correo = inputEditText.getText() != null ? inputEditText.getText().toString().trim() : "";
 
-                    if(TextUtils.isEmpty(correo)) {
-                        Toast.makeText(LoginActivity.this, "Ingresa tu correo electronico", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    auth.sendPasswordResetEmail(correo).addOnCompleteListener(new OnCompleteListener<Void>() {
-
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if(task.isSuccessful()) {
-                                Toast.makeText(LoginActivity.this, "Te hemos enviado un correo", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(LoginActivity.this, "Error al enviar el correo", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
+                if(TextUtils.isEmpty(correo)) {
+                    Toast.makeText(LoginActivity.this, "Ingresa tu correo electrónico", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+
+                authViewModel.sendPasswordResetEmail(correo);
             });
+            alert.setNegativeButton("Cancelar", null);
 
             alert.show();
         });
@@ -130,55 +157,56 @@ public class LoginActivity extends AppCompatActivity {
 
         // Si queremos iniciar con Google
         if (requestCode == RC_SIGN_IN) {
+            if (data == null) {
+                Toast.makeText(this, "Google Sign-In: Sin datos recibidos (ResultCode: " + resultCode + ")", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
 
             try {
                 // Obtenemos la cuenta
                 GoogleSignInAccount account = task.getResult(ApiException.class);
-                Log.d(TAG_GOOGLE, "firebaseAuthWithGoogle:" + account.getId());
-                // Y mandamos el token para autenticarse con google
-                firebaseAuthWithGoogle(account.getIdToken());
+                if (account != null && account.getIdToken() != null) {
+                    Log.d(TAG_GOOGLE, "firebaseAuthWithGoogle:" + account.getId());
+                    // Y mandamos el token para autenticarse con google
+                    firebaseAuthWithGoogle(account.getIdToken());
+                } else {
+                    Toast.makeText(this, "Error: No se pudo obtener el ID Token de Google (ResultCode: " + resultCode + ")", Toast.LENGTH_LONG).show();
+                }
             } catch (ApiException e) {
-                // Si no lo mostramos en consola
-                Log.w(TAG_GOOGLE, "Google sign in failed", e);
+                Log.w(TAG_GOOGLE, "Google sign in failed. Code: " + e.getStatusCode(), e);
+                String errorDetails;
+                switch (e.getStatusCode()) {
+                    case 10:
+                        errorDetails = "DEVELOPER_ERROR: Revisa que el SHA-1 registrado en Firebase Console coincida con esta app y descarga de nuevo el google-services.json.";
+                        break;
+                    case 12500:
+                        errorDetails = "SIGN_IN_FAILED: Revisa la pantalla de consentimiento de OAuth en Google Cloud Console.";
+                        break;
+                    case 12501:
+                        errorDetails = "SIGN_IN_CANCELLED: Inicio de sesión cancelado por el usuario.";
+                        break;
+                    case 7:
+                        errorDetails = "NETWORK_ERROR: Revisa tu conexión a internet.";
+                        break;
+                    default:
+                        errorDetails = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+                        break;
+                }
+                new AlertDialog.Builder(this)
+                    .setTitle("Google Sign-In (Código " + e.getStatusCode() + ")")
+                    .setMessage(errorDetails)
+                    .setPositiveButton("Aceptar", null)
+                    .show();
             }
         }
     }
 
     // Metodo que autenticará la cuenta de google
     private void firebaseAuthWithGoogle(String idToken) {
-        // Obtenemos las credenciales de Googla
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-
-        // E iniciamos sesión con esas credenciales
-        auth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    // Si se pudo iniciar sesión
-                    if (task.isSuccessful()) {
-                        Log.d(TAG_GOOGLE, "signInWithCredential:success");
-
-                        // Detectar si es un usuario nuevo o existente
-                        FirebaseUser currentUser = auth.getCurrentUser();
-                        if (currentUser != null && currentUser.getMetadata() != null) {
-                            // Si el timestamp de creación es igual al de último login,
-                            // es la primera vez que inicia sesión
-                            long creationTime = currentUser.getMetadata().getCreationTimestamp();
-                            long lastSignInTime = currentUser.getMetadata().getLastSignInTimestamp();
-
-                            // Permitir pequeño margen (1 segundo) para diferencias de sincronización
-                            boolean esNuevo = (lastSignInTime - creationTime) < 1000;
-                            ingresado(esNuevo);
-                        } else {
-                            // Si no podemos obtener metadata, asumir que es usuario existente
-                            ingresado(false);
-                        }
-                    } else {
-                        // Si no, mandamos un error
-                        Log.w(TAG_GOOGLE, "signInWithCredential:failure", task.getException());
-                        Toast.makeText(this, R.string.error_credenciales_google,
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+        authViewModel.signInWithCredential(credential);
     }
 
     // Metodo para iniciar sesión con google
@@ -191,8 +219,8 @@ public class LoginActivity extends AppCompatActivity {
     // Metodo para iniciar sesión con correo y contraseña
     public void iniciarSesion(){
         // Obtenemos el correo y la contraseña de sus respectivos campos
-        final String correo = Objects.requireNonNull(etCorreo.getText()).toString();
-        final String pass = Objects.requireNonNull(etPass.getText()).toString();
+        final String correo = Objects.requireNonNull(binding.etCorreo.getText()).toString();
+        final String pass = Objects.requireNonNull(binding.etPass.getText()).toString();
 
         // Si el correo está vacío
         if (TextUtils.isEmpty(correo)){
@@ -218,117 +246,18 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         //Autenticación de usuario mediante correo y contraseña
-        auth.signInWithEmailAndPassword(correo, pass).addOnCompleteListener(
-                LoginActivity.this, task -> {
-                    // Si es correcto
-                    if (task.isSuccessful()){
-                        // Llamamos el metodo ingresado como un usuario ya registrado
-                        ingresado(false);
-                    } else {
-                        // Si no, mandamos un aviso de contraseña o correo invalido
-                        Toast.makeText(LoginActivity.this, R.string.datos_incorrectos,
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+        authViewModel.signInWithEmail(correo, pass);
     }
 
     // Si el usuario decidió registrarse lo mandamos a esa activity
     public void registrarse(){
         Intent i = new Intent(LoginActivity.this, RegistrarseActivity.class);
         startActivity(i);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.left_in, R.anim.left_out);
-        } else {
-            overridePendingTransition(R.anim.left_in, R.anim.left_out);
-        }
+        Transiciones.left(this);
         finish();
     }
 
-    // metodo que ejecutará al haber ingresado
-    // Bandera nuevo usuario
-    private void ingresado(boolean nuevo) {
-        // Obtenemos el usuario actual
-        FirebaseUser currentUser = auth.getCurrentUser();
 
-        // Obtenemos la referencia usuarios de la base de datos
-        DatabaseReference dr = FirebaseDatabase.getInstance().getReference("usuarios");
-
-        // Si el usuario actual es nulo, retornamos
-        if (currentUser == null) return;
-
-        // Si es un nuevo usuario
-        if(nuevo) {
-            LocalDateTime fechaActual = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                fechaActual = LocalDateTime.now();
-            }
-
-            // Suponemos que es de google
-            // Creamos un objeto usuario y le asignamos los datos de google
-            Usuario usuario = new Usuario();
-            usuario.setUid(currentUser.getUid());
-            usuario.setNombre(currentUser.getDisplayName());
-            usuario.setEmail(currentUser.getEmail());
-            usuario.setNumber_phone(currentUser.getPhoneNumber());
-            usuario.setFecha_creacion(fechaActual.toString());
-
-            // Si tiene foto le asignamos el link al objeto
-            if (currentUser.getPhotoUrl() != null) {
-                usuario.setFoto(currentUser.getPhotoUrl().toString());
-            }
-
-            // Lo escribimos en la base de datos
-            dr.child(currentUser.getUid()).setValue(usuario)
-                    .addOnSuccessListener(aVoid -> Log.d("FIREBASE_TRACE", "=====================> NUEVO USUARIO CREADO CON ÉXITO: " + currentUser.getUid()))
-                    .addOnFailureListener(e -> Log.e("FIREBASE_TRACE", "=====================> ERROR CREANDO NUEVO USUARIO: " + currentUser.getUid(), e));
-
-            // Mandamos un mensaje de bienvenida
-            Toast.makeText(LoginActivity.this, getString(R.string.bienvenida) +
-                    " " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
-
-            // Y lo redirigimos al menu principal de la app
-            Intent i = new Intent(LoginActivity.this, MenuLateralActivity.class);
-            i.putExtra("usuario", usuario); // Mandamos el usuario
-            startActivity(i);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.fade_out);
-            } else {
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-            }
-            finish();
-
-        } else { // Si es un usuario previamente registrado
-            // Intetamos obtener el usuario de la base de datos
-            dr.child(currentUser.getUid()).get().addOnCompleteListener(task -> {
-                // Si se pudo
-                if (task.isSuccessful()) {
-                    // Obtenemos el usuario
-                    Usuario usuario = task.getResult().getValue(Usuario.class);
-
-                    // Mandamos un mensaje de bienvenida
-                    assert usuario != null;
-                    Toast.makeText(LoginActivity.this, getString(R.string.bienvenida) +
-                                    " " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
-
-                    // Redirigimos al usuario al menu principal
-                    Intent i = new Intent(LoginActivity.this,
-                            MenuLateralActivity.class);
-                    i.putExtra("usuario", usuario); // Mandamos el usuario
-                    startActivity(i);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.fade_out);
-                    } else {
-                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                    }
-                    finish();
-                } else {
-                    // Si no supo obtener la cuenta mandamos un error
-                    Toast.makeText(LoginActivity.this, R.string.error_cuenta +
-                                    ": " + task.getException(), Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    }
 
     // Metodo para cambiarle el texto Sign In a Google al boton de Google
     protected void setGoogleButtonText(SignInButton signInButton, String texto) {

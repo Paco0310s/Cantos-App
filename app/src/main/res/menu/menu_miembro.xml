@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/hacer_admin"
+        android:title="Nombrar Administrador"
+        android:icon="@drawable/baseline_group_24"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/quitar_admin"
+        android:title="Quitar Administrador"
+        android:icon="@drawable/ic_menos"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/expulsar_miembro"
+        android:title="Expulsar del grupo"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="never" />
+
+</menu>

@@ -19,7 +19,11 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="@color/screen_bg_color"
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_menu_lateral"
+        app:itemBackground="@drawable/nav_item_background_selector"
+        app:itemIconTint="@color/nav_item_tint_selector"
+        app:itemTextColor="@color/nav_item_text_selector"
         app:menu="@menu/menu_lateral" />
 </androidx.drawerlayout.widget.DrawerLayout>

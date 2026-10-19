@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -24,6 +25,17 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.widget.TextView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import androidx.lifecycle.ViewModelProvider;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.pacosotelo.coro.modelos.Grupo;
+import com.pacosotelo.coro.modelos.Usuario;
+import com.pacosotelo.coro.tools.Constantes;
+import com.pacosotelo.coro.tools.MenuHelper;
+import com.pacosotelo.coro.viewmodel.CantosViewModel;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
@@ -34,6 +46,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.pacosotelo.coro.R;
 import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.tools.AdaptadorCantos;
+import com.pacosotelo.coro.tools.Transiciones;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -46,8 +59,10 @@ public class ListaTodosCantosFragment extends Fragment {
     private RecyclerView lista;
     private AdaptadorCantos adapter;
     private ProgressBar progressBar;
-    private TextView tvSinInternet;
-    private TextView tvInstruccion;
+    private View containerSinInternet;
+    private View containerInstruccion;
+    private CantosViewModel cantosViewModel;
+    private String ultimaBusqueda = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,14 +75,34 @@ public class ListaTodosCantosFragment extends Fragment {
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_lista_todos_cantos, container, false);
 
+        cantosViewModel = new ViewModelProvider(this).get(CantosViewModel.class);
+
         lista = root.findViewById(R.id.listaTodosCantos);
 
         progressBar = root.findViewById(R.id.pbTodosCantos);
-        tvSinInternet = root.findViewById(R.id.tvSinInternet);
-        tvInstruccion = root.findViewById(R.id.tvInstruccion);
+        containerSinInternet = root.findViewById(R.id.containerSinInternet);
+        containerInstruccion = root.findViewById(R.id.containerInstruccion);
 
         FloatingActionButton fabNuevo = root.findViewById(R.id.fabTodosNuevoCanto);
         fabNuevo.setOnClickListener(v -> nuevoCanto());
+
+        cantosViewModel.getTodosCantos().observe(getViewLifecycleOwner(), cantos -> {
+            listaCache.clear();
+            listaCache.addAll(cantos);
+            progressBar.setVisibility(View.GONE);
+            filtrarYMostrar(ultimaBusqueda);
+        });
+
+        cantosViewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                progressBar.setVisibility(View.GONE);
+                if (containerSinInternet != null) containerSinInternet.setVisibility(View.VISIBLE);
+            }
+        });
+
+        cantosViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        });
 
         // No cargamos toda la lista al inicio para evitar persistir todo el listado localmente.
         // Esta pantalla hará consultas remotas sólo cuando el usuario escriba 3 o más letras.
@@ -88,56 +123,57 @@ public class ListaTodosCantosFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.info) {
+            MenuHelper.alertaAcercaDe(getActivity());
+            return true;
+        } else if (itemId == R.id.cerrarSesion) {
+            MenuHelper.cerrarSesion(getActivity());
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void cerrarSesion() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(getActivity(), LoginActivity.class);
+        startActivity(intent);
+        if (getActivity() != null) {
+            Transiciones.fade(getActivity());
+            getActivity().finish();
+        }
+    }
+
+
+
     // Método para obtener los datos y filtrar por 'contains' (se ejecuta sólo cuando el texto tiene 3+ caracteres)
     private void buscarEnFirebase(String texto) {
+        ultimaBusqueda = texto;
         // Si no hay conexión, informar al usuario y no intentar la consulta
         if (!isNetworkAvailable()) {
             progressBar.setVisibility(View.GONE);
-            tvSinInternet.setVisibility(View.VISIBLE);
+            if (containerSinInternet != null) containerSinInternet.setVisibility(View.VISIBLE);
+            if (containerInstruccion != null) containerInstruccion.setVisibility(View.GONE);
             listaCantos.clear();
             adapter = new AdaptadorCantos(listaCantos, getActivity());
             lista.setHasFixedSize(true);
             lista.setLayoutManager(new LinearLayoutManager(getActivity()));
             lista.setAdapter(adapter);
-            tvInstruccion.setVisibility(View.GONE);
             return;
         }
 
-        tvSinInternet.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
-        FirebaseDatabase fd = FirebaseDatabase.getInstance();
-        DatabaseReference dr = fd.getReference("cantos");
-
+        if (containerSinInternet != null) containerSinInternet.setVisibility(View.GONE);
+        
         // Si ya tenemos cache en memoria, filtramos localmente para 'contains'
         if (!listaCache.isEmpty()) {
             filtrarYMostrar(texto);
-            progressBar.setVisibility(View.GONE);
             return;
         }
 
-        // Si no hay cache, obtenemos todos los cantos una sola vez (no se persisten en SQLite aquí)
-        dr.orderByChild("nombre").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                listaCache.clear();
-                for (DataSnapshot objSnap : snapshot.getChildren()) {
-                    if (objSnap != null) {
-                        Canto c = objSnap.getValue(Canto.class);
-                        listaCache.add(c);
-                    }
-                }
-
-                filtrarYMostrar(texto);
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("FIREBASE_TRACE", "=====================> ERROR OBTENIENDO TODOS LOS CANTOS", error.toException());
-                progressBar.setVisibility(View.GONE);
-                tvSinInternet.setVisibility(View.VISIBLE);
-            }
-        });
+        // Si no hay cache, le pedimos al ViewModel que los descargue
+        cantosViewModel.loadAllCantos();
     }
 
     private void filtrarYMostrar(String s) {
@@ -160,10 +196,10 @@ public class ListaTodosCantosFragment extends Fragment {
 
         // Mostrar/ocultar mensajes
         if (listaCantos.isEmpty()) {
-            tvInstruccion.setVisibility(View.GONE);
+            if (containerInstruccion != null) containerInstruccion.setVisibility(View.GONE);
         } else {
-            tvInstruccion.setVisibility(View.GONE);
-            tvSinInternet.setVisibility(View.GONE);
+            if (containerInstruccion != null) containerInstruccion.setVisibility(View.GONE);
+            if (containerSinInternet != null) containerSinInternet.setVisibility(View.GONE);
         }
     }
 
@@ -194,7 +230,7 @@ public class ListaTodosCantosFragment extends Fragment {
 
         assert activity != null;
 
-        activity.overridePendingTransition(R.anim.left_in,R.anim.left_out);
+        Transiciones.left(activity);
     }
 
     public static String quitaDiacriticos(String s) {
@@ -213,27 +249,18 @@ public class ListaTodosCantosFragment extends Fragment {
         public boolean onQueryTextChange(String s) {
             int longitud = s.trim().length();
 
-            if (longitud == 0) {
-                // Sin texto: mostrar instrucción inicial
+            if (longitud == 0 || longitud < 3) {
+                // Sin texto o menos de 3 caracteres: mostrar instrucción inicial
                 listaCantos.clear();
                 adapter = new AdaptadorCantos(listaCantos, getActivity());
                 lista.setHasFixedSize(true);
                 lista.setLayoutManager(new LinearLayoutManager(getActivity()));
                 lista.setAdapter(adapter);
-                tvInstruccion.setVisibility(View.VISIBLE);
-                tvSinInternet.setVisibility(View.GONE);
-            } else if (longitud < 3) {
-                // Menos de 3 caracteres: mostrar instrucción y no buscar
-                listaCantos.clear();
-                adapter = new AdaptadorCantos(listaCantos, getActivity());
-                lista.setHasFixedSize(true);
-                lista.setLayoutManager(new LinearLayoutManager(getActivity()));
-                lista.setAdapter(adapter);
-                tvInstruccion.setVisibility(View.VISIBLE);
-                tvSinInternet.setVisibility(View.GONE);
+                if (containerInstruccion != null) containerInstruccion.setVisibility(View.VISIBLE);
+                if (containerSinInternet != null) containerSinInternet.setVisibility(View.GONE);
             } else {
                 // 3 o más caracteres: ocultar instrucción y realizar búsqueda remota (contains)
-                tvInstruccion.setVisibility(View.GONE);
+                if (containerInstruccion != null) containerInstruccion.setVisibility(View.GONE);
                 buscarEnFirebase(s);
             }
 

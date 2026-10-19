@@ -24,7 +24,9 @@ import com.pacosotelo.coro.ui.ModificarEsquemaActivity;
 import com.pacosotelo.coro.ui.NuevoEsquemaActivity;
 
 import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.ViewHolder> {
     private final LayoutInflater mInflater;
@@ -34,14 +36,14 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
     public AdaptadorEsquemas(List<Esquema> listaEsquemas, Context contexto) {
         this.mInflater = LayoutInflater.from(contexto);
         this.contexto = contexto;
-        this.listaEsquemas = listaEsquemas;
+        this.listaEsquemas = new ArrayList<>(listaEsquemas);
     }
 
     @NonNull
     @Override
     public AdaptadorEsquemas.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.item_esquema, null);
-        return new AdaptadorEsquemas.ViewHolder(view);
+        View view = mInflater.inflate(R.layout.item_esquema, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
@@ -55,8 +57,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
     }
 
     public void setLista(List<Esquema> listaEsquemas) {
-        this.listaEsquemas = listaEsquemas;
-        notifyDataSetChanged();
+        actualizarLista(listaEsquemas);
     }
 
     public void actualizarLista(List<Esquema> nuevaLista) {
@@ -73,12 +74,33 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
 
             @Override
             public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                return listaEsquemas.get(oldItemPosition).getId().equals(nuevaLista.get(newItemPosition).getId());
+                try {
+                    Esquema oldE = listaEsquemas.get(oldItemPosition);
+                    Esquema newE = nuevaLista.get(newItemPosition);
+                    if (oldE == null || newE == null || oldE.getId() == null || newE.getId() == null) {
+                        return false;
+                    }
+                    return oldE.getId().equals(newE.getId());
+                } catch (Exception e) {
+                    return false;
+                }
             }
 
             @Override
             public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                return listaEsquemas.get(oldItemPosition).getNombre().equals(nuevaLista.get(newItemPosition).getNombre());
+                try {
+                    Esquema oldE = listaEsquemas.get(oldItemPosition);
+                    Esquema newE = nuevaLista.get(newItemPosition);
+
+                    if (oldE == null || newE == null) return false;
+
+                    boolean nombreIgual = Objects.equals(oldE.getNombre(), newE.getNombre());
+                    boolean cantosIgual = Objects.equals(oldE.getCantos(), newE.getCantos());
+
+                    return nombreIgual && cantosIgual;
+                } catch (Exception e) {
+                    return false;
+                }
             }
         });
 
@@ -117,7 +139,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                 i.putExtra("esquema", esquema);
                 contexto.startActivity(i);
                 if (contexto instanceof Activity) {
-                    ((Activity) contexto).overridePendingTransition(R.anim.left_in, R.anim.left_out);
+                    Transiciones.left((Activity) contexto);
                 }
             });
         }
@@ -141,7 +163,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
 
                 contexto.startActivity(intent);
                 if (contexto instanceof Activity) {
-                    ((Activity) contexto).overridePendingTransition(R.anim.left_in, R.anim.left_out);
+                    Transiciones.left((Activity) contexto);
                 }
             });
             listaCantosEsquema.setAdapter(adapter);

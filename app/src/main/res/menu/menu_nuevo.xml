@@ -16,4 +16,10 @@
         app:showAsAction="ifRoom"
         /-->
 
+    <item
+        android:id="@+id/transportarTono"
+        android:title="Transportar"
+        android:icon="@drawable/ic_notes"
+        app:showAsAction="ifRoom" />
+
 </menu>

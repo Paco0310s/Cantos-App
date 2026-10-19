@@ -1,29 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item
-        android:id="@+id/nav_listaCantos"
-        android:icon="@drawable/hogar"
-        android:title="Mis Cantos" />
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_listaCantos"
+            android:icon="@drawable/hogar"
+            android:title="@string/mis_cantos" />
 
-    <item
-        android:visible="true"
-        android:id="@+id/nav_listaEsquemas"
-        android:icon="@drawable/ic_lista"
-        android:title="Mis Esquemas" />
+        <item
+            android:id="@+id/nav_listaEsquemas"
+            android:icon="@drawable/ic_lista"
+            android:title="@string/esquemas" />
 
-    <item
-        android:id="@+id/nav_listaTodosCantos"
-        android:icon="@drawable/world"
-        android:title="Publico" />
+        <item
+            android:id="@+id/nav_listaTodosCantos"
+            android:icon="@drawable/world"
+            android:title="Público" />
 
-    <!-- item
-        android:visible="true"
-        android:id="@+id/nav_listaGrupos"
-        android:icon="@drawable/baseline_group_24"
-        android:title="Grupos" / -->
+        <item
+            android:id="@+id/nav_listaGrupos"
+            android:icon="@drawable/baseline_group_24"
+            android:title="@string/grupos" />
+
+        <item
+            android:id="@+id/nav_afinador"
+            android:icon="@drawable/ic_afinador"
+            android:title="@string/afinador" />
+    </group>
 
 </menu>

@@ -16,40 +16,91 @@
         android:layout_marginTop="7dp"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="0dp"
-        style="@style/fondo"
-        />
+        style="@style/fondo" />
 
     <!-- Mostrar cuando el usuario no pertenece a ningun grupo -->
     <LinearLayout
         android:id="@+id/no_group_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp"
+        android:visibility="gone">
 
-        <TextView
-            android:id="@+id/tvNoGroup"
-            android:layout_width="wrap_content"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No estás en ningún grupo. Crea un grupo para poder crear cantos y esquemas o únete a un grupo existente para obtener los cantos de ese grupo."
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textAlignment="center"
-            android:paddingBottom="16dp" />
+            app:cardBackgroundColor="@color/card_bg_color"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_stroke_color"
+            app:strokeWidth="1dp">
 
-        <Button
-            android:id="@+id/btnCrearGrupo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Crear grupo"
-            android:layout_marginBottom="8dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
 
-        <Button
-            android:id="@+id/btnUnirseGrupo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Unirse a un grupo" />
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:contentDescription="@string/grupos"
+                    android:src="@drawable/baseline_group_24"
+                    app:tint="@color/tag_momento_text_color" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Sin Grupo Seleccionado"
+                    android:textColor="@color/card_title_color"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNoGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="No perteneces a ningún grupo. Crea uno nuevo o únete a uno existente para ver y crear canciones."
+                    android:textColor="@color/text_secondary_color"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCrearGrupo"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="@color/primary_button_bg"
+                    android:text="Crear un grupo"
+                    android:textAllCaps="false"
+                    android:textColor="@color/primary_button_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUnirseGrupo"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Unirse a un grupo"
+                    android:textAllCaps="false"
+                    android:textColor="@color/tag_momento_text_color"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/tag_momento_bg_color"
+                    app:cornerRadius="14dp"
+                    app:strokeWidth="0dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
@@ -60,9 +111,9 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
+        android:contentDescription="@string/todo"
         android:visibility="invisible"
         app:srcCompat="@drawable/ic_add"
-        android:contentDescription="@string/todo"
         tools:ignore="ContentDescription" />
 
     <ProgressBar
@@ -71,7 +122,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:backgroundTint="#ffffff"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
 </FrameLayout>

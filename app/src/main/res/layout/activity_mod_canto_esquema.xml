@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    style="@style/barra"
+    android:background="@color/screen_bg_color"
     android:fitsSystemWindows="true"
     tools:context=".ui.ModCantoEsquemaActivity">
 
@@ -11,92 +12,105 @@
         android:id="@+id/app_bar"
         layout="@layout/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
-        android:layout_marginTop="60dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        style="@style/fondo"
-        tools:ignore="MissingConstraints">
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/app_bar">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            tools:ignore="UselessLeaf">
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="16dp">
 
-            <TextView
-                android:id="@+id/tvNombre"
-                android:layout_height="25dp"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_marginTop="20dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:text="@string/nombre"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:fontFamily="@font/mywife"
-                style="@style/texto"
-                />
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/card_bg_color"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_stroke_color"
+                app:strokeWidth="1dp">
 
-            <EditText
-                android:id="@+id/etNombre"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:inputType="text"
-                android:textSize="18sp"
-                style="@style/campo"
-                tools:ignore="LabelFor"
-                android:autofillHints="Nombre" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-            <TextView
-                android:id="@+id/tvLetra"
-                android:layout_height="25dp"
-                android:layout_width="match_parent"
-                android:layout_marginTop="30dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:text="@string/letra"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:fontFamily="@font/mywife"
-                style="@style/texto"
-                />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/modificar_canto"
+                        android:textColor="@color/card_title_color"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/etLetra"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="5dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:textSize="18sp"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                android:minHeight="200dp"
-                style="@style/campo"
-                tools:ignore="LabelFor"
-                android:autofillHints="Letra"
-                />
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="16dp"
+                        app:dividerColor="@color/card_stroke_color" />
 
-            <Button
-                android:id="@+id/bAgregar"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:layout_marginTop="40dp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="25dp"
-                android:textSize="20sp"
-                android:onClick="modificarCanto"
-                android:text="@string/modificar"
-                style="@style/boton"
-                android:fontFamily="@font/mywife"
-                tools:ignore="UsingOnClickInXml" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/RoundedOutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/nombre"
+                        app:endIconMode="clear_text">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNombre"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapWords"
+                            android:textColor="@color/card_title_color" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/RoundedOutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="@string/letra"
+                        app:helperText="💡 Tip: Encierra los acordes entre comillas simples (ej. 'DO') para resaltarlos."
+                        app:helperTextTextColor="@color/tag_momento_text_color">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etLetra"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="top"
+                            android:inputType="textMultiLine"
+                            android:minLines="10"
+                            android:textColor="@color/card_title_color" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bAgregar"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="28dp"
+                        android:backgroundTint="@color/primary_button_bg"
+                        android:onClick="modificarCanto"
+                        android:text="@string/modificar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary_button_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="14dp" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
     </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
