@@ -9,8 +9,14 @@ import androidx.appcompat.widget.Toolbar;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +27,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,6 +43,8 @@ import com.pacosotelo.coro.modelos.Canto;
 import com.pacosotelo.coro.tools.Constantes;
 
 import java.time.LocalDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +68,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
     private String[] arrayMomentos, arrayTiempos;
     private ArrayList<String> momentosSeleccionados, tiemposSeleccionados;
     private boolean comillas = true;
+    private boolean isHighlighting = false;
     FirebaseUser currentUser;
 
     @Override
@@ -85,6 +96,21 @@ public class NuevoCantoActivity extends AppCompatActivity {
         if (etTono != null) {
             ArrayAdapter<String> adapterTonos = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, Constantes.tonos);
             etTono.setAdapter(adapterTonos);
+        }
+
+        if (etLetra != null) {
+            etLetra.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    resaltarSintaxis(s);
+                }
+            });
         }
         //listaMomentos = findViewById(R.id.listaMomentos);
         //listaTiempos = findViewById(R.id.listaTiempos);
@@ -153,6 +179,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
                     letra = letra.replaceAll("'b","b");
 
                     etLetra.setText(letra);
+                    resaltarSintaxis(etLetra.getText());
                 }
                 break;
 
@@ -259,7 +286,10 @@ public class NuevoCantoActivity extends AppCompatActivity {
             if (canto.getNombre() != null) etNombre.setText(canto.getNombre());
             if (canto.getAutor() != null && etAutor != null) etAutor.setText(canto.getAutor());
             if (canto.getTono() != null && etTono != null) etTono.setText(canto.getTono());
-            if (canto.getLetra() != null) etLetra.setText(canto.getLetra());
+            if (canto.getLetra() != null) {
+                etLetra.setText(canto.getLetra());
+                resaltarSintaxis(etLetra.getText());
+            }
 
             if (canto.getMomentos() != null) {
                 momentosSeleccionados.clear();
@@ -377,6 +407,7 @@ public class NuevoCantoActivity extends AppCompatActivity {
             letraActual = subirMedioTono(letraActual);
         }
         etLetra.setText(letraActual);
+        resaltarSintaxis(etLetra.getText());
     }
 
     private String subirMedioTono(String texto) {
@@ -613,5 +644,41 @@ public class NuevoCantoActivity extends AppCompatActivity {
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void resaltarSintaxis(Editable s) {
+        if (s == null || isHighlighting) return;
+        isHighlighting = true;
+
+        ForegroundColorSpan[] oldSpans = s.getSpans(0, s.length(), ForegroundColorSpan.class);
+        for (ForegroundColorSpan span : oldSpans) {
+            s.removeSpan(span);
+        }
+        StyleSpan[] oldStyleSpans = s.getSpans(0, s.length(), StyleSpan.class);
+        for (StyleSpan span : oldStyleSpans) {
+            s.removeSpan(span);
+        }
+
+        // 1. Resaltar acordes ('DO', 'SOLm')
+        Pattern patternChord = Pattern.compile("'([^']+)'");
+        Matcher matcherChord = patternChord.matcher(s.toString());
+        int chordColor = ContextCompat.getColor(this, R.color.chord_highlight_color);
+
+        while (matcherChord.find()) {
+            s.setSpan(new ForegroundColorSpan(chordColor), matcherChord.start(), matcherChord.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(new StyleSpan(Typeface.BOLD), matcherChord.start(), matcherChord.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        // 2. Resaltar señas (INTRO, CORO, VIOLIN, 2 VECES, etc.)
+        Pattern patternDirective = Pattern.compile("\\b(INTRO|CORO|ESTROFA|PUENTE|OUTRO|FINAL|SOLO|INTERLUDIO|VIOLIN|VIOLÍN|GUITARRA|MANDOLINA|FLAUTA|PIANO|TROMPETA|TONO|TONOS|BIS|\\d+\\s*VECES|\\d+X)\\b|[\\[\\(][^\\]\\)]+[\\]\\)]");
+        Matcher matcherDirective = patternDirective.matcher(s.toString());
+        int directiveColor = ContextCompat.getColor(this, R.color.directive_highlight_color);
+
+        while (matcherDirective.find()) {
+            s.setSpan(new ForegroundColorSpan(directiveColor), matcherDirective.start(), matcherDirective.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), matcherDirective.start(), matcherDirective.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        isHighlighting = false;
     }
 }
