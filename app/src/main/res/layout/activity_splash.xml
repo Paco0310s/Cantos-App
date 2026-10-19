@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="v6.0.0"
+            android:text="v6.0.1 Armonía"
             android:textAlignment="center"
             android:textColor="@color/text_secondary_color"
             android:textSize="12sp"

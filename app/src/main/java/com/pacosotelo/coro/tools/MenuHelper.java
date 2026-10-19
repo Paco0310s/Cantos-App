@@ -53,7 +53,7 @@ public class MenuHelper {
         String grupoActual = (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) ? "Ninguno" : Constantes.GRUPO_SELECCIONADO;
 
         String mensaje = "© Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCréditos: \nLogo: Santiago Romo \n\n" +
-                "Versión: 6.0.0" + "\n\nUsuario: " + email + "\n\nGrupo Seleccionado: " + grupoActual;
+                "Versión: 6.0.1 Armonía" + "\n\nUsuario: " + email + "\n\nGrupo Seleccionado: " + grupoActual;
 
         builder.setMessage(mensaje);
         builder.setCancelable(true);
