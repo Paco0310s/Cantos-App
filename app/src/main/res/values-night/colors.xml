@@ -17,4 +17,6 @@
     <color name="tag_tiempo_text_color">#80DEEA</color>
     <color name="chord_highlight_color">#FFD54F</color>
     <color name="directive_highlight_color">#FF8A65</color>
+    <color name="color_link">#90CAF9</color>
+    <color name="color_dialog_button">#CE93D8</color>
 </resources>

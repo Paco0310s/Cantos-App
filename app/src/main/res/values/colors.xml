@@ -33,4 +33,6 @@
     <color name="tag_tiempo_text_color">#004D40</color>
     <color name="chord_highlight_color">#D81B60</color>
     <color name="directive_highlight_color">#E64A19</color>
+    <color name="color_link">#1976D2</color>
+    <color name="color_dialog_button">#7B1FA2</color>
 </resources>

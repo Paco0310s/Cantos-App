@@ -183,7 +183,6 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                 if (fromPosition != RecyclerView.NO_POSITION && toPosition != RecyclerView.NO_POSITION) {
                     Collections.swap(listaCantos, fromPosition, toPosition);
                     adapter2.notifyItemMoved(fromPosition, toPosition);
-                    autoGuardarEsquema();
                     return true;
                 }
                 return false;
@@ -196,7 +195,6 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                     Canto cantoEliminado = listaCantos.remove(position);
                     adapter2.notifyItemRemoved(position);
                     adapter2.notifyItemRangeChanged(position, listaCantos.size());
-                    autoGuardarEsquema();
                     Toast.makeText(ModificarEsquemaActivity.this, cantoEliminado.getNombre() + " removido", Toast.LENGTH_SHORT).show();
                 }
             }

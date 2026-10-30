@@ -19,6 +19,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatDelegate;
+
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +33,10 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -132,6 +138,28 @@ public class MenuLateralActivity extends AppCompatActivity {
             usuario = new Usuario();
         }
 
+        checkInAppReview();
+    }
+
+    private void checkInAppReview() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        int launchCount = prefs.getInt("launch_count", 0) + 1;
+        prefs.edit().putInt("launch_count", launchCount).apply();
+
+        // Mostrar el review a la quinta vez que abre la app
+        if (launchCount == 5) {
+            ReviewManager manager = ReviewManagerFactory.create(this);
+            Task<ReviewInfo> request = manager.requestReviewFlow();
+            request.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    ReviewInfo reviewInfo = task.getResult();
+                    Task<Void> flow = manager.launchReviewFlow(this, reviewInfo);
+                    flow.addOnCompleteListener(task2 -> {
+                        // El flujo ha terminado. Google Play decide si lo mostró o no.
+                    });
+                }
+            });
+        }
     }
 
     private void toggleTheme() {

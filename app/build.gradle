@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
@@ -12,8 +13,8 @@ android {
         applicationId "com.pacosotelo.coro"
         minSdk 24
         targetSdk 36
-        versionCode 18
-        versionName "6.0.1"
+        versionCode 19
+        versionName "6.1.0 Armonía"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -52,6 +53,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-storage'
     implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-analytics'
 
     // Auth services
     implementation 'com.google.android.gms:play-services-auth:21.3.0'
@@ -66,6 +69,9 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
+
+    // Google Play In-App Review
+    implementation 'com.google.android.play:review:2.0.2'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

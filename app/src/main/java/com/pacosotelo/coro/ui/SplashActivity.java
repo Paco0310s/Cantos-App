@@ -3,9 +3,14 @@ package com.pacosotelo.coro.ui;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 import com.pacosotelo.coro.R;
@@ -32,8 +37,8 @@ public class SplashActivity extends AppCompatActivity {
         binding = ActivitySplashBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Firebase Analytics, para poder observar informacion de la app posteriormente
-        //FirebaseAnalytics.getInstance(this);
+        // Firebase Analytics y Crashlytics para poder observar informacion de la app posteriormente
+        FirebaseAnalytics.getInstance(this);
 
         // Obtenemos la instancia de FirebaseDatabase y FirebaseAuth
         fd = FirebaseDatabase.getInstance();
@@ -102,47 +107,51 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void mostrarMensajeMantenimiento() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Aviso");
-        String mensaje = "La aplicación se encuentra en mantenimiento \nIntente nuevamente mas tarde";
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle("Modo Mantenimiento");
+        String mensaje = "Los servidores de la aplicación se encuentran en mantenimiento para traerte nuevas mejoras.\n\nPor favor, intenta ingresar nuevamente más tarde.";
         builder.setMessage(mensaje);
         builder.setCancelable(false);
-        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
-        AlertDialog alerta = builder.create();
-        alerta.show();
+        builder.setPositiveButton("Entendido", (dialog, which) -> finishAffinity());
+        builder.show();
     }
 
     private void mostrarMensajeActualización() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Aviso");
-        String mensaje = "Actualice la aplicación a la versión mas reciente";
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle("Actualización Disponible");
+        String mensaje = "Hay una nueva versión de la aplicación disponible. Por favor actualiza para disfrutar de las nuevas funciones.";
         builder.setMessage(mensaje);
         builder.setCancelable(false);
-        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
-        AlertDialog alerta = builder.create();
-        alerta.show();
+        builder.setPositiveButton("Actualizar", (dialog, which) -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.pacosotelo.coro")));
+            } catch (ActivityNotFoundException anfe) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.pacosotelo.coro")));
+            }
+            finishAffinity();
+        });
+        builder.setNegativeButton(R.string.cancelar, (dialog, which) -> finishAffinity());
+        builder.show();
     }
 
     private void mostrarErrorMantenimiento() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Error");
-        String mensaje = "Ocurrió un error al obtener la información de mantenimiento \nVerifique su conexión a internet";
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle("Error de conexión");
+        String mensaje = "Ocurrió un error al contactar con el servidor.\n\nPor favor, verifica tu conexión a internet e intenta abrir la aplicación de nuevo.";
         builder.setMessage(mensaje);
         builder.setCancelable(false);
-        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
-        AlertDialog alerta = builder.create();
-        alerta.show();
+        builder.setPositiveButton("Entendido", (dialog, which) -> finishAffinity());
+        builder.show();
     }
 
     private void mostrarErrorVersion() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Error");
-        String mensaje = "Ocurrió un error al obtener la versión \nVerifique su conexión a internet";
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
+        builder.setTitle("Error de conexión");
+        String mensaje = "No se pudo verificar la versión de la aplicación.\n\nPor favor, asegúrate de estar conectado a internet e inténtalo nuevamente.";
         builder.setMessage(mensaje);
         builder.setCancelable(false);
-        builder.setPositiveButton(R.string.aceptar, (dialog, which) -> finishAffinity());
-        AlertDialog alerta = builder.create();
-        alerta.show();
+        builder.setPositiveButton("Entendido", (dialog, which) -> finishAffinity());
+        builder.show();
     }
 
     private void redireccionar() {

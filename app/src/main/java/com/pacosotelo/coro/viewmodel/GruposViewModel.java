@@ -230,54 +230,67 @@ public class GruposViewModel extends ViewModel {
         }
 
         isLoading.setValue(true);
-        gruposRepository.getGrupoByCodigo(codigo).addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                DataSnapshot snapshot = task.getResult();
-                Grupo grupoEncontrado = null;
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    Grupo g = child.getValue(Grupo.class);
-                    if (g != null && codigo.equalsIgnoreCase(g.getCodigo())) {
-                        grupoEncontrado = g;
-                        break;
-                    }
-                }
-
-                if (grupoEncontrado != null) {
-                    ArrayList<String> userGrupos = usuario.getGrupos();
-                    if (userGrupos == null) {
-                        userGrupos = new ArrayList<>();
-                    }
-                    if (userGrupos.contains(grupoEncontrado.getUuid())) {
-                        isLoading.setValue(false);
-                        errorMessage.setValue("Ya eres miembro de este grupo");
-                        return;
-                    }
-
-                    userGrupos.add(grupoEncontrado.getUuid());
-                    usuario.setGrupos(userGrupos);
-                    usuario.setGrupoActual(grupoEncontrado.getUuid());
-
-                    final Grupo finalGrupoEncontrado = grupoEncontrado;
-                    gruposRepository.addMiembroToGrupo(grupoEncontrado.getUuid(), usuario.getUid());
-                    gruposRepository.updateUsuario(usuario).addOnCompleteListener(updateTask -> {
-                        isLoading.setValue(false);
-                        if (updateTask.isSuccessful()) {
-                            Constantes.usuario = usuario;
-                            Constantes.GRUPO_SELECCIONADO = finalGrupoEncontrado.getUuid();
-                            FirebaseMessaging.getInstance().subscribeToTopic("grupo_" + finalGrupoEncontrado.getUuid());
-                            groupCreatedMessage.setValue("Te has unido al grupo '" + finalGrupoEncontrado.getNombre() + "'");
-                            groupOperationSuccess.setValue(true);
-                        } else {
-                            errorMessage.setValue("Error al unirse al grupo");
+        gruposRepository.getGruposRef().orderByChild("codigo").equalTo(codigo).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Grupo grupoEncontrado = null;
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        Grupo g = child.getValue(Grupo.class);
+                        if (g != null && codigo.equalsIgnoreCase(g.getCodigo())) {
+                            grupoEncontrado = g;
+                            break;
                         }
-                    });
+                    }
+
+                    if (grupoEncontrado != null) {
+                        ArrayList<String> userGrupos = usuario.getGrupos();
+                        if (userGrupos == null) {
+                            userGrupos = new ArrayList<>();
+                        }
+                        if (userGrupos.contains(grupoEncontrado.getUuid())) {
+                            isLoading.setValue(false);
+                            errorMessage.setValue("Ya eres miembro de este grupo");
+                            return;
+                        }
+
+                        userGrupos.add(grupoEncontrado.getUuid());
+                        usuario.setGrupos(userGrupos);
+                        usuario.setGrupoActual(grupoEncontrado.getUuid());
+
+                        final Grupo finalGrupoEncontrado = grupoEncontrado;
+                        
+                        // Guardar en la base de datos de manera secuencial (primero actualizar usuario, luego grupo)
+                        gruposRepository.updateUsuario(usuario).addOnCompleteListener(updateTask -> {
+                            if (updateTask.isSuccessful()) {
+                                gruposRepository.addMiembroToGrupo(finalGrupoEncontrado.getUuid(), usuario.getUid())
+                                    .addOnCompleteListener(memberTask -> {
+                                        isLoading.setValue(false);
+                                        Constantes.usuario = usuario;
+                                        Constantes.GRUPO_SELECCIONADO = finalGrupoEncontrado.getUuid();
+                                        FirebaseMessaging.getInstance().subscribeToTopic("grupo_" + finalGrupoEncontrado.getUuid());
+                                        groupCreatedMessage.setValue("Te has unido al grupo '" + finalGrupoEncontrado.getNombre() + "'");
+                                        groupOperationSuccess.setValue(true);
+                                    });
+                            } else {
+                                isLoading.setValue(false);
+                                errorMessage.setValue("Error al unirse al grupo: " + (updateTask.getException() != null ? updateTask.getException().getMessage() : "Desconocido"));
+                            }
+                        });
+                    } else {
+                        isLoading.setValue(false);
+                        errorMessage.setValue("No se encontró un grupo con el código: " + codigo);
+                    }
                 } else {
                     isLoading.setValue(false);
                     errorMessage.setValue("No se encontró un grupo con el código: " + codigo);
                 }
-            } else {
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
                 isLoading.setValue(false);
-                errorMessage.setValue("Error al buscar el grupo");
+                errorMessage.setValue("Error de permisos al buscar el grupo");
             }
         });
     }

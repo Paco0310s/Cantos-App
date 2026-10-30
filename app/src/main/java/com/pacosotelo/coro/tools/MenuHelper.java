@@ -1,14 +1,18 @@
 package com.pacosotelo.coro.tools;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -48,15 +52,44 @@ public class MenuHelper {
         if (activity == null) return;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity, R.style.CustomMaterialDialog);
         builder.setTitle(activity.getString(R.string.acerca_de));
+        
+        // Configuramos la vista personalizada para incluir los links
+        View dialogView = activity.getLayoutInflater().inflate(R.layout.dialog_acerca_de, null);
+        builder.setView(dialogView);
+        
+        TextView tvUserInfo = dialogView.findViewById(R.id.tvUserInfo);
+        TextView tvWeb = dialogView.findViewById(R.id.tvWeb);
+        TextView tvCopiarClabe = dialogView.findViewById(R.id.tvCopiarClabe);
+        TextView tvCopiarTarjeta = dialogView.findViewById(R.id.tvCopiarTarjeta);
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String email = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : "";
         String grupoActual = (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) ? "Ninguno" : Constantes.GRUPO_SELECCIONADO;
 
-        String mensaje = "© Paco Sotelo 2026\nPara el mundo, desde 2021 \n\nCréditos: \nLogo: Santiago Romo \n\n" +
-                "Versión: 6.0.1 Armonía" + "\n\nUsuario: " + email + "\n\nGrupo Seleccionado: " + grupoActual;
+        tvUserInfo.setText("Usuario: " + email + "\n\nGrupo Seleccionado: " + grupoActual);
 
-        builder.setMessage(mensaje);
-        builder.setCancelable(true);
+        tvWeb.setOnClickListener(v -> {
+            try {
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://pacosotelo.com")));
+            } catch (Exception e) {
+                // Ignore
+            }
+        });
+
+        tvCopiarClabe.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("CLABE", "722969010225670860");
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(activity, "CLABE copiada al portapapeles", Toast.LENGTH_SHORT).show();
+        });
+
+        tvCopiarTarjeta.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Tarjeta OXXO", "2242 1703 2007 1607");
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(activity, "Tarjeta copiada al portapapeles", Toast.LENGTH_SHORT).show();
+        });
+
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
         builder.show();
     }

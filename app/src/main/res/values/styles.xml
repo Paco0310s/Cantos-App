@@ -30,9 +30,12 @@
         <item name="shapeAppearanceOverlay">@style/CustomDialogCorner</item>
         <item name="colorSurface">@color/card_bg_color</item>
         <item name="colorOnSurface">@color/card_title_color</item>
-        <item name="colorPrimary">@color/tag_momento_text_color</item>
+        <item name="colorPrimary">@color/primary_button_bg</item>
         <item name="materialAlertDialogTitleTextStyle">@style/CustomDialogTitleText</item>
         <item name="materialAlertDialogBodyTextStyle">@style/CustomDialogBodyText</item>
+        <item name="buttonBarPositiveButtonStyle">@style/CustomDialogButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/CustomDialogButtonStyle</item>
+        <item name="buttonBarNeutralButtonStyle">@style/CustomDialogButtonStyle</item>
     </style>
 
     <style name="CustomDialogCorner">
@@ -48,6 +51,13 @@
     <style name="CustomDialogBodyText" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
         <item name="android:textColor">@color/text_secondary_color</item>
         <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="CustomDialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/color_dialog_button</item>
     </style>
 
 </resources>
