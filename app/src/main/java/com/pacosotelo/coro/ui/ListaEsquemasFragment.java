@@ -52,6 +52,7 @@ import com.pacosotelo.coro.tools.Constantes;
 import com.pacosotelo.coro.tools.MenuHelper;
 import com.pacosotelo.coro.tools.Transiciones;
 import androidx.lifecycle.ViewModelProvider;
+import com.pacosotelo.coro.viewmodel.CantosViewModel;
 import com.pacosotelo.coro.viewmodel.EsquemasViewModel;
 import com.pacosotelo.coro.viewmodel.GruposViewModel;
 
@@ -74,6 +75,7 @@ public class ListaEsquemasFragment extends Fragment {
     private TextView tvNoGroupEsquemas;
     private EsquemasViewModel esquemasViewModel;
     private GruposViewModel gruposViewModel;
+    private CantosViewModel cantosViewModel;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -134,6 +136,7 @@ public class ListaEsquemasFragment extends Fragment {
         });
 
         esquemasViewModel = new ViewModelProvider(requireActivity()).get(EsquemasViewModel.class);
+        cantosViewModel = new ViewModelProvider(requireActivity()).get(CantosViewModel.class);
 
         esquemasViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -153,15 +156,19 @@ public class ListaEsquemasFragment extends Fragment {
             }
         });
 
+        cantosViewModel.getCantos().observe(getViewLifecycleOwner(), cantos -> {
+            if (adapter != null) {
+                adapter.actualizarCantosGlobales(cantos);
+            }
+        });
+
         listaEsquemas = new ArrayList<>();
         listaRespaldo = new ArrayList<>();
 
-        adapter = new AdaptadorEsquemas(listaEsquemas, getActivity());
+        adapter = new AdaptadorEsquemas(listaEsquemas, getActivity(), cantosViewModel);
         rvEsquemas.setHasFixedSize(true);
         rvEsquemas.setLayoutManager(new LinearLayoutManager(getActivity()));
         rvEsquemas.setAdapter(adapter);
-
-        inicializarFirebase();
 
         return root;
     }

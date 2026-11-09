@@ -41,6 +41,7 @@ import com.pacosotelo.coro.viewmodel.EsquemasViewModel;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -320,7 +321,11 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         esquema.setId(UUID.randomUUID().toString());
         esquema.setNombre(etNombreEsquema.getText().toString());
 
-        esquema.setCantos(listaCantos);
+        List<String> cantosIds = new ArrayList<>();
+        for (Canto c : listaCantos) {
+            cantosIds.add(c.getId());
+        }
+        esquema.setCantosIds(cantosIds);
 
         esquema.setFecha_creacion(fechaActual != null ? fechaActual.toString() : "");
 

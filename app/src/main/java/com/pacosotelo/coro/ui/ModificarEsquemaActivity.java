@@ -46,6 +46,7 @@ import com.pacosotelo.coro.viewmodel.EsquemasViewModel;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -418,7 +419,12 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     private void autoGuardarEsquema() {
         try {
             if (esquema != null) {
-                esquema.setCantos(listaCantos);
+                List<String> cantosIds = new ArrayList<>();
+                for (Canto c : listaCantos) {
+                    cantosIds.add(c.getId());
+                }
+                esquema.setCantosIds(cantosIds);
+
                 if (etNombreEsquema != null && etNombreEsquema.getText() != null) {
                     esquema.setNombre(etNombreEsquema.getText().toString().trim());
                 }
@@ -446,7 +452,13 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         esquemaMod.setApp("");
         esquemaMod.setId(esquema.getId());
         esquemaMod.setNombre(etNombreEsquema.getText().toString());
-        esquemaMod.setCantos(listaCantos);
+
+        List<String> cantosIds = new ArrayList<>();
+        for (Canto c : listaCantos) {
+            cantosIds.add(c.getId());
+        }
+        esquemaMod.setCantosIds(cantosIds);
+
         esquemaMod.setFecha_modificacion(fechaActual != null ? fechaActual.toString() : "");
         esquemaMod.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
 

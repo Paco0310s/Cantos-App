@@ -1,11 +1,14 @@
 package com.pacosotelo.coro.modelos;
 
+import com.google.firebase.database.Exclude;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Esquema implements Serializable {
     private String id;
     private String nombre;
+    private List<String> cantosIds;
     private ArrayList<Canto> cantos;
     private String fecha_creacion;
     private String fecha_modificacion;
@@ -13,6 +16,7 @@ public class Esquema implements Serializable {
     private String grupo_id;
 
     public Esquema() {
+        cantosIds = new ArrayList<>();
         cantos = new ArrayList<>();
     }
 
@@ -32,10 +36,20 @@ public class Esquema implements Serializable {
         this.nombre = nombre;
     }
 
+    public List<String> getCantosIds() {
+        return cantosIds;
+    }
+
+    public void setCantosIds(List<String> cantosIds) {
+        this.cantosIds = cantosIds;
+    }
+
+    @Exclude
     public ArrayList<Canto> getCantos() {
         return cantos;
     }
 
+    @Exclude
     public void setCantos(ArrayList<Canto> cantos) {
         this.cantos = cantos;
     }

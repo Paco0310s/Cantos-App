@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,14 +60,13 @@ public class MenuHelper {
         
         TextView tvUserInfo = dialogView.findViewById(R.id.tvUserInfo);
         TextView tvWeb = dialogView.findViewById(R.id.tvWeb);
-        TextView tvCopiarClabe = dialogView.findViewById(R.id.tvCopiarClabe);
-        TextView tvCopiarTarjeta = dialogView.findViewById(R.id.tvCopiarTarjeta);
+        Button bDonar = dialogView.findViewById(R.id.bDonar);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String email = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : "";
         String grupoActual = (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.isEmpty()) ? "Ninguno" : Constantes.GRUPO_SELECCIONADO;
 
-        tvUserInfo.setText("Usuario: " + email + "\n\nGrupo Seleccionado: " + grupoActual);
+        tvUserInfo.setText(activity.getString(R.string.formato_info_usuario, email, grupoActual));
 
         tvWeb.setOnClickListener(v -> {
             try {
@@ -76,19 +76,15 @@ public class MenuHelper {
             }
         });
 
-        tvCopiarClabe.setOnClickListener(v -> {
-            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("CLABE", "722969010225670860");
-            clipboard.setPrimaryClip(clip);
-            Toast.makeText(activity, "CLABE copiada al portapapeles", Toast.LENGTH_SHORT).show();
-        });
-
-        tvCopiarTarjeta.setOnClickListener(v -> {
-            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Tarjeta OXXO", "2242 1703 2007 1607");
-            clipboard.setPrimaryClip(clip);
-            Toast.makeText(activity, "Tarjeta copiada al portapapeles", Toast.LENGTH_SHORT).show();
-        });
+        if (bDonar != null) {
+            bDonar.setOnClickListener(v -> {
+                try {
+                    activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://pacosotelo.com/#donaciones")));
+                } catch (Exception e) {
+                    Toast.makeText(activity, "Error al abrir la página web", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         builder.setPositiveButton(R.string.aceptar, (dialog, which) -> dialog.dismiss());
         builder.show();

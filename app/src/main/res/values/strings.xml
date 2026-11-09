@@ -115,6 +115,7 @@
     <string name="titulo_unirse_grupo">Unirse a un grupo</string>
     <string name="msg_ingresa_codigo_grupo">Ingresa el código de 6 caracteres del grupo</string>
     <string name="btn_unirse">Unirse</string>
+    <string name="formato_info_usuario">Usuario: %1$s\n\nGrupo Seleccionado: %2$s</string>
     <string name="msg_codigo_invalido">El código debe tener exactamente 6 caracteres</string>
     <string name="msg_grupo_no_encontrado">No se encontró un grupo con ese código</string>
     <string name="msg_error_buscar_grupo">Error al buscar el grupo</string>

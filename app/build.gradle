@@ -13,8 +13,8 @@ android {
         applicationId "com.pacosotelo.coro"
         minSdk 24
         targetSdk 36
-        versionCode 19
-        versionName "6.1.0 Armonía"
+        versionCode 20
+        versionName "6.1.5 Armonía"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

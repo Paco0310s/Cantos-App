@@ -17,3 +17,5 @@ local.properties
 /app/release
 *.aab
 /app/google-services.json
+/coro-7251f-default-rtdb-export.json
+/coro-7251f-default-rtdb-export_migrado.json

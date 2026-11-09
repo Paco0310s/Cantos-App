@@ -22,6 +22,7 @@ import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.ui.CantoActivity;
 import com.pacosotelo.coro.ui.ModificarEsquemaActivity;
 import com.pacosotelo.coro.ui.NuevoEsquemaActivity;
+import com.pacosotelo.coro.viewmodel.CantosViewModel;
 
 import java.util.ArrayList;
 import java.util.ArrayList;
@@ -32,22 +33,32 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
     private final LayoutInflater mInflater;
     private final Context contexto;
     private List<Esquema> listaEsquemas;
+    private List<Canto> listaCantosGlobales; // Para resolver cantosIds
 
-    public AdaptadorEsquemas(List<Esquema> listaEsquemas, Context contexto) {
+    public AdaptadorEsquemas(List<Esquema> listaEsquemas, Context contexto, CantosViewModel cantosViewModel) {
         this.mInflater = LayoutInflater.from(contexto);
         this.contexto = contexto;
         this.listaEsquemas = new ArrayList<>(listaEsquemas);
+        this.listaCantosGlobales = new ArrayList<>();
+    }
+
+    public void actualizarCantosGlobales(List<Canto> cantos) {
+        this.listaCantosGlobales.clear();
+        if (cantos != null) {
+            this.listaCantosGlobales.addAll(cantos);
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
-    public AdaptadorEsquemas.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.item_esquema, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AdaptadorEsquemas.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.bindData(listaEsquemas.get(position));
     }
 
@@ -95,7 +106,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                     if (oldE == null || newE == null) return false;
 
                     boolean nombreIgual = Objects.equals(oldE.getNombre(), newE.getNombre());
-                    boolean cantosIgual = Objects.equals(oldE.getCantos(), newE.getCantos());
+                    boolean cantosIgual = Objects.equals(oldE.getCantosIds(), newE.getCantosIds());
 
                     return nombreIgual && cantosIgual;
                 } catch (Exception e) {
@@ -147,8 +158,22 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
         private void bindData(final Esquema esquema) {
             nombreEsquema.setText(esquema.getNombre());
 
-            List<Canto> cantos = esquema.getCantos();
-            if (cantos == null) cantos = new ArrayList<>();
+            List<Canto> cantos = new ArrayList<>();
+            if (esquema.getCantosIds() != null && listaCantosGlobales != null) {
+                for (String cantoId : esquema.getCantosIds()) {
+                    for (Canto c : listaCantosGlobales) {
+                        if (c != null && c.getId() != null && c.getId().equals(cantoId)) {
+                            cantos.add(c);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Retrocompatibilidad con esquemas viejos que aún tengan "cantos"
+            if (cantos.isEmpty() && esquema.getCantos() != null) {
+                cantos.addAll(esquema.getCantos());
+            }
 
             CantoItemAdapter adapter = new CantoItemAdapter(cantos, (canto, i) -> {
                 int pos = getAbsoluteAdapterPosition();

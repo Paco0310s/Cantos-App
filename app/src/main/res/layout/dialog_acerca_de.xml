@@ -10,7 +10,7 @@
         android:id="@+id/tvAppInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="© Paco Sotelo 2026\nPara el mundo, desde 2021\n\nCréditos:\nLogo: Santiago Romo\n\nVersión: 6.1.0 Armonía"
+        android:text="© Paco Sotelo 2026\nPara el mundo, desde 2021\n\nCréditos:\nLogo: Santiago Romo\n\nVersión: 6.1.5 Armonía"
         android:textColor="@color/card_title_color"
         android:textSize="14sp" />
 
@@ -50,73 +50,14 @@
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground" />
 
-    <TextView
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/bDonar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="¿Te gusta la app? Apoya el proyecto"
-        android:textColor="@color/card_title_color"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-    <!-- CLABE -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="CLABE MercadoPago:\n722969010225670860\nA nombre de:\nFrancisco Rafael Sotelo Delgado"
-            android:textColor="@color/text_secondary_color"
-            android:textSize="13sp" />
-
-        <TextView
-            android:id="@+id/tvCopiarClabe"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="COPIAR"
-            android:textColor="@color/color_link"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:padding="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground" />
-    </LinearLayout>
-
-    <!-- OXXO SPIN -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Depósito OXXO Spin:\n2242 1703 2007 1607\nA nombre de:\nFrancisco Rafael Sotelo Delgado"
-            android:textColor="@color/text_secondary_color"
-            android:textSize="13sp" />
-
-        <TextView
-            android:id="@+id/tvCopiarTarjeta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="COPIAR"
-            android:textColor="@color/color_link"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:padding="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground" />
-    </LinearLayout>
+        android:layout_marginTop="12dp"
+        android:text="Invítame un café ☕"
+        android:textColor="@color/primary_button_text"
+        app:backgroundTint="@color/primary_button_bg"
+        app:cornerRadius="12dp" />
 
 </LinearLayout>
