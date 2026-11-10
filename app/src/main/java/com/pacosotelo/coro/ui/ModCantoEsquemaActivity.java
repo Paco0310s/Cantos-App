@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import com.google.firebase.database.FirebaseDatabase;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pacosotelo.coro.R;
@@ -152,14 +153,20 @@ public class ModCantoEsquemaActivity extends AppCompatActivity {
             return;
         }
 
-        if (canto != null && esquema != null && esquema.getCantos() != null) {
+        if (canto != null) {
             canto.setNombre(etNombre.getText().toString().trim());
             canto.setLetra(etLetra.getText().toString().trim());
 
-            if (indice >= 0 && indice < esquema.getCantos().size()) {
-                esquema.getCantos().set(indice, canto);
-                esquemasViewModel.saveEsquema(esquema);
-            }
+            FirebaseDatabase.getInstance().getReference("cantos")
+                    .child(canto.getId())
+                    .setValue(canto)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Canto modificado globalmente", Toast.LENGTH_SHORT).show();
+                        regresar();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Error al modificar el canto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
         }
     }
 

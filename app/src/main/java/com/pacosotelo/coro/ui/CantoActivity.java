@@ -32,6 +32,8 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.graphics.Typeface;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,6 +77,7 @@ public class CantoActivity extends AppCompatActivity {
     private FloatingActionButton bAtras, bSiguiente;
     private boolean bandera;
     private AtomicInteger indice;
+    private ArrayList<Canto> listaCantos;
 
     Map<String, String> tonosArriba;
     Map<String, String> tonosAbajo;
@@ -196,6 +199,11 @@ public class CantoActivity extends AppCompatActivity {
             } else {
                 esquema = (Esquema) this.getIntent().getSerializableExtra("esquema");
             }
+            
+            // Recibimos la lista de cantos resuelta
+            if (this.getIntent().hasExtra("listaCantos")) {
+                listaCantos = (ArrayList<Canto>) this.getIntent().getSerializableExtra("listaCantos");
+            }
 
             indice = new AtomicInteger();
 
@@ -220,19 +228,27 @@ public class CantoActivity extends AppCompatActivity {
     }
 
     private void verificar(int indice) {
+        if (listaCantos == null || listaCantos.isEmpty()) {
+            bAtras.setVisibility(View.INVISIBLE);
+            bSiguiente.setVisibility(View.INVISIBLE);
+            barra();
+            letra();
+            return;
+        }
+
         if(indice == 0) {
             bAtras.setVisibility(View.INVISIBLE);
         } else {
             bAtras.setVisibility(View.VISIBLE);
         }
 
-        if(indice == esquema.getCantos().size() - 1) {
+        if(indice >= listaCantos.size() - 1) {
             bSiguiente.setVisibility(View.INVISIBLE);
         } else {
             bSiguiente.setVisibility(View.VISIBLE);
         }
 
-        canto = esquema.getCantos().get(indice);
+        canto = listaCantos.get(indice);
 
         barra();
         letra();
@@ -264,9 +280,9 @@ public class CantoActivity extends AppCompatActivity {
         } else if (itemId == R.id.modificar) {
             if(bandera) {
                 Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
-                intent.putExtra("canto", esquema.getCantos().get(indice.get()));
+                intent.putExtra("canto", canto); // Usar el objeto 'canto' activo en lugar de depender del índice sobre la lista original
                 intent.putExtra("esquema", esquema);
-                intent.putExtra("indice", indice.get());
+                intent.putExtra("indice", indice != null ? indice.get() : 0);
 
                 this.startActivity(intent);
                 Transiciones.left(this);

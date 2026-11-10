@@ -195,9 +195,6 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                 cantos.addAll(esquema.getCantos());
             }
 
-            // Inyectamos los cantos resueltos al esquema temporal para que CantoActivity y ModificarEsquema los tengan
-            esquema.setCantos(new ArrayList<>(cantos));
-
             CantoItemAdapter adapter = new CantoItemAdapter(cantos, (canto, i) -> {
                 int pos = getAbsoluteAdapterPosition();
                 if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
@@ -206,6 +203,7 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                 Intent intent = new Intent(contexto, CantoActivity.class);
                 intent.putExtra("canto", canto);
                 intent.putExtra("esquema", esq);
+                intent.putExtra("listaCantos", new ArrayList<>(cantos)); // Pasamos la lista resuelta directamente
                 intent.putExtra("bandera", true);
                 intent.putExtra("indice", i);
 

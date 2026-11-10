@@ -67,7 +67,6 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     CantoEsquemaEditAdapter adapter2;
     Esquema esquema;
     private EsquemasViewModel esquemasViewModel;
-    private CantosViewModel cantosViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,68 +110,17 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         rvCantosEsquema.setLayoutManager(new LinearLayoutManager(this));
 
         esquemasViewModel = new ViewModelProvider(this).get(EsquemasViewModel.class);
-        cantosViewModel = new ViewModelProvider(this).get(CantosViewModel.class);
 
-        // Asegurarnos de tener los cantos cargados en esta actividad
-        if (Constantes.GRUPO_SELECCIONADO != null) {
-            cantosViewModel.loadCantosByGrupo(Constantes.GRUPO_SELECCIONADO);
+        if (esquema != null && esquema.getCantos() != null) {
+            listaCantos.clear();
+            listaCantos.addAll(esquema.getCantos());
         }
 
-        cantosViewModel.getCantos().observe(this, cantosGlobales -> {
-            if (esquema != null && esquema.getCantosIds() != null) {
-                listaCantos.clear();
-                for (String idCanto : esquema.getCantosIds()) {
-                    for (Canto c : cantosGlobales) {
-                        if (c.getId().equals(idCanto)) {
-                            listaCantos.add(c);
-                            break;
-                        }
-                    }
-                }
-                if (adapter2 != null) {
-                    adapter2.notifyDataSetChanged();
-                }
-            }
-        });
+        // Eliminamos el ValueEventListener en tiempo real de esta pantalla.
+        // Ahora trabajamos exclusivamente con la copia local (draft) que se pasa en el Intent.
+        // Esto permite que el usuario edite libremente sin que Firebase le sobreescriba sus cambios antes de guardar,
+        // y si presiona "Atrás", la lista original queda intacta.
 
-        // Mantener el esquema sincronizado con Firebase
-        if (esquema != null && esquema.getId() != null) {
-            FirebaseDatabase.getInstance().getReference("esquemas-new").child(esquema.getId()).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        Esquema e = snapshot.getValue(Esquema.class);
-                        if (e != null) {
-                            esquema = e;
-                            if (etNombreEsquema != null && !etNombreEsquema.hasFocus()) {
-                                etNombreEsquema.setText(esquema.getNombre());
-                            }
-                            
-                            // Disparar recarga manual
-                            if (cantosViewModel.getCantos().getValue() != null) {
-                                listaCantos.clear();
-                                if (esquema.getCantosIds() != null) {
-                                    for (String cantoId : esquema.getCantosIds()) {
-                                        for (Canto c : cantosViewModel.getCantos().getValue()) {
-                                            if (c != null && c.getId() != null && c.getId().equals(cantoId)) {
-                                                listaCantos.add(c);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                } else if (esquema.getCantos() != null) {
-                                    listaCantos.addAll(esquema.getCantos());
-                                }
-                                if (adapter2 != null) adapter2.notifyDataSetChanged();
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {}
-            });
-        }
 
         esquemasViewModel.getSaveSuccess().observe(this, isSuccess -> {
             if (isSuccess) {
@@ -221,6 +169,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
                 if (fromPosition != RecyclerView.NO_POSITION && toPosition != RecyclerView.NO_POSITION) {
                     Collections.swap(listaCantos, fromPosition, toPosition);
+                    if (esquema != null) esquema.setCantos(new ArrayList<>(listaCantos)); // Hidratar esquema
                     adapter2.notifyItemMoved(fromPosition, toPosition);
                     return true;
                 }
@@ -232,6 +181,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                 int position = viewHolder.getBindingAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && position < listaCantos.size()) {
                     Canto cantoEliminado = listaCantos.remove(position);
+                    if (esquema != null) esquema.setCantos(new ArrayList<>(listaCantos)); // Hidratar esquema
                     adapter2.notifyItemRemoved(position);
                     adapter2.notifyItemRangeChanged(position, listaCantos.size());
                     Toast.makeText(ModificarEsquemaActivity.this, cantoEliminado.getNombre() + " removido", Toast.LENGTH_SHORT).show();
@@ -443,35 +393,15 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             Canto c = arrayAdapter.getItem(position);
             if (c != null) {
                 listaCantos.add(c);
+                if (esquema != null) esquema.setCantos(new ArrayList<>(listaCantos)); // Hidratar esquema
                 if (adapter2 != null) {
                     adapter2.notifyItemInserted(listaCantos.size() - 1);
                 }
-                autoGuardarEsquema();
             }
             dialog.dismiss();
         });
 
         dialog.show();
-    }
-
-    private void autoGuardarEsquema() {
-        try {
-            if (esquema != null) {
-                List<String> cantosIds = new ArrayList<>();
-                for (Canto c : listaCantos) {
-                    cantosIds.add(c.getId());
-                }
-                esquema.setCantosIds(cantosIds);
-
-                if (etNombreEsquema != null && etNombreEsquema.getText() != null) {
-                    esquema.setNombre(etNombreEsquema.getText().toString().trim());
-                }
-                esquema.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
-                esquemasViewModel.saveEsquemaSilencioso(esquema);
-            }
-        } catch (Exception e) {
-            Log.e("ModificarEsquema", "Error al auto-guardar esquema: " + e.getMessage());
-        }
     }
 
     private void modificarEsquema() {
