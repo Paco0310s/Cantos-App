@@ -26,26 +26,32 @@ import com.pacosotelo.coro.viewmodel.CantosViewModel;
 
 import java.util.ArrayList;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.ViewHolder> {
     private final LayoutInflater mInflater;
     private final Context contexto;
     private List<Esquema> listaEsquemas;
-    private List<Canto> listaCantosGlobales; // Para resolver cantosIds
+    private Map<String, Canto> mapaCantosGlobales; // Búsqueda O(1)
 
     public AdaptadorEsquemas(List<Esquema> listaEsquemas, Context contexto, CantosViewModel cantosViewModel) {
         this.mInflater = LayoutInflater.from(contexto);
         this.contexto = contexto;
         this.listaEsquemas = new ArrayList<>(listaEsquemas);
-        this.listaCantosGlobales = new ArrayList<>();
+        this.mapaCantosGlobales = new HashMap<>();
     }
 
     public void actualizarCantosGlobales(List<Canto> cantos) {
-        this.listaCantosGlobales.clear();
+        this.mapaCantosGlobales.clear();
         if (cantos != null) {
-            this.listaCantosGlobales.addAll(cantos);
+            for (Canto c : cantos) {
+                if (c != null && c.getId() != null) {
+                    this.mapaCantosGlobales.put(c.getId(), c);
+                }
+            }
         }
         notifyDataSetChanged();
     }
@@ -145,6 +151,22 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
                 int pos = getAbsoluteAdapterPosition();
                 if (listaEsquemas == null || pos < 0 || pos >= listaEsquemas.size()) return;
                 Esquema esquema = listaEsquemas.get(pos);
+                
+                // Asegurar que el esquema que se pasa tenga los cantos completos, 
+                // resolviéndolos primero si es que Firebase solo mandó los cantosIds
+                List<Canto> cantosResueltos = new ArrayList<>();
+                if (esquema.getCantosIds() != null && mapaCantosGlobales != null) {
+                    for (String cantoId : esquema.getCantosIds()) {
+                        Canto c = mapaCantosGlobales.get(cantoId);
+                        if (c != null) {
+                            cantosResueltos.add(c);
+                        }
+                    }
+                }
+                if (cantosResueltos.isEmpty() && esquema.getCantos() != null) {
+                    cantosResueltos.addAll(esquema.getCantos());
+                }
+                esquema.setCantos(new ArrayList<>(cantosResueltos));
 
                 Intent i = new Intent(contexto, ModificarEsquemaActivity.class);
                 i.putExtra("esquema", esquema);
@@ -159,13 +181,11 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
             nombreEsquema.setText(esquema.getNombre());
 
             List<Canto> cantos = new ArrayList<>();
-            if (esquema.getCantosIds() != null && listaCantosGlobales != null) {
+            if (esquema.getCantosIds() != null && mapaCantosGlobales != null) {
                 for (String cantoId : esquema.getCantosIds()) {
-                    for (Canto c : listaCantosGlobales) {
-                        if (c != null && c.getId() != null && c.getId().equals(cantoId)) {
-                            cantos.add(c);
-                            break;
-                        }
+                    Canto c = mapaCantosGlobales.get(cantoId);
+                    if (c != null) {
+                        cantos.add(c);
                     }
                 }
             }
@@ -174,6 +194,9 @@ public class AdaptadorEsquemas extends RecyclerView.Adapter<AdaptadorEsquemas.Vi
             if (cantos.isEmpty() && esquema.getCantos() != null) {
                 cantos.addAll(esquema.getCantos());
             }
+
+            // Inyectamos los cantos resueltos al esquema temporal para que CantoActivity y ModificarEsquema los tengan
+            esquema.setCantos(new ArrayList<>(cantos));
 
             CantoItemAdapter adapter = new CantoItemAdapter(cantos, (canto, i) -> {
                 int pos = getAbsoluteAdapterPosition();

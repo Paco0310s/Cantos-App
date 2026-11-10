@@ -42,6 +42,7 @@ import com.pacosotelo.coro.modelos.Esquema;
 import com.pacosotelo.coro.tools.Constantes;
 import com.pacosotelo.coro.tools.Transiciones;
 import androidx.lifecycle.ViewModelProvider;
+import com.pacosotelo.coro.viewmodel.CantosViewModel;
 import com.pacosotelo.coro.viewmodel.EsquemasViewModel;
 
 import java.time.LocalDateTime;
@@ -66,6 +67,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     CantoEsquemaEditAdapter adapter2;
     Esquema esquema;
     private EsquemasViewModel esquemasViewModel;
+    private CantosViewModel cantosViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,10 +111,33 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
         rvCantosEsquema.setLayoutManager(new LinearLayoutManager(this));
 
         esquemasViewModel = new ViewModelProvider(this).get(EsquemasViewModel.class);
+        cantosViewModel = new ViewModelProvider(this).get(CantosViewModel.class);
+
+        // Asegurarnos de tener los cantos cargados en esta actividad
+        if (Constantes.GRUPO_SELECCIONADO != null) {
+            cantosViewModel.loadCantosByGrupo(Constantes.GRUPO_SELECCIONADO);
+        }
+
+        cantosViewModel.getCantos().observe(this, cantosGlobales -> {
+            if (esquema != null && esquema.getCantosIds() != null) {
+                listaCantos.clear();
+                for (String idCanto : esquema.getCantosIds()) {
+                    for (Canto c : cantosGlobales) {
+                        if (c.getId().equals(idCanto)) {
+                            listaCantos.add(c);
+                            break;
+                        }
+                    }
+                }
+                if (adapter2 != null) {
+                    adapter2.notifyDataSetChanged();
+                }
+            }
+        });
 
         // Mantener el esquema sincronizado con Firebase
         if (esquema != null && esquema.getId() != null) {
-            FirebaseDatabase.getInstance().getReference("esquemas").child(esquema.getId()).addValueEventListener(new ValueEventListener() {
+            FirebaseDatabase.getInstance().getReference("esquemas-new").child(esquema.getId()).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
@@ -122,9 +147,22 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
                             if (etNombreEsquema != null && !etNombreEsquema.hasFocus()) {
                                 etNombreEsquema.setText(esquema.getNombre());
                             }
-                            if (esquema.getCantos() != null) {
+                            
+                            // Disparar recarga manual
+                            if (cantosViewModel.getCantos().getValue() != null) {
                                 listaCantos.clear();
-                                listaCantos.addAll(esquema.getCantos());
+                                if (esquema.getCantosIds() != null) {
+                                    for (String cantoId : esquema.getCantosIds()) {
+                                        for (Canto c : cantosViewModel.getCantos().getValue()) {
+                                            if (c != null && c.getId() != null && c.getId().equals(cantoId)) {
+                                                listaCantos.add(c);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                } else if (esquema.getCantos() != null) {
+                                    listaCantos.addAll(esquema.getCantos());
+                                }
                                 if (adapter2 != null) adapter2.notifyDataSetChanged();
                             }
                         }
@@ -216,7 +254,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
             int itemId = menuItem.getItemId();
             if (itemId == R.id.verCanto) {
                 Intent intent = new Intent(this, ModCantoEsquemaActivity.class);
-                intent.putExtra("canto", esquema.getCantos().get(indice));
+                intent.putExtra("canto", listaCantos.get(indice));
                 intent.putExtra("esquema", esquema);
                 intent.putExtra("indice", indice);
 
@@ -264,7 +302,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.eliminar) {
-            dr = fd.getReference("esquemas");
+            dr = fd.getReference("esquemas-new");
             FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
 
             if (usuario == null) {

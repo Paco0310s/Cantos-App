@@ -86,7 +86,9 @@ public class ListaEsquemasFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (Constantes.GRUPO_SELECCIONADO == null || Constantes.GRUPO_SELECCIONADO.trim().isEmpty()) {
+        if (Constantes.GRUPO_SELECCIONADO != null && !Constantes.GRUPO_SELECCIONADO.trim().isEmpty()) {
+            cargarEsquemas();
+        } else {
             inicializarFirebase();
         }
     }

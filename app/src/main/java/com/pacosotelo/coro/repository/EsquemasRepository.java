@@ -14,7 +14,7 @@ public class EsquemasRepository {
 
     public EsquemasRepository() {
         database = FirebaseDatabase.getInstance();
-        esquemasRef = database.getReference("esquemas");
+        esquemasRef = database.getReference("esquemas-new");
     }
 
     public Task<DataSnapshot> getEsquemasByGrupo(String grupoId) {

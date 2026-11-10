@@ -70,12 +70,6 @@ public class EsquemasViewModel extends ViewModel {
             return;
         }
 
-        // Si ya estamos escuchando este grupo en tiempo real, no recreamos el listener
-        if (grupoId.equals(lastGrupoId) && activeEsquemasListener != null) {
-            isLoading.setValue(false);
-            return;
-        }
-
         stopListeningEsquemas();
 
         lastGrupoId = grupoId;

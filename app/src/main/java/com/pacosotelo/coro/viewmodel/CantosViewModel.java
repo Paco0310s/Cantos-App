@@ -86,12 +86,6 @@ public class CantosViewModel extends ViewModel {
             return;
         }
 
-        // Si ya estamos escuchando este grupo en tiempo real, no recreamos el listener
-        if (grupoId.equals(lastGrupoId) && activeCantosListener != null) {
-            isLoading.setValue(false);
-            return;
-        }
-
         stopListeningCantos();
 
         lastGrupoId = grupoId;
