@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -337,54 +338,86 @@ public class NuevoCantoActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoTransportar() {
-        String tonoRegistrado = null;
-        if (etTono != null && etTono.getText() != null && !etTono.getText().toString().trim().isEmpty()) {
-            tonoRegistrado = etTono.getText().toString().trim();
-        } else if (canto != null && canto.getTono() != null && !canto.getTono().trim().isEmpty()) {
-            tonoRegistrado = canto.getTono().trim();
-        }
-
-        if (tonoRegistrado == null) {
-            new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog)
-                    .setTitle("Tono Requerido")
-                    .setMessage("Para poder transportar este canto a otro tono, primero debes ingresar o seleccionar su tono original en el campo 'Tono / Clave'.")
-                    .setPositiveButton("Aceptar", null)
-                    .show();
-            return;
-        }
-
-        String tonoOriginalBruto = tonoRegistrado;
-        String tonoOriginal = tonoOriginalBruto.replaceAll("[mM]$", "");
-        String sufijo = tonoOriginalBruto.endsWith("m") || tonoOriginalBruto.endsWith("M") ? tonoOriginalBruto.substring(tonoOriginalBruto.length() - 1) : "";
-
         String[] tonosDisponibles = {"DO", "DO#", "RE", "MIb", "MI", "FA", "FA#", "SOL", "SOL#", "LA", "SIb", "SI"};
-        
+
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
         builder.setTitle("Transportar a otro tono");
 
-        int checkedItem = -1;
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_transportar, null);
+        builder.setView(dialogView);
+
+        TextView tvAviso = dialogView.findViewById(R.id.tvAvisoTono);
+        Spinner spinnerOriginal = dialogView.findViewById(R.id.spinnerOriginal);
+        Spinner spinnerDestino = dialogView.findViewById(R.id.spinnerDestino);
+
+        ArrayAdapter<String> adapterTonos = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, tonosDisponibles);
+        spinnerOriginal.setAdapter(adapterTonos);
+        spinnerDestino.setAdapter(adapterTonos);
+
+        String tonoOriginalBruto = "DO";
+        if (etTono != null && etTono.getText() != null && !etTono.getText().toString().trim().isEmpty()) {
+            tonoOriginalBruto = etTono.getText().toString().trim();
+        } else if (canto != null && canto.getTono() != null && !canto.getTono().trim().isEmpty()) {
+            tonoOriginalBruto = canto.getTono().trim();
+        } else {
+            String primerAcorde = obtenerPrimerAcorde(etLetra != null ? etLetra.getText().toString() : "");
+            if (primerAcorde != null) {
+                tonoOriginalBruto = primerAcorde;
+                tvAviso.setVisibility(View.VISIBLE);
+                tvAviso.setText("Este canto no tiene tono registrado. Hemos detectado que empieza en '" + primerAcorde + "'. Confirma si es correcto.");
+            } else {
+                tvAviso.setVisibility(View.VISIBLE);
+                tvAviso.setText("Este canto no tiene tono registrado. Elige el tono base manualmente.");
+            }
+        }
+
+        String tonoOriginal = tonoOriginalBruto.replaceAll("[mM]$", "").replaceAll("7$", "");
+        String sufijo = tonoOriginalBruto.substring(tonoOriginal.length());
+
+        int checkedItem = 0;
         for (int i = 0; i < tonosDisponibles.length; i++) {
             if (tonosDisponibles[i].equals(tonoOriginal)) {
                 checkedItem = i;
                 break;
             }
         }
+        spinnerOriginal.setSelection(checkedItem);
+        spinnerDestino.setSelection(checkedItem);
 
-        builder.setSingleChoiceItems(tonosDisponibles, checkedItem, (dialog, which) -> {
-            String tonoDestino = tonosDisponibles[which];
-            transportarTonoDirecto(tonoOriginal, tonoDestino);
+        builder.setPositiveButton("Transportar", (dialog, which) -> {
+            String tonoOrigenSeleccionado = (String) spinnerOriginal.getSelectedItem();
+            String tonoDestinoSeleccionado = (String) spinnerDestino.getSelectedItem();
+            
+            transportarTonoDirecto(tonoOrigenSeleccionado, tonoDestinoSeleccionado);
             
             if (etTono != null) {
-                etTono.setText(tonoDestino + sufijo);
+                etTono.setText(tonoDestinoSeleccionado + sufijo);
             }
             if (canto != null) {
-                canto.setTono(tonoDestino + sufijo);
+                canto.setTono(tonoDestinoSeleccionado + sufijo);
             }
             dialog.dismiss();
-            Toast.makeText(this, "Tono transportado a " + tonoDestino + sufijo, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Tono transportado a " + tonoDestinoSeleccionado + sufijo, Toast.LENGTH_SHORT).show();
         });
         builder.setNegativeButton("Cancelar", null);
         builder.show();
+    }
+
+    private String obtenerPrimerAcorde(String letra) {
+        if (letra == null || letra.isEmpty()) return null;
+        Pattern pattern = Pattern.compile("'([^']+)'");
+        Matcher matcher = pattern.matcher(letra);
+        if (matcher.find()) {
+            String acorde = matcher.group(1);
+            if (acorde != null) {
+                String base = acorde.replaceAll("[mM7b#]", "");
+                String[] validos = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
+                for (String v : validos) {
+                    if (base.startsWith(v)) return acorde;
+                }
+            }
+        }
+        return null;
     }
 
     private void transportarTonoDirecto(String original, String destino) {

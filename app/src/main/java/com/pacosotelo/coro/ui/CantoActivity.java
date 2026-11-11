@@ -21,8 +21,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -599,45 +601,83 @@ public class CantoActivity extends AppCompatActivity {
 
 
     private void mostrarDialogoTransportar() {
-        if (canto == null || canto.getTono() == null || canto.getTono().trim().isEmpty()) {
-            new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog)
-                    .setTitle("Tono Requerido")
-                    .setMessage("Para poder transportar este canto a otro tono, primero debes registrar su tono original (puedes asignarlo al editar el canto).")
-                    .setPositiveButton("Aceptar", null)
-                    .show();
-            return;
-        }
-
-        String tonoOriginalBruto = canto.getTono().trim();
-        String tonoOriginal = tonoOriginalBruto.replaceAll("[mM]$", "");
-        String sufijo = tonoOriginalBruto.endsWith("m") || tonoOriginalBruto.endsWith("M") ? tonoOriginalBruto.substring(tonoOriginalBruto.length() - 1) : "";
-
         String[] tonosDisponibles = {"DO", "DO#", "RE", "MIb", "MI", "FA", "FA#", "SOL", "SOL#", "LA", "SIb", "SI"};
-        
+
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.CustomMaterialDialog);
         builder.setTitle("Transportar a otro tono");
 
-        int checkedItem = -1;
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_transportar, null);
+        builder.setView(dialogView);
+
+        TextView tvAviso = dialogView.findViewById(R.id.tvAvisoTono);
+        Spinner spinnerOriginal = dialogView.findViewById(R.id.spinnerOriginal);
+        Spinner spinnerDestino = dialogView.findViewById(R.id.spinnerDestino);
+
+        ArrayAdapter<String> adapterTonos = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, tonosDisponibles);
+        spinnerOriginal.setAdapter(adapterTonos);
+        spinnerDestino.setAdapter(adapterTonos);
+
+        String tonoOriginalBruto = "DO";
+        if (canto != null && canto.getTono() != null && !canto.getTono().trim().isEmpty()) {
+            tonoOriginalBruto = canto.getTono().trim();
+        } else {
+            String primerAcorde = obtenerPrimerAcorde(canto != null ? canto.getLetra() : "");
+            if (primerAcorde != null) {
+                tonoOriginalBruto = primerAcorde;
+                tvAviso.setVisibility(View.VISIBLE);
+                tvAviso.setText("Este canto no tiene tono registrado. Hemos detectado que empieza en '" + primerAcorde + "'. Confirma si es correcto.");
+            } else {
+                tvAviso.setVisibility(View.VISIBLE);
+                tvAviso.setText("Este canto no tiene tono registrado. Elige el tono base manualmente.");
+            }
+        }
+
+        String tonoOriginal = tonoOriginalBruto.replaceAll("[mM]$", "").replaceAll("7$", "");
+        String sufijo = tonoOriginalBruto.substring(tonoOriginal.length());
+
+        int checkedItem = 0;
         for (int i = 0; i < tonosDisponibles.length; i++) {
             if (tonosDisponibles[i].equals(tonoOriginal)) {
                 checkedItem = i;
                 break;
             }
         }
+        spinnerOriginal.setSelection(checkedItem);
+        spinnerDestino.setSelection(checkedItem);
 
-        builder.setSingleChoiceItems(tonosDisponibles, checkedItem, (dialog, which) -> {
-            String tonoDestino = tonosDisponibles[which];
-            transportarTonoDirecto(tonoOriginal, tonoDestino);
+        builder.setPositiveButton("Transportar", (dialog, which) -> {
+            String tonoOrigenSeleccionado = (String) spinnerOriginal.getSelectedItem();
+            String tonoDestinoSeleccionado = (String) spinnerDestino.getSelectedItem();
             
+            transportarTonoDirecto(tonoOrigenSeleccionado, tonoDestinoSeleccionado);
+
             if (tvCantoTono != null) {
                 tvCantoTono.setVisibility(View.VISIBLE);
-                tvCantoTono.setText("Tono transpuesto: " + tonoDestino + sufijo);
+                tvCantoTono.setText("Tono transpuesto: " + tonoDestinoSeleccionado + sufijo);
             }
             dialog.dismiss();
-            Toast.makeText(this, "Tono transportado a " + tonoDestino + sufijo, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Tono transportado a " + tonoDestinoSeleccionado + sufijo, Toast.LENGTH_SHORT).show();
         });
         builder.setNegativeButton("Cancelar", null);
         builder.show();
+    }
+
+    private String obtenerPrimerAcorde(String letra) {
+        if (letra == null || letra.isEmpty()) return null;
+        Pattern pattern = Pattern.compile("'([^']+)'");
+        Matcher matcher = pattern.matcher(letra);
+        if (matcher.find()) {
+            String acorde = matcher.group(1);
+            if (acorde != null) {
+                // Verificar que parezca un acorde musical
+                String base = acorde.replaceAll("[mM7b#]", "");
+                String[] validos = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
+                for (String v : validos) {
+                    if (base.startsWith(v)) return acorde;
+                }
+            }
+        }
+        return null;
     }
 
     private void transportarTonoDirecto(String original, String destino) {
@@ -668,7 +708,17 @@ public class CantoActivity extends AppCompatActivity {
         mostrarLetraFormateada();
         
         // Actualizamos el objeto Canto para que si presiona "Modificar" guarde el nuevo tono en Firebase
-        canto.setTono(destino + (canto.getTono().trim().endsWith("m") || canto.getTono().trim().endsWith("M") ? canto.getTono().trim().substring(canto.getTono().trim().length() - 1) : ""));
+        String sufijoOriginal = "";
+        if (canto != null && canto.getTono() != null) {
+            String t = canto.getTono().trim();
+            if (t.endsWith("m") || t.endsWith("M") || t.endsWith("7") || t.endsWith("m7")) {
+                sufijoOriginal = t.replaceAll("^[A-Z#b]+", ""); // Extrae todo lo que no sea el tono base
+            }
+        }
+        if (canto != null) {
+            canto.setTono(destino + sufijoOriginal);
+            canto.setLetra(letra); // También guardamos la nueva letra en el objeto para transportes sucesivos
+        }
     }
 
     private void subirTonoLogico() {

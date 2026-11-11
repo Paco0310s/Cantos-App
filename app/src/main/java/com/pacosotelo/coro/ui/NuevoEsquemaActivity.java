@@ -319,7 +319,7 @@ public class NuevoEsquemaActivity extends AppCompatActivity {
         esquema.setGrupo_id(Constantes.GRUPO_SELECCIONADO);
         esquema.setApp("");
         esquema.setId(UUID.randomUUID().toString());
-        esquema.setNombre(etNombreEsquema.getText().toString());
+        esquema.setNombre(etNombreEsquema.getText().toString().trim());
 
         List<String> cantosIds = new ArrayList<>();
         for (Canto c : listaCantos) {

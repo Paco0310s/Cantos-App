@@ -419,7 +419,7 @@ public class ModificarEsquemaActivity extends AppCompatActivity {
 
         esquemaMod.setApp("");
         esquemaMod.setId(esquema.getId());
-        esquemaMod.setNombre(etNombreEsquema.getText().toString());
+        esquemaMod.setNombre(etNombreEsquema.getText().toString().trim());
 
         List<String> cantosIds = new ArrayList<>();
         for (Canto c : listaCantos) {
