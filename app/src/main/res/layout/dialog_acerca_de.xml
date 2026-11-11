@@ -10,7 +10,7 @@
         android:id="@+id/tvAppInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="© Paco Sotelo 2026\nPara el mundo, desde 2021\n\nCréditos:\nLogo: Santiago Romo\n\nVersión: 6.1.5 Armonía"
+        android:text="© Paco Sotelo 2026\nPara el mundo, desde 2021\n\nCréditos:\nLogo: Santiago Romo\n\nVersión: 6.5.0 Armonía"
         android:textColor="@color/card_title_color"
         android:textSize="14sp" />
 
