@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.widget.SearchView;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -64,7 +65,7 @@ public class ListaCantosFragment extends Fragment {
     private List<Canto> listaRespaldo;
     private RecyclerView lista;
     private AdaptadorCantos adapter;
-    private ProgressBar progressBar;
+    private ShimmerFrameLayout shimmerCantos;
     private FloatingActionButton fabNuevo;
     private View noGroupContainer;
     private Button btnCrearGrupo, btnUnirseGrupo;
@@ -105,7 +106,7 @@ public class ListaCantosFragment extends Fragment {
         });
 
         lista = root.findViewById(R.id.lista);
-        progressBar = root.findViewById(R.id.pbCantos);
+        shimmerCantos = root.findViewById(R.id.shimmerCantos);
 
         this.fabNuevo = root.findViewById(R.id.fabNuevoCanto);
         this.fabNuevo.setOnClickListener(v -> {
@@ -126,7 +127,13 @@ public class ListaCantosFragment extends Fragment {
 
         // Observar estado de carga
         cantosViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (isLoading) {
+                shimmerCantos.setVisibility(View.VISIBLE);
+                shimmerCantos.startShimmer();
+            } else {
+                shimmerCantos.stopShimmer();
+                shimmerCantos.setVisibility(View.GONE);
+            }
         });
 
         // Observar errores
@@ -190,7 +197,10 @@ public class ListaCantosFragment extends Fragment {
     private void inicializarFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            if (progressBar != null) progressBar.setVisibility(View.GONE);
+            if (shimmerCantos != null) {
+                shimmerCantos.stopShimmer();
+                shimmerCantos.setVisibility(View.GONE);
+            }
             return;
         }
         
@@ -202,7 +212,10 @@ public class ListaCantosFragment extends Fragment {
                     if (noGroupContainer != null) noGroupContainer.setVisibility(View.VISIBLE);
                     if (lista != null) lista.setVisibility(View.GONE);
                     if (fabNuevo != null) fabNuevo.setVisibility(View.INVISIBLE);
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    if (shimmerCantos != null) {
+                        shimmerCantos.stopShimmer();
+                        shimmerCantos.setVisibility(View.GONE);
+                    }
                     Constantes.GRUPO_SELECCIONADO = null;
                 } else {
                     if (noGroupContainer != null) noGroupContainer.setVisibility(View.GONE);

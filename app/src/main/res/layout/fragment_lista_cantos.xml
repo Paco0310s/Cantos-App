@@ -116,12 +116,38 @@
         app:srcCompat="@drawable/ic_add"
         tools:ignore="ContentDescription" />
 
-    <ProgressBar
-        android:id="@+id/pbCantos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:backgroundTint="#ffffff"
-        android:visibility="gone" />
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmerCantos"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="10dp"
+        android:visibility="gone"
+        app:shimmer_auto_start="true"
+        app:shimmer_duration="1200">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+            <include layout="@layout/shimmer_item_canto" />
+
+        </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
 </FrameLayout>

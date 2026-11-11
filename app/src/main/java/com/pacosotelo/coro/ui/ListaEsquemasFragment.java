@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.widget.Button;
@@ -68,11 +69,11 @@ public class ListaEsquemasFragment extends Fragment {
     private List<Esquema> listaRespaldo = new ArrayList<>();
     private RecyclerView rvEsquemas;
     private AdaptadorEsquemas adapter;
-    private ProgressBar progressBar;
     private FloatingActionButton fabNuevo;
     private View noGroupContainerEsquemas;
     private Button btnCrearGrupoEsquemas, btnUnirseGrupoEsquemas;
     private TextView tvNoGroupEsquemas;
+    private ShimmerFrameLayout shimmerEsquemas;
     private EsquemasViewModel esquemasViewModel;
     private GruposViewModel gruposViewModel;
     private CantosViewModel cantosViewModel;
@@ -93,6 +94,25 @@ public class ListaEsquemasFragment extends Fragment {
         }
     }
 
+    private boolean isLoadingEsquemas = true;
+    private boolean isLoadingCantos = true;
+
+    private void actualizarEstadoCarga() {
+        if (isLoadingEsquemas || isLoadingCantos) {
+            if (shimmerEsquemas != null) {
+                shimmerEsquemas.setVisibility(View.VISIBLE);
+                shimmerEsquemas.startShimmer();
+            }
+            if (rvEsquemas != null) rvEsquemas.setVisibility(View.GONE);
+        } else {
+            if (shimmerEsquemas != null) {
+                shimmerEsquemas.stopShimmer();
+                shimmerEsquemas.setVisibility(View.GONE);
+            }
+            if (rvEsquemas != null) rvEsquemas.setVisibility(View.VISIBLE);
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -100,8 +120,7 @@ public class ListaEsquemasFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_lista_esquemas, container, false);
 
         rvEsquemas = root.findViewById(R.id.rvEsquemas);
-
-        progressBar = root.findViewById(R.id.pbEsquemas);
+        shimmerEsquemas = root.findViewById(R.id.shimmerEsquemas);
 
         this.fabNuevo = root.findViewById(R.id.fabNuevoEsquema);
         this.fabNuevo.setOnClickListener(v -> {
@@ -121,9 +140,7 @@ public class ListaEsquemasFragment extends Fragment {
         btnCrearGrupoEsquemas.setOnClickListener(v -> MenuHelper.mostrarDialogoCrearGrupo(requireActivity(), gruposViewModel));
         btnUnirseGrupoEsquemas.setOnClickListener(v -> MenuHelper.mostrarDialogoUnirseGrupo(requireActivity(), gruposViewModel));
 
-        esquemasViewModel = new ViewModelProvider(this).get(EsquemasViewModel.class);
         gruposViewModel = new ViewModelProvider(requireActivity()).get(GruposViewModel.class);
-
         gruposViewModel.getGroupCreatedMessage().observe(getViewLifecycleOwner(), mensaje -> {
             if (mensaje != null && !mensaje.isEmpty()) {
                 Toast.makeText(getActivity(), mensaje, Toast.LENGTH_LONG).show();
@@ -141,7 +158,13 @@ public class ListaEsquemasFragment extends Fragment {
         cantosViewModel = new ViewModelProvider(requireActivity()).get(CantosViewModel.class);
 
         esquemasViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            isLoadingEsquemas = isLoading;
+            actualizarEstadoCarga();
+        });
+
+        cantosViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            isLoadingCantos = isLoading;
+            actualizarEstadoCarga();
         });
 
         esquemasViewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
@@ -153,7 +176,9 @@ public class ListaEsquemasFragment extends Fragment {
         esquemasViewModel.getEsquemas().observe(getViewLifecycleOwner(), esquemas -> {
             listaRespaldo.clear();
             listaRespaldo.addAll(esquemas);
-            if (adapter != null) {
+            
+            // Si ya llegaron los cantos o al menos ya tenemos respuesta del servidor, armamos la lista.
+            if (adapter != null && cantosViewModel.getCantos().getValue() != null) {
                 adapter.actualizarLista(new ArrayList<>(esquemas));
             }
         });
@@ -161,6 +186,10 @@ public class ListaEsquemasFragment extends Fragment {
         cantosViewModel.getCantos().observe(getViewLifecycleOwner(), cantos -> {
             if (adapter != null) {
                 adapter.actualizarCantosGlobales(cantos);
+                // Una vez que llegan los cantos, si ya teníamos los esquemas listos, los dibujamos
+                if (esquemasViewModel.getEsquemas().getValue() != null) {
+                    adapter.actualizarLista(new ArrayList<>(esquemasViewModel.getEsquemas().getValue()));
+                }
             }
         });
 
@@ -205,7 +234,10 @@ public class ListaEsquemasFragment extends Fragment {
     private void inicializarFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            progressBar.setVisibility(View.GONE);
+            if (shimmerEsquemas != null) {
+                shimmerEsquemas.stopShimmer();
+                shimmerEsquemas.setVisibility(View.GONE);
+            }
             return;
         }
 
@@ -217,7 +249,10 @@ public class ListaEsquemasFragment extends Fragment {
                     noGroupContainerEsquemas.setVisibility(View.VISIBLE);
                     rvEsquemas.setVisibility(View.GONE);
                     fabNuevo.setVisibility(View.INVISIBLE);
-                    progressBar.setVisibility(View.GONE);
+                    if (shimmerEsquemas != null) {
+                        shimmerEsquemas.stopShimmer();
+                        shimmerEsquemas.setVisibility(View.GONE);
+                    }
                     Constantes.GRUPO_SELECCIONADO = null;
                 } else {
                     noGroupContainerEsquemas.setVisibility(View.GONE);
@@ -236,6 +271,11 @@ public class ListaEsquemasFragment extends Fragment {
         }
 
         final String grupoSeleccionado = Constantes.GRUPO_SELECCIONADO.trim();
+
+        // Forzar siempre la carga de cantos del grupo actual para asegurarnos 
+        // de que no se crucen los cantos si el usuario cambia de grupo
+        cantosViewModel.loadCantosByGrupo(grupoSeleccionado);
+        
         esquemasViewModel.loadEsquemasByGrupo(grupoSeleccionado);
     }
 

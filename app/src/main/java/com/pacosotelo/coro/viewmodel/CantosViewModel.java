@@ -86,6 +86,11 @@ public class CantosViewModel extends ViewModel {
             return;
         }
 
+        if (!grupoId.equals(lastGrupoId)) {
+            cantosLiveData.setValue(new ArrayList<>());
+            isLoading.setValue(true);
+        }
+
         stopListeningCantos();
 
         lastGrupoId = grupoId;

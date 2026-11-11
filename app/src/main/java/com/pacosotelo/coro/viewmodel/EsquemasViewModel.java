@@ -70,6 +70,11 @@ public class EsquemasViewModel extends ViewModel {
             return;
         }
 
+        if (!grupoId.equals(lastGrupoId)) {
+            esquemasLiveData.setValue(new ArrayList<>());
+            isLoading.setValue(true);
+        }
+
         stopListeningEsquemas();
 
         lastGrupoId = grupoId;
